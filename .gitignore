@@ -1,0 +1,9 @@
+# Live database: user accounts, password hashes, bookings. Never commit.
+*.db
+*.db-shm
+*.db-wal
+
+# Build output and logs
+*.exe
+northstar
+*.log

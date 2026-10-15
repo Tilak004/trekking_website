@@ -707,3 +707,8 @@ img.avatar.photo { border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18
   [data-theme="ghats"] #treks .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   [data-theme="ghats"] .trek-card { height: 200px; aspect-ratio: auto; }
 }
+
+/* Smaller hero buttons */
+.hero-ctas { gap: 10px; }
+.hero-ctas .btn.big { padding: 8px 15px; font-size: .7rem; gap: 6px; border-width: 1.5px; }
+.hero-ctas .btn.big svg { width: 14px; height: 14px; }
