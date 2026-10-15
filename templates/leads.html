@@ -1,0 +1,52 @@
+{{define "title"}}Trek Leads · {{.Brand}}{{end}}
+{{define "content"}}
+<header class="page-head head-row">
+  <div>
+  <h1>Trek leads</h1>
+  <p class="muted">The people who take you up the mountain. Every profile builds up from real treks led and real reviews from trekkers.</p>
+  </div>
+  <a class="btn" href="/lead-with-us">Become a trek lead</a>
+</header>
+<div class="grid leads-grid">
+{{range .Leads}}
+  <a class="card" href="/leads/{{.Slug}}">
+    {{template "avatar" .}}
+    <h3>{{.Name}}{{if .Verified}} <span class="verified sm">✓</span>{{end}}</h3>
+    <p class="muted">{{.Headline}}</p>
+    <span class="card-link">View profile →</span>
+  </a>
+{{else}}
+  <p class="muted">No trek leads listed yet.</p>
+{{end}}
+</div>
+
+<section class="section why">
+  <div class="section-head">
+    <p class="eyebrow">Why trek with us</p>
+    <h2>Built by people who race mountains</h2>
+  </div>
+  <div class="why-grid">
+    <div class="why-item">
+      <div class="why-icon">01</div>
+      <h3>Athlete-led groups</h3>
+      <p>Your lead is an endurance athlete who knows pacing, safety and how to get every member to the top.</p>
+    </div>
+    <div class="why-item">
+      <div class="why-icon">02</div>
+      <h3>Small, personal batches</h3>
+      <p>Limited seats per batch, so the trail feels like yours and nobody gets left behind.</p>
+    </div>
+    <div class="why-item">
+      <div class="why-icon">03</div>
+      <h3>Honest, simple booking</h3>
+      <p>Send a request for free. We confirm your seat personally before any payment.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band">
+  <h2>Your next summit is a weekend away.</h2>
+  <p>Create a free account and request a seat in under two minutes.</p>
+  {{if .User}}<a class="btn big" href="#treks">Find a trek</a>{{else}}<a class="btn big" href="/signup">Sign up free</a>{{end}}
+</section>
+{{end}}

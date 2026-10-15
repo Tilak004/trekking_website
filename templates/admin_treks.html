@@ -1,0 +1,26 @@
+{{define "title"}}Treks · Admin{{end}}
+{{define "content"}}
+{{template "adminnav" .}}
+<div class="head-row">
+  <h1>Treks</h1>
+  <a class="btn" href="/admin/treks/new">+ New trek</a>
+</div>
+<div class="table-wrap">
+<table class="table">
+  <tr><th>Trek</th><th>Difficulty</th><th>Price</th><th>Next batch</th><th>Rating</th><th>Visible</th><th></th></tr>
+  {{range .Treks}}
+  <tr>
+    <td><strong>{{.Name}}</strong><br><span class="muted small">{{.Region}}</span></td>
+    <td>{{.Difficulty}}</td>
+    <td>₹{{inr .Price}}</td>
+    <td>{{with .NextBatch}}{{fmtDate .}}{{else}}<span class="muted">none</span>{{end}}</td>
+    <td>{{if .Ratings}}{{rating .AvgRating}} ({{.Ratings}}){{else}}–{{end}}</td>
+    <td>{{if .Active}}Yes{{else}}<span class="muted">Hidden</span>{{end}}</td>
+    <td><a href="/admin/treks/{{.ID}}">Edit &amp; batches →</a></td>
+  </tr>
+  {{else}}
+  <tr><td colspan="7" class="muted">No treks yet.</td></tr>
+  {{end}}
+</table>
+</div>
+{{end}}

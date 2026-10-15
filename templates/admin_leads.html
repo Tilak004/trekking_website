@@ -1,0 +1,31 @@
+{{define "title"}}Trek Leads · Admin{{end}}
+{{define "content"}}
+{{template "adminnav" .}}
+<div class="head-row">
+  <h1>Trek leads</h1>
+  <a class="btn" href="/admin/leads/new">+ New lead</a>
+</div>
+<div class="table-wrap">
+<table class="table">
+  <tr><th>Lead</th><th>Status</th><th>Treks led</th><th>Trekkers</th><th>Rating</th><th>Visible</th><th></th></tr>
+  {{range .Leads}}
+  <tr>
+    <td><strong>{{.Name}}</strong>{{if .Verified}} <span class="verified sm">✓</span>{{end}}<br><span class="muted small">{{.Headline}}{{with .City}} · {{.}}{{end}}</span>{{with .AppliedAt}}<br><span class="muted small">Applied {{.}}</span>{{end}}</td>
+    <td><span class="status {{.Status}}">{{.Status}}</span>
+      {{$id := .ID}}
+      {{if ne .Status "approved"}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"><input type="hidden" name="status" value="approved"><button class="btn small act-approved">Approve</button></form>{{end}}
+      {{if eq .Status "pending"}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"><input type="hidden" name="status" value="rejected"><button class="btn small act-rejected">Reject</button></form>{{end}}
+    </td>
+    <td>{{.TreksLed}}</td>
+    <td>{{.TrekkersGuided}}</td>
+    <td>{{if .Ratings}}{{rating .AvgRating}} ({{.Ratings}}){{else}}–{{end}}</td>
+    <td>{{if .Active}}Yes{{else}}<span class="muted">Hidden</span>{{end}}</td>
+    <td><a href="/admin/leads/{{.ID}}">Edit →</a></td>
+  </tr>
+  {{else}}
+  <tr><td colspan="7" class="muted">No leads yet.</td></tr>
+  {{end}}
+</table>
+</div>
+<p class="muted small">Treks led and trekkers guided count only bookings marked <em>completed</em>.</p>
+{{end}}

@@ -1,0 +1,21 @@
+{{define "title"}}One last step · {{.Brand}}{{end}}
+{{define "content"}}
+{{with .Booking}}
+<section class="sent panel">
+  <p class="eyebrow">Request #{{.ID}} saved</p>
+  <h1>One last step: send it to us on WhatsApp</h1>
+  <p class="muted">Tap the button below. WhatsApp opens with your booking details already typed in, so just hit send. We'll reply to confirm your seat.</p>
+
+  <dl class="sent-summary">
+    <div><dt>Trek</dt><dd>{{.TrekName}}</dd></div>
+    <div><dt>Date</dt><dd>{{fmtDate .StartDate}}</dd></div>
+    <div><dt>People</dt><dd>{{.People}}</dd></div>
+    {{with .Pickup}}<div><dt>Pickup</dt><dd>{{.}}</dd></div>{{end}}
+  </dl>
+
+  <a class="btn-wa" href="{{bookingWA .}}" target="_blank" rel="noopener">{{template "waicon"}} Send on WhatsApp</a>
+  <p class="small muted">Prefer to call? Ring us on <a href="tel:{{$.Site.TelLink}}">{{$.Site.Phone}}</a>.</p>
+  <p class="small"><a href="/my">Go to my bookings →</a></p>
+</section>
+{{end}}
+{{end}}

@@ -1,0 +1,108 @@
+{{define "title"}}{{if .Trek.ID}}Edit {{.Trek.Name}}{{else}}New trek{{end}} · Admin{{end}}
+{{define "content"}}
+{{template "adminnav" .}}
+<p class="crumb"><a href="/admin/treks">← All treks</a>{{if .Trek.ID}} · <a href="/treks/{{.Trek.Slug}}">View public page</a>{{end}}</p>
+<h1>{{if .Trek.ID}}Edit {{.Trek.Name}}{{else}}New trek{{end}}</h1>
+
+{{with .Trek}}
+<form method="post" action="/admin/treks/{{if .ID}}{{.ID}}{{else}}new{{end}}" class="form panel">
+  <div class="row">
+    <label>Name <input name="name" value="{{.Name}}" required maxlength="120"></label>
+    <label>URL slug <input name="slug" value="{{.Slug}}" placeholder="auto from name" maxlength="120"></label>
+  </div>
+  <div class="row">
+    <label>Region <input name="region" value="{{.Region}}" placeholder="e.g. Chikkamagaluru"></label>
+    <label>Duration <input name="duration" value="{{.Duration}}" placeholder="e.g. 2 days / 1 night"></label>
+  </div>
+  <div class="row">
+    <label>Distance (km) <input type="number" name="distance_km" value="{{.DistanceKm}}" min="0"></label>
+    <label>Max altitude (m) <input type="number" name="max_altitude" value="{{.MaxAltitude}}" min="0"></label>
+    <label>Difficulty
+      <select name="difficulty">
+        {{$d := .Difficulty}}
+        {{range $.Difficulties}}<option {{if eq . $d}}selected{{end}}>{{.}}</option>{{end}}
+      </select>
+    </label>
+    <label>Price per person (₹) <input type="number" name="price" value="{{.Price}}" min="0" required></label>
+  </div>
+  <label>Short summary (shown on cards) <input name="summary" value="{{.Summary}}" maxlength="300"></label>
+  <label>Full description <textarea name="description" rows="8">{{.Description}}</textarea></label>
+  <label>Best season <input name="best_season" value="{{.BestSeason}}" placeholder="e.g. September – February" maxlength="80"></label>
+  <label>Itinerary
+    <textarea name="itinerary" rows="10">{{.Itinerary}}</textarea>
+    <span class="hint">One step per paragraph. The first line is the time or day, the next lines are the details. Leave a blank line between steps.</span>
+  </label>
+  <div class="row">
+    <label>Included (one per line) <textarea name="inclusions" rows="6">{{.Inclusions}}</textarea></label>
+    <label>Not included (one per line) <textarea name="exclusions" rows="6">{{.Exclusions}}</textarea></label>
+  </div>
+  <label>What to carry (one per line) <textarea name="things_to_carry" rows="6">{{.ThingsToCarry}}</textarea></label>
+  <label>FAQs
+    <textarea name="faqs" rows="8">{{.FAQs}}</textarea>
+    <span class="hint">First line is the question, the next lines are the answer. Leave a blank line between questions.</span>
+  </label>
+  <label>Cover photo
+    <select name="photo">
+      <option value="">— none (uses a mountain graphic) —</option>
+      {{$p := .Photo}}
+      {{range $.Photos}}<option {{if eq . $p}}selected{{end}}>{{.}}</option>{{end}}
+    </select>
+    <span class="hint">Drop images into the <code>photos</code> folder next to the app, then refresh this page.</span>
+  </label>
+  <label>Pickup points (one per line) <textarea name="pickup_points" rows="3">{{.PickupPoints}}</textarea></label>
+  <label class="check"><input type="checkbox" name="active" {{if .Active}}checked{{end}}> Visible to trekkers</label>
+  <button class="btn">Save trek</button>
+</form>
+{{end}}
+
+{{if .Trek.ID}}
+<h2>Batches</h2>
+<div class="table-wrap">
+<table class="table">
+  <tr><th>Date</th><th>Seats taken</th><th>Requests</th><th>Lead &amp; seats</th><th></th></tr>
+  {{range .Batches}}
+  <tr {{if lt .StartDate $.Today}}class="past"{{end}}>
+    <td>{{fmtDate .StartDate}}</td>
+    <td>{{.Taken}} / {{.Seats}}</td>
+    <td>{{.Bookings}}</td>
+    <td>
+      <form method="post" action="/admin/batches/{{.ID}}/lead" class="inline-form">
+        {{$lead := .LeadID}}
+        <select name="lead_id">
+          <option value="0">— no lead —</option>
+          {{range $.Leads}}<option value="{{.ID}}" {{if eq .ID $lead}}selected{{end}}>{{.Name}}</option>{{end}}
+        </select>
+        <input type="number" name="seats" value="{{.Seats}}" min="1" class="narrow" title="Seats">
+        <button class="btn small ghost">Update</button>
+      </form>
+    </td>
+    <td>
+      {{if eq .Bookings 0}}
+      <form method="post" action="/admin/batches/{{.ID}}/delete" class="inline" onsubmit="return confirm('Delete this batch?')">
+        <button class="linklike danger">Delete</button>
+      </form>
+      {{end}}
+    </td>
+  </tr>
+  {{else}}
+  <tr><td colspan="5" class="muted">No batches yet.</td></tr>
+  {{end}}
+</table>
+</div>
+
+<form method="post" action="/admin/treks/{{.Trek.ID}}/batches" class="form panel">
+  <strong>Add a batch</strong>
+  <div class="row">
+    <label>Start date <input type="date" name="start_date" min="{{.Today}}" required></label>
+    <label>Seats <input type="number" name="seats" value="20" min="1" required></label>
+    <label>Trek lead
+      <select name="lead_id">
+        <option value="0">— assign later —</option>
+        {{range .Leads}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+      </select>
+    </label>
+  </div>
+  <button class="btn">Add batch</button>
+</form>
+{{end}}
+{{end}}

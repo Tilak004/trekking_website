@@ -1,0 +1,32 @@
+{{define "title"}}Cancellation &amp; refund policy · {{.Brand}}{{end}}
+{{define "content"}}
+<!-- TEMPLATE: review these rules and amounts before going live. -->
+<article class="legal">
+  <p class="eyebrow">Policies</p>
+  <h1>Cancellation &amp; refund policy</h1>
+  <p class="muted">Last updated: {{year}}</p>
+
+  <h2>If you cancel</h2>
+  <div class="table-wrap">
+  <table class="table">
+    <tr><th>When you cancel</th><th>Refund</th></tr>
+    <tr><td>7 or more days before the trek</td><td>Full refund, minus a ₹200 processing fee</td></tr>
+    <tr><td>3 to 6 days before the trek</td><td>50% refund, or move to another date for free</td></tr>
+    <tr><td>Less than 3 days before the trek</td><td>No refund, but you can move to another date once</td></tr>
+  </table>
+  </div>
+  <p>Cancelling a booking <em>request</em> before we've confirmed it is always free. To cancel a confirmed booking, use <a href="/my">My Bookings</a> or message us on WhatsApp.</p>
+
+  <h2>If we cancel</h2>
+  <p>We may cancel or reschedule a trek because of heavy rain, forest department closures, unsafe conditions or too few participants. If that happens, you can choose a full refund or a free move to another date or trek.</p>
+
+  <h2>During the trek</h2>
+  <p>Your trek lead may turn the group back, or ask a participant not to continue, if conditions or someone's health make it unsafe. No refund is due in that case, but we'll always help you get back safely.</p>
+
+  <h2>How refunds are paid</h2>
+  <p>Refunds go back to the original payment method within 7 working days of approval.</p>
+
+  <h2>Questions</h2>
+  <p>Write to <a href="mailto:{{.Site.Email}}">{{.Site.Email}}</a> or call {{.Site.Phone}}.</p>
+</article>
+{{end}}

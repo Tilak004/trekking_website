@@ -1,0 +1,20 @@
+{{define "title"}}Users · Admin{{end}}
+{{define "content"}}
+{{template "adminnav" .}}
+<h1>Users</h1>
+<div class="table-wrap">
+<table class="table">
+  <tr><th>Name</th><th>Email</th><th>Phone</th><th>Bookings</th><th>Joined</th><th>Role</th></tr>
+  {{range .Users}}
+  <tr>
+    <td>{{.Name}}</td>
+    <td>{{.Email}}</td>
+    <td>{{.Phone}}</td>
+    <td>{{.Bookings}}</td>
+    <td class="small">{{.CreatedAt}}</td>
+    <td>{{if .IsAdmin}}Admin{{else}}Trekker{{end}}</td>
+  </tr>
+  {{end}}
+</table>
+</div>
+{{end}}

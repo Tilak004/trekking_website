@@ -1,0 +1,42 @@
+{{define "title"}}Bookings · Admin{{end}}
+{{define "content"}}
+{{template "adminnav" .}}
+<h1>Booking requests</h1>
+<nav class="tabs">
+  <a href="/admin" {{if eq .Filter ""}}class="on"{{end}}>All</a>
+  {{range .Statuses}}<a href="/admin?status={{.}}" {{if eq . $.Filter}}class="on"{{end}}>{{.}}</a>{{end}}
+</nav>
+<div class="table-wrap">
+<table class="table">
+  <tr><th>#</th><th>Trekker</th><th>Trek &amp; date</th><th>Details</th><th>Status</th><th>Actions</th></tr>
+  {{range .Bookings}}
+  <tr>
+    <td>{{.ID}}<br><span class="muted small">{{.CreatedAt}}</span></td>
+    <td><strong>{{.UserName}}</strong><br><span class="small">{{.UserEmail}}<br>{{.UserPhone}}</span></td>
+    <td><a href="/treks/{{.TrekSlug}}">{{.TrekName}}</a><br><span class="small">{{fmtDate .StartDate}}</span>
+        <br><span class="muted small">Lead: {{or .LeadName "–"}}</span></td>
+    <td class="small">
+      <strong>{{.People}}</strong> {{if eq .People 1}}person{{else}}people{{end}} · age {{.Age}}<br>
+      Pickup: {{.Pickup}}<br>
+      Emergency: {{.EmergencyName}} ({{.EmergencyPhone}})
+      {{with .Medical}}<br><span class="warn">Medical:</span> {{.}}{{end}}
+      {{with .Note}}<br>Note: {{.}}{{end}}
+    </td>
+    <td><span class="status {{.Status}}">{{.Status}}</span></td>
+    <td class="actions">
+      {{$id := .ID}}
+      {{range nextActions .Status}}
+      <form method="post" action="/admin/bookings/{{$id}}/status" class="inline">
+        <input type="hidden" name="status" value="{{.}}">
+        <input type="hidden" name="back" value="{{$.Filter}}">
+        <button class="btn small act-{{.}}">{{actionLabel .}}</button>
+      </form>
+      {{end}}
+    </td>
+  </tr>
+  {{else}}
+  <tr><td colspan="6" class="muted">No bookings here.</td></tr>
+  {{end}}
+</table>
+</div>
+{{end}}

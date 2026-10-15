@@ -1,0 +1,58 @@
+{{define "hero"}}
+<section class="hero"{{with .HeroPhoto}} style="background-image:url('/photos/{{.}}')"{{end}}>
+  {{with .HeroSlides}}
+  <div class="hero-slides" aria-hidden="true">
+    {{range $i, $s := .}}<div class="slide{{if eq $i 0}} on{{end}}" style="background-image:url('/photos/{{$s.Photo}}')"></div>{{end}}
+  </div>
+  {{end}}
+  <div class="wrap hero-inner">
+    <p class="hero-script">Explore</p>
+    <h1 class="hero-title">The Western Ghats</h1>
+    <p class="hero-tagline">Weekend treks led by athletes</p>
+    <div class="hero-divider" aria-hidden="true"><span></span>{{template "icon" "mountain"}}<span></span></div>
+    <p class="hero-intro">Small-group treks from Bangalore to Karnataka's most beautiful trails, with athlete trek leads, honest pricing and every detail sorted.</p>
+    <div class="hero-ctas">
+      <a class="btn big" href="#treks">{{template "icon" "compass"}} Explore treks</a>
+      <a class="btn big ghost-light" href="/leads">{{template "icon" "users"}} Meet the leads</a>
+    </div>
+  </div>
+  <div class="hero-features">
+    <div class="wrap features">
+      <div class="feature">{{template "icon" "mountain"}}<span>Athlete<br>trek leads</span></div>
+      <div class="feature">{{template "icon" "users"}}<span>Small,<br>friendly groups</span></div>
+      <div class="feature">{{template "icon" "calendar"}}<span>Weekend departures<br>from Bangalore</span></div>
+      <div class="feature">{{template "icon" "wallet"}}<span>Free to<br>request a seat</span></div>
+    </div>
+  </div>
+</section>
+<script>
+(() => {
+  const slides = [...document.querySelectorAll('.hero-slides .slide')];
+  if (slides.length < 2 || getComputedStyle(document.querySelector('.hero-slides')).display === 'none') return;
+  let i = 0, timer;
+  const go = n => {
+    slides[i].classList.remove('on');
+    i = (n + slides.length) % slides.length;
+    slides[i].classList.add('on');
+  };
+  const start = () => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    clearInterval(timer); timer = setInterval(() => go(i + 1), 6000);
+  };
+  start();
+})();
+</script>
+{{end}}
+
+{{define "content"}}
+<section id="treks" class="section">
+  <div class="section-head">
+    <p class="eyebrow">Book now · More opening soon</p>
+    <h2>Choose your trail</h2>
+  </div>
+  <div class="grid">
+    {{range .Upcoming}}{{template "trekcard" .}}{{end}}
+    {{range .Soon}}{{template "trekcard" .}}{{end}}
+  </div>
+</section>
+{{end}}
