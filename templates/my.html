@@ -23,7 +23,7 @@
     </div>
   </div>
   {{if and (eq .Status "completed") (not .Reviewed)}}
-  <form method="post" action="/my/bookings/{{.ID}}/review" class="form review-form">
+  <form method="post" action="/my/bookings/{{.ID}}/review" class="form review-form" enctype="multipart/form-data">
     <strong>How was it? Leave a review</strong>
     <div class="row">
       <label>Trek
@@ -35,6 +35,7 @@
       </label>
       {{end}}
     </div>
+    <label>Add a photo from the trek (optional) <input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label>
     <label>Comment <textarea name="comment" rows="2" maxlength="1000" placeholder="What stood out?"></textarea></label>
     <button class="btn small">Submit review</button>
   </form>

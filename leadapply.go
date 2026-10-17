@@ -20,6 +20,7 @@ const (
 	LeadPending  = "pending"
 	LeadApproved = "approved"
 	LeadRejected = "rejected"
+	LeadRemoved  = "removed" // taken off the platform by an admin; can't re-apply
 )
 
 const maxPhotoBytes = 5 << 20
@@ -100,7 +101,7 @@ func (a *App) leadApply(w http.ResponseWriter, r *http.Request) {
 
 	if file, _, err := r.FormFile("photo"); err == nil {
 		defer file.Close()
-		photo, err := a.saveLeadPhoto(file, f.Name)
+		photo, err := a.savePhoto(file, "leads", f.Name)
 		if err != nil {
 			fail(err.Error())
 			return
@@ -108,6 +109,10 @@ func (a *App) leadApply(w http.ResponseWriter, r *http.Request) {
 		f.Photo = photo
 	}
 
+	if has && existing.Status == LeadRemoved {
+		fail("This trek-lead profile has been removed. Please contact us if you think this is a mistake.")
+		return
+	}
 	if has {
 		// Re-submitting after a rejection puts the application back in the queue.
 		status := existing.Status
@@ -140,9 +145,9 @@ user_id, status, active, applied_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pend
 	redirect(w, r, "/lead-with-us?msg=applied")
 }
 
-// saveLeadPhoto stores an uploaded profile photo under photos/leads after
-// checking that the file really is an image.
-func (a *App) saveLeadPhoto(file multipart.File, name string) (string, error) {
+// savePhoto stores an uploaded image under photos/<dir> after checking that
+// the file really is an image.
+func (a *App) savePhoto(file multipart.File, dir, name string) (string, error) {
 	head := make([]byte, 512)
 	n, _ := io.ReadFull(file, head)
 	ext := photoExts[http.DetectContentType(head[:n])]
@@ -156,7 +161,7 @@ func (a *App) saveLeadPhoto(file multipart.File, name string) (string, error) {
 	if base == "" {
 		base = "lead"
 	}
-	rel := "leads/" + base + "-" + randomToken(4) + ext
+	rel := dir + "/" + base + "-" + randomToken(4) + ext
 	full := filepath.Join(a.photosDir, filepath.FromSlash(rel))
 	if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
 		return "", err
@@ -198,12 +203,34 @@ func (a *App) adminSetLeadStatus(w http.ResponseWriter, r *http.Request) {
 	switch status {
 	case LeadApproved:
 		active = 1
-	case LeadRejected, LeadPending:
+	case LeadRejected, LeadPending, LeadRemoved:
 	default:
 		http.Error(w, "Unknown status.", http.StatusBadRequest)
 		return
 	}
-	if _, err := a.db.Exec(`UPDATE leads SET status = ?, active = ? WHERE id = ?`, status, active, pathID(r)); err != nil {
+	id := pathID(r)
+	tx, err := a.db.Begin()
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(`UPDATE leads SET status = ?, active = ? WHERE id = ?`, status, active, id); err != nil {
+		a.serverError(w, err)
+		return
+	}
+	if status == LeadRemoved {
+		// Their upcoming dates stay bookable but need a new lead; proposals are dropped.
+		if _, err := tx.Exec(`UPDATE batches SET lead_id = NULL WHERE lead_id = ? AND status = 'live' AND start_date >= date('now')`, id); err != nil {
+			a.serverError(w, err)
+			return
+		}
+		if _, err := tx.Exec(`UPDATE batches SET status = 'rejected' WHERE lead_id = ? AND status = 'pending'`, id); err != nil {
+			a.serverError(w, err)
+			return
+		}
+	}
+	if err := tx.Commit(); err != nil {
 		a.serverError(w, err)
 		return
 	}

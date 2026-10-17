@@ -1,0 +1,85 @@
+{{define "title"}}Lead dashboard · {{.Brand}}{{end}}
+{{define "content"}}
+{{with .Lead}}
+<header class="page-head head-row">
+  <div>
+    <p class="eyebrow">Lead dashboard</p>
+    <h1>Hi {{firstWord .Name}}</h1>
+    <p class="muted">Your treks, your groups, and new dates you'd like to lead. Trekkers' contact details stay with our team; we'll add you to each trek's WhatsApp group.</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><strong>{{.TreksLed}}</strong><span>Treks led</span></div>
+    <div class="stat"><strong>{{.TrekkersGuided}}</strong><span>Trekkers guided</span></div>
+    <div class="stat"><strong>{{if .Ratings}}{{rating .AvgRating}}{{else}}–{{end}}</strong><span>Avg rating</span></div>
+  </div>
+</header>
+{{end}}
+
+<div class="two-col">
+  <div>
+    <h2 class="dash-h">Your upcoming treks</h2>
+    {{range .Upcoming}}
+    <article class="dash-batch">
+      <div class="dash-batch-head">
+        <div>
+          <h3><a href="/treks/{{.TrekSlug}}">{{.TrekName}}</a></h3>
+          <span class="muted small">{{fmtDate .StartDate}} · {{.Taken}} / {{.Seats}} seats confirmed</span>
+        </div>
+        {{if eq .Status "live"}}<span class="status approved">Live</span>
+        {{else if eq .Status "pending"}}<span class="status pending">Waiting for approval</span>
+        {{else}}<span class="status rejected">Not approved</span>{{end}}
+      </div>
+      {{if eq .Status "live"}}
+        {{with .Participants}}
+        <div class="table-wrap">
+        <table class="table small">
+          <tr><th>Trekker</th><th>Group</th><th>Pickup</th><th>Medical notes</th></tr>
+          {{range .}}
+          <tr>
+            <td><strong>{{.UserName}}</strong>{{if eq .Status "requested"}}<br><span class="status pending">Not confirmed yet</span>{{end}}</td>
+            <td>{{.People}} · age {{.Age}}</td>
+            <td>{{.Pickup}}</td>
+            <td>{{with .Medical}}<span class="warn">{{.}}</span>{{else}}<span class="muted">None</span>{{end}}{{with .Note}}<br><span class="muted">Note: {{.}}</span>{{end}}</td>
+          </tr>
+          {{end}}
+        </table>
+        </div>
+        {{else}}<p class="muted small">No bookings yet. Share the trek page with your friends and followers!</p>{{end}}
+      {{else}}
+        <form method="post" action="/lead/dates/{{.ID}}/withdraw" class="inline" onsubmit="return confirm('Withdraw this date?')">
+          <button class="linklike danger small">Withdraw this date</button>
+        </form>
+      {{end}}
+    </article>
+    {{else}}
+    <p class="muted">No upcoming treks yet. Propose a date →</p>
+    {{end}}
+
+    {{with .Past}}
+    <h2 class="dash-h">Past treks</h2>
+    <ul class="tight-list">
+      {{range .}}<li>{{.TrekName}} · {{fmtDate .StartDate}}{{if eq .Status "live"}} · {{.Taken}} trekkers{{end}}</li>{{end}}
+    </ul>
+    {{end}}
+  </div>
+
+  <aside class="panel">
+    <h3>Propose a date</h3>
+    <p class="muted small">Pick a trek and a date you'd like to lead. It goes live after our team approves it. The price is the trek's standard price.</p>
+    <form method="post" action="/lead/dates" class="form">
+      <label>Trek
+        <select name="trek_id" required>
+          <option value="">Choose a trek…</option>
+          {{range .Treks}}<option value="{{.ID}}">{{.Name}}{{if .Price}} · ₹{{inr .Price}}{{end}}</option>{{end}}
+        </select>
+      </label>
+      <div class="row">
+        <label>Date <input type="date" name="start_date" min="{{.MinDate}}" required></label>
+        <label>Group size <input type="number" name="seats" min="2" max="40" value="15" required></label>
+      </div>
+      <button class="btn">Send for approval</button>
+    </form>
+    <p class="muted small" style="margin-top:12px"><a href="/lead-with-us">Edit your public profile →</a></p>
+  </aside>
+</div>
+{{end}}

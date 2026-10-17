@@ -33,6 +33,7 @@
   {{if .ThingsToCarry}}<a href="#carry">What to carry</a>{{end}}
   <a href="#dates">Dates</a>
   {{if .FAQs}}<a href="#faqs">FAQs</a>{{end}}
+  {{if .Lat}}<a href="#map">Map</a>{{end}}
   <a href="#reviews">Reviews</a>
 </nav>
 
@@ -41,7 +42,15 @@
     <section id="overview" class="trek-section">
       <p class="lead">{{.Summary}}</p>
       <div class="prose">{{range paras .Description}}<p>{{.}}</p>{{end}}</div>
+      {{with .Elevation}}<div class="elev-wrap" data-island="elevation" data-points="{{.}}"></div>{{end}}
     </section>
+
+    {{if .Lat}}
+    <section id="map" class="trek-section">
+      <h2>Where it is</h2>
+      <div class="trek-map" data-island="map" data-single="1"><script type="application/json" class="island-data">{{$.MapData}}</script></div>
+    </section>
+    {{end}}
 
     {{with blocks .Itinerary}}
     <section id="itinerary" class="trek-section">
@@ -124,6 +133,7 @@
     {{else if not $.Batches}}
       <p class="muted">No upcoming dates to book right now.</p>
     {{else}}
+    <div data-island="booking"><script type="application/json" class="island-data">{{$.BookingData}}</script>
     <form method="post" action="/treks/{{.Slug}}/book" class="form">
       <fieldset>
         <legend>Date</legend>
@@ -149,6 +159,7 @@
       <label>Anything else? <textarea name="note" rows="2" maxlength="1000" placeholder="Names of friends joining, questions…"></textarea></label>
       <button class="btn block">Send booking request</button>
     </form>
+    </div>
     {{end}}
     <ul class="assurances">
       <li>No payment to request a seat</li>

@@ -9,7 +9,6 @@
     <p class="hero-script">Explore</p>
     <h1 class="hero-title">The Western Ghats</h1>
     <p class="hero-tagline">Weekend treks led by athletes</p>
-    <div class="hero-divider" aria-hidden="true"><span></span>{{template "icon" "mountain"}}<span></span></div>
     <p class="hero-intro">Small-group treks from Bangalore to Karnataka's most beautiful trails, with athlete trek leads, honest pricing and every detail sorted.</p>
     <div class="hero-ctas">
       <a class="btn big" href="#treks">{{template "icon" "compass"}} Explore treks</a>
@@ -47,12 +46,49 @@
 {{define "content"}}
 <section id="treks" class="section">
   <div class="section-head">
-    <p class="eyebrow">Book now · More opening soon</p>
+    <p class="eyebrow">Find your trail</p>
     <h2>Choose your trail</h2>
   </div>
-  <div class="grid">
-    {{range .Upcoming}}{{template "trekcard" .}}{{end}}
-    {{range .Soon}}{{template "trekcard" .}}{{end}}
+  <div data-island="finder">
+    <div class="grid">
+      {{range .Upcoming}}{{template "trekcard" .}}{{end}}
+      {{range .Soon}}{{template "trekcard" .}}{{end}}
+    </div>
+  </div>
+  <script type="application/json" id="trek-data">{{.FinderData}}</script>
+</section>
+
+{{if .Stats.Trekkers}}
+<section class="trust-strip">
+  <div><strong>{{.Stats.TreksDone}}</strong><span>Treks completed</span></div>
+  <div><strong>{{.Stats.Trekkers}}</strong><span>Trekkers guided</span></div>
+  {{if .Stats.Reviews}}<div><strong>★ {{rating .Stats.AvgRating}}</strong><span>From {{.Stats.Reviews}} reviews</span></div>{{end}}
+</section>
+{{end}}
+
+<section class="section">
+  <div class="section-head">
+    <p class="eyebrow">Where we trek</p>
+    <h2>Trails on the map</h2>
+    <p class="muted">From the Western Ghats to the rocky hills around Bangalore. Tap a pin to see the trek.</p>
+  </div>
+  <div class="ghats-map" data-island="map"><noscript><p class="muted">Turn on JavaScript to see the map.</p></noscript></div>
+</section>
+
+{{with .PhotoReviews}}
+<section class="section">
+  <div class="section-head">
+    <p class="eyebrow">From trekkers</p>
+    <h2>Real treks, real reviews</h2>
+  </div>
+  <div class="photo-reviews">
+    {{range .}}
+    <figure>
+      <img src="/photos/{{.Photo}}" alt="Photo by {{.UserName}}" loading="lazy">
+      <figcaption><span class="rating">{{starsN .TrekRating}}</span>{{with .Comment}}<q>{{.}}</q>{{end}}<b>{{.UserName}} · {{.TrekName}}</b></figcaption>
+    </figure>
+    {{end}}
   </div>
 </section>
+{{end}}
 {{end}}

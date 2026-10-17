@@ -49,6 +49,16 @@
     </select>
     <span class="hint">Drop images into the <code>photos</code> folder next to the app, then refresh this page.</span>
   </label>
+  <div class="row">
+    <label>Latitude <input name="lat" value="{{if .Lat}}{{.Lat}}{{end}}" placeholder="e.g. 13.13" inputmode="decimal"></label>
+    <label>Longitude <input name="lng" value="{{if .Lng}}{{.Lng}}{{end}}" placeholder="e.g. 75.27" inputmode="decimal"></label>
+    <label>Finder tags <input name="tags" value="{{.Tags}}" placeholder="waterfalls, grasslands, sunrise, forest, summit, rocky">
+      <span class="hint">Used by the trek finder. Comma separated.</span></label>
+  </div>
+  <label>Elevation profile (optional)
+    <textarea name="elevation" rows="4" placeholder="0 820&#10;2.5 1100&#10;5 1520">{{.Elevation}}</textarea>
+    <span class="hint">One point per line: distance in km, then altitude in m. Take these from a GPS track (Strava, Wikiloc). Leave empty to hide the chart.</span>
+  </label>
   <label>Pickup points (one per line) <textarea name="pickup_points" rows="3">{{.PickupPoints}}</textarea></label>
   <label class="check"><input type="checkbox" name="active" {{if .Active}}checked{{end}}> Visible to trekkers</label>
   <button class="btn">Save trek</button>
@@ -62,7 +72,7 @@
   <tr><th>Date</th><th>Seats taken</th><th>Requests</th><th>Lead &amp; seats</th><th></th></tr>
   {{range .Batches}}
   <tr {{if lt .StartDate $.Today}}class="past"{{end}}>
-    <td>{{fmtDate .StartDate}}</td>
+    <td>{{fmtDate .StartDate}}{{if ne .Status "live"}} <span class="status {{.Status}}">{{.Status}}</span>{{end}}</td>
     <td>{{.Taken}} / {{.Seats}}</td>
     <td>{{.Bookings}}</td>
     <td>

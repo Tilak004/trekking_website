@@ -5,5 +5,8 @@
 
 # Build output and logs
 *.exe
-northstar
+beyond
 *.log
+
+# Frontend build tooling (only needed to rebuild static/js)
+web/node_modules/

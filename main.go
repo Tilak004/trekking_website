@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -29,6 +30,7 @@ var templateFS embed.FS
 var staticFS embed.FS
 
 type App struct {
+	demo      bool // running on a demo database: shows a banner
 	db        *sql.DB
 	pages     map[string]*template.Template
 	photosDir string
@@ -36,8 +38,9 @@ type App struct {
 
 func main() {
 	addr := flag.String("addr", envOr("ADDR", ":8080"), "HTTP listen address")
-	dbPath := flag.String("db", envOr("DB_PATH", "northstar.db"), "path to the SQLite database file")
+	dbPath := flag.String("db", envOr("DB_PATH", "beyond.db"), "path to the SQLite database file")
 	photosDir := flag.String("photos", envOr("PHOTOS_DIR", "photos"), "folder with site photos")
+	resetAdmin := flag.Bool("reset-admin-password", false, "set a new random admin password, print it and exit")
 	flag.Parse()
 	os.MkdirAll(*photosDir+"/gallery", 0o755)
 
@@ -46,8 +49,16 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	if *resetAdmin {
+		if err := resetAdminPassword(db); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 
-	app := &App{db: db, pages: loadPages(), photosDir: *photosDir}
+	base := strings.TrimSuffix(filepath.Base(*dbPath), filepath.Ext(*dbPath))
+	sessionCookie = "session_" + slugify(base)
+	app := &App{db: db, pages: loadPages(), photosDir: *photosDir, demo: strings.Contains(base, "demo")}
 	srv := &http.Server{Addr: *addr, Handler: app.routes(), ReadHeaderTimeout: 10 * time.Second}
 	log.Printf("%s running on %s", site.Name, *addr)
 	log.Fatal(srv.ListenAndServe())
@@ -64,6 +75,9 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /leads", a.leadsPage)
 	mux.HandleFunc("GET /leads/{slug}", a.leadPage)
 	mux.HandleFunc("GET /lead-with-us", a.leadApplyPage)
+	mux.HandleFunc("GET /lead", a.requireUser(a.leadDashboard))
+	mux.HandleFunc("POST /lead/dates", a.requireUser(a.leadProposeDate))
+	mux.HandleFunc("POST /lead/dates/{id}/withdraw", a.requireUser(a.leadWithdrawDate))
 	mux.HandleFunc("POST /lead-with-us", a.requireUser(a.leadApply))
 	mux.HandleFunc("GET /about", a.staticPage("about.html"))
 	mux.HandleFunc("GET /contact", a.staticPage("contact.html"))
@@ -94,6 +108,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /admin/treks/{id}/batches", a.requireAdmin(a.adminAddBatch))
 	mux.HandleFunc("POST /admin/batches/{id}/lead", a.requireAdmin(a.adminSetBatchLead))
 	mux.HandleFunc("POST /admin/batches/{id}/delete", a.requireAdmin(a.adminDeleteBatch))
+	mux.HandleFunc("POST /admin/batches/{id}/review", a.requireAdmin(a.adminReviewBatch))
 	mux.HandleFunc("GET /admin/leads", a.requireAdmin(a.adminLeads))
 	mux.HandleFunc("GET /admin/leads/new", a.requireAdmin(a.adminLeadForm))
 	mux.HandleFunc("POST /admin/leads/new", a.requireAdmin(a.adminSaveLead))
@@ -120,6 +135,9 @@ var flashMessages = map[string]string{
 	"applied":       "Application received! We'll review it and get back to you.",
 	"lead_updated":  "Your trek-lead profile is updated.",
 	"lead_status":   "Trek lead updated.",
+	"proposed":      "Date proposed! It goes live once our team approves it.",
+	"withdrawn":     "Date withdrawn.",
+	"date_reviewed": "Proposed date updated.",
 }
 
 var flashErrors = map[string]string{
@@ -129,6 +147,11 @@ var flashErrors = map[string]string{
 	"batch_has_bookings": "This batch has bookings, so it can't be deleted.",
 	"bad_review":         "Please give a rating from 1 to 5.",
 	"cannot_review":      "You can only review a completed trek, once.",
+	"bad_photo":          "Please upload a JPG, PNG or WebP photo under 5 MB.",
+	"bad_date":           "Please pick a date at least 3 days from today.",
+	"bad_seats":          "Group size must be between 2 and 40.",
+	"bad_trek":           "Please pick a trek from the list.",
+	"dup_date":           "You have already proposed that trek on that date.",
 }
 
 func (a *App) render(w http.ResponseWriter, r *http.Request, page string, data map[string]any) {
@@ -137,6 +160,16 @@ func (a *App) render(w http.ResponseWriter, r *http.Request, page string, data m
 	}
 	data["Brand"] = site.Name
 	data["Site"] = site
+	data["Demo"] = a.demo
+	if u := currentUser(r); u != nil {
+		role := "Trekker"
+		if u.IsAdmin {
+			role = "Admin"
+		} else if l, ok, _ := a.myLead(u.ID); ok && l.Status == LeadApproved {
+			role = "Trek lead"
+		}
+		data["Role"] = role
+	}
 	data["User"] = currentUser(r)
 	data["Path"] = r.URL.Path
 	data["BaseURL"] = baseURL(r)
@@ -213,6 +246,7 @@ var templateFuncs = template.FuncMap{
 	},
 	"nextActions": nextActions,
 	"blocks":      splitBlocks,
+	"slug":        slugify,
 	"paras":       splitParas,
 	"bookingWA":   func(k Booking) string { return whatsAppLink(bookingMessage(k)) },
 	"hasPrefix":   strings.HasPrefix,
@@ -284,6 +318,11 @@ func slugify(s string) string {
 func formInt(r *http.Request, key string) int {
 	n, _ := strconv.Atoi(strings.TrimSpace(r.FormValue(key)))
 	return n
+}
+
+func formFloat(r *http.Request, key string) float64 {
+	f, _ := strconv.ParseFloat(strings.TrimSpace(r.FormValue(key)), 64)
+	return f
 }
 
 func pathID(r *http.Request) int64 {

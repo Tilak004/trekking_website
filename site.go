@@ -21,30 +21,35 @@ type Site struct {
 }
 
 var site = Site{
-	Name:        "Northstar Treks", // PLACEHOLDER
+	Name:        "Beyond Expeditions",
 	Tagline:     "Weekend treks in the Western Ghats, led by athletes.",
 	Description: "Small-group weekend treks across Karnataka's Western Ghats, led by an Ironman finisher, a 24-hour adventure racer and a trekker who has done every major trail in Karnataka.",
 	Phone:       "+91 94817 40319",
 	WhatsApp:    "919481740319",
-	Email:       "hello@northstartreks.in", // PLACEHOLDER
-	Instagram:   "northstartreks",          // PLACEHOLDER
+	Email:       "hello@beyondexpeditions.in", // PLACEHOLDER
+	Instagram:   "beyondexpeditions",          // PLACEHOLDER
 	City:        "Bangalore, Karnataka",
 }
 
 // defaultTheme is the theme every visitor sees. Others can be previewed with ?theme=<name>.
-const defaultTheme = "ghats"
+const defaultTheme = "night"
 
 type Theme struct {
 	Name, Label, Fonts string // Fonts is a Google Fonts css2 query
+	Base               string // optional theme whose layout this one builds on
 }
 
+// Attr is the value of <html data-theme>, e.g. "ghats night".
+func (t Theme) Attr() string { return strings.TrimSpace(t.Base + " " + t.Name) }
+
 var themes = []Theme{
-	{"ghats", "Western Ghats", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700"},
-	{"explore", "Explore", "family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=Kaushan+Script"},
-	{"forest", "Forest & sunrise", "family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700"},
-	{"alpine", "Alpine", "family=Montserrat:wght@600;700&family=Inter:wght@400;500;600;700"},
-	{"earth", "Earth", "family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600;700"},
-	{"bold", "Bold", "family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700"},
+	{"night", "Shola Night", "family=Marcellus&family=Outfit:wght@600;700;800&family=Inter:wght@300;400;500;600", "ghats"},
+	{"ghats", "Western Ghats", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", ""},
+	{"explore", "Explore", "family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=Kaushan+Script", ""},
+	{"forest", "Forest & sunrise", "family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700", ""},
+	{"alpine", "Alpine", "family=Montserrat:wght@600;700&family=Inter:wght@400;500;600;700", ""},
+	{"earth", "Earth", "family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600;700", ""},
+	{"bold", "Bold", "family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700", ""},
 }
 
 // FontsHref is the stylesheet link for the theme's fonts. It's a fixed string from

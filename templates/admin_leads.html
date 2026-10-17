@@ -13,8 +13,11 @@
     <td><strong>{{.Name}}</strong>{{if .Verified}} <span class="verified sm">✓</span>{{end}}<br><span class="muted small">{{.Headline}}{{with .City}} · {{.}}{{end}}</span>{{with .AppliedAt}}<br><span class="muted small">Applied {{.}}</span>{{end}}</td>
     <td><span class="status {{.Status}}">{{.Status}}</span>
       {{$id := .ID}}
-      {{if ne .Status "approved"}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"><input type="hidden" name="status" value="approved"><button class="btn small act-approved">Approve</button></form>{{end}}
+      {{if and (ne .Status "approved") (ne .Status "removed")}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"><input type="hidden" name="status" value="approved"><button class="btn small act-approved">Approve</button></form>{{end}}
       {{if eq .Status "pending"}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"><input type="hidden" name="status" value="rejected"><button class="btn small act-rejected">Reject</button></form>{{end}}
+      {{if and (ne .Status "removed") (ne .Status "rejected")}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"
+        onsubmit="return confirm('Remove {{.Name}} as a trek lead?\n\nTheir profile is hidden, they lose dashboard access, their upcoming trek dates become unassigned and their proposed dates are dropped.')">
+        <input type="hidden" name="status" value="removed"><button class="btn small act-cancelled">Remove</button></form>{{end}}
     </td>
     <td>{{.TreksLed}}</td>
     <td>{{.TrekkersGuided}}</td>

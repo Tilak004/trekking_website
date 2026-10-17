@@ -1,6 +1,28 @@
 {{define "title"}}Treks · Admin{{end}}
 {{define "content"}}
 {{template "adminnav" .}}
+{{with .Pending}}
+<section class="panel pending-dates">
+  <h2>Dates waiting for approval <span class="status pending">{{len .}}</span></h2>
+  <div class="table-wrap">
+  <table class="table">
+    <tr><th>Trek</th><th>Date</th><th>Group size</th><th>Proposed by</th><th></th></tr>
+    {{range .}}
+    <tr>
+      <td><strong>{{.TrekName}}</strong></td>
+      <td>{{fmtDate .StartDate}}</td>
+      <td>{{.Seats}}</td>
+      <td>{{if .LeadSlug}}<a href="/leads/{{.LeadSlug}}" target="_blank">{{.LeadName}}</a>{{else}}–{{end}}<br><span class="muted small">{{.ProposedAt}}</span></td>
+      <td class="actions">
+        <form method="post" action="/admin/batches/{{.ID}}/review" class="inline"><input type="hidden" name="status" value="live"><button class="btn small act-approved">Approve</button></form>
+        <form method="post" action="/admin/batches/{{.ID}}/review" class="inline"><input type="hidden" name="status" value="rejected"><button class="btn small act-rejected">Reject</button></form>
+      </td>
+    </tr>
+    {{end}}
+  </table>
+  </div>
+</section>
+{{end}}
 <div class="head-row">
   <h1>Treks</h1>
   <a class="btn" href="/admin/treks/new">+ New trek</a>

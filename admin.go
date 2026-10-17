@@ -70,7 +70,12 @@ func (a *App) adminTreks(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
-	a.render(w, r, "admin_treks.html", map[string]any{"Treks": treks})
+	pending, err := a.pendingBatches()
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	a.render(w, r, "admin_treks.html", map[string]any{"Treks": treks, "Pending": pending})
 }
 
 func (a *App) adminTrekForm(w http.ResponseWriter, r *http.Request) {
@@ -133,6 +138,10 @@ func (a *App) adminSaveTrek(w http.ResponseWriter, r *http.Request) {
 		Exclusions:    strings.Join(splitLines(r.FormValue("exclusions")), "\n"),
 		ThingsToCarry: strings.Join(splitLines(r.FormValue("things_to_carry")), "\n"),
 		FAQs:          trimTo(r.FormValue("faqs"), 10000),
+		Lat:           formFloat(r, "lat"),
+		Lng:           formFloat(r, "lng"),
+		Tags:          strings.Join(splitTags(r.FormValue("tags")), ", "),
+		Elevation:     trimTo(r.FormValue("elevation"), 5000),
 		Active:        r.FormValue("active") == "on",
 	}
 	if t.Photo != "" && !slices.Contains(a.listPhotos(""), t.Photo) {
@@ -147,20 +156,21 @@ func (a *App) adminSaveTrek(w http.ResponseWriter, r *http.Request) {
 	}
 	args := []any{t.Slug, t.Name, t.Region, t.Duration, t.DistanceKm, t.MaxAltitude, t.Difficulty, t.Price,
 		t.Summary, t.Description, t.PickupPoints, t.Photo, t.Active,
-		t.BestSeason, t.Itinerary, t.Inclusions, t.Exclusions, t.ThingsToCarry, t.FAQs}
+		t.BestSeason, t.Itinerary, t.Inclusions, t.Exclusions, t.ThingsToCarry, t.FAQs, t.Lat, t.Lng, t.Tags, t.Elevation}
 	var err error
 	if t.ID == 0 {
 		var res sql.Result
 		res, err = a.db.Exec(`INSERT INTO treks (slug, name, region, duration, distance_km, max_altitude, difficulty, price,
-summary, description, pickup_points, photo, active, best_season, itinerary, inclusions, exclusions, things_to_carry, faqs)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, args...)
+summary, description, pickup_points, photo, active, best_season, itinerary, inclusions, exclusions, things_to_carry, faqs, lat, lng, tags, elevation)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, args...)
 		if err == nil {
 			t.ID, _ = res.LastInsertId()
 		}
 	} else {
 		_, err = a.db.Exec(`UPDATE treks SET slug = ?, name = ?, region = ?, duration = ?, distance_km = ?, max_altitude = ?,
 difficulty = ?, price = ?, summary = ?, description = ?, pickup_points = ?, photo = ?, active = ?,
-best_season = ?, itinerary = ?, inclusions = ?, exclusions = ?, things_to_carry = ?, faqs = ? WHERE id = ?`, append(args, t.ID)...)
+best_season = ?, itinerary = ?, inclusions = ?, exclusions = ?, things_to_carry = ?, faqs = ?,
+lat = ?, lng = ?, tags = ?, elevation = ? WHERE id = ?`, append(args, t.ID)...)
 	}
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE") {

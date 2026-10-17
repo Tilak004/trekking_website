@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en" data-theme="{{.Theme.Name}}">
+<html lang="en" data-theme="{{.Theme.Attr}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{block "title" .}}{{.Brand}} · {{.Site.Tagline}}{{end}}</title>
 <meta name="description" content="{{.MetaDesc}}">
-<meta name="theme-color" content="#0f2a22">
-<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0c1214">
+<link rel="icon" href="/static/logo/favicon.png" type="image/png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{.Brand}}">
 <meta property="og:title" content="{{template "title" .}}">
@@ -23,11 +23,7 @@
 <header class="site-header{{if eq .Path "/"}} over-hero{{end}}">
   <div class="wrap nav">
     <a class="brand" href="/" aria-label="{{.Brand}} home">
-      <svg class="logo" viewBox="0 0 48 40" aria-hidden="true">
-        <circle cx="31" cy="12" r="8" fill="var(--sun)"/>
-        <path d="M1 38 16 12l8 12 6-8 17 22z" fill="#fff"/>
-        <path d="m16 12 5 8.6-2.6-1.4-2.4 2.3-2.4-2.3-2.6 1.4z" fill="var(--forest-700)"/>
-      </svg>
+      <img class="logo" src="/static/logo/mark-small.png" alt="">
       <span class="brand-text"><b>{{firstWord .Brand}}</b><i>{{restWords .Brand}}</i></span>
     </a>
     <input type="checkbox" id="menu-toggle" class="menu-toggle" aria-label="Menu">
@@ -46,8 +42,9 @@
       <details class="account">
         <summary aria-label="Account">{{initial .Name}}</summary>
         <div class="account-menu">
-          <span class="muted small">{{.Name}}</span>
+          <span class="acct-who">Signed in as <b>{{.Name}}</b><em class="role role-{{slug $.Role}}">{{$.Role}}</em></span>
           <a href="/my">My bookings</a>
+          <a href="/lead">Lead dashboard</a>
           <a href="/lead-with-us">Trek-lead profile</a>
           {{if .IsAdmin}}<a href="/admin">Admin</a>{{end}}
           <form method="post" action="/logout"><button class="linklike">Log out</button></form>
@@ -60,6 +57,7 @@
     </div>
   </div>
 </header>
+{{if .Demo}}<div class="demo-banner">DEMO SITE · sample data for testing. Real bookings are not taken here.</div>{{end}}
 {{block "hero" .}}{{end}}
 <main class="wrap">
   {{with .Msg}}<div class="flash ok">{{.}}</div>{{end}}
@@ -70,11 +68,7 @@
   <div class="wrap footer-grid">
     <div class="footer-about">
       <a class="brand" href="/">
-        <svg class="logo" viewBox="0 0 48 40" aria-hidden="true">
-        <circle cx="31" cy="12" r="8" fill="var(--sun)"/>
-        <path d="M1 38 16 12l8 12 6-8 17 22z" fill="#fff"/>
-        <path d="m16 12 5 8.6-2.6-1.4-2.4 2.3-2.4-2.3-2.6 1.4z" fill="var(--forest-700)"/>
-      </svg>
+        <img class="logo" src="/static/logo/mark-small.png" alt="">
         <span class="brand-text"><b>{{firstWord .Brand}}</b><i>{{restWords .Brand}}</i></span>
       </a>
       <p>{{.Site.Description}}</p>
@@ -128,6 +122,7 @@
   {{template "waicon"}}<span>Chat with us</span>
 </a>
 {{end}}
+<script type="module" src="/static/js/islands.js"></script>
 </body>
 </html>
 
@@ -143,6 +138,7 @@
     {{if .LeadRating}} · Lead <span class="rating">{{starsN .LeadRating}}</span>{{end}}
   </div>
   {{with .Comment}}<p>{{.}}</p>{{end}}
+  {{with .Photo}}<img class="review-photo" src="/photos/{{.}}" alt="Trek photo" loading="lazy">{{end}}
 </div>
 {{else}}<p class="muted">No reviews yet.</p>{{end}}
 {{end}}
@@ -158,6 +154,7 @@
   <div class="card-body">
     <p class="eyebrow">{{.Region}}</p>
     <h3>{{.Name}}</h3>
+    {{with .Lead}}<span class="card-lead">{{if .Photo}}<img src="/photos/{{.Photo}}" alt="">{{else}}<i>{{initial .Name}}</i>{{end}}Led by {{.Name}}{{if .Verified}}<b title="Verified lead"> ✓</b>{{end}}</span>{{end}}
     <p class="card-summary">{{.Summary}}</p>
     <div class="facts">
       {{with .Duration}}<span>{{.}}</span>{{end}}

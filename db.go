@@ -166,10 +166,15 @@ type Trek struct {
 	Exclusions    string
 	ThingsToCarry string
 	FAQs          string
+	Lat           float64
+	Lng           float64
+	Tags          string
+	Elevation     string
 	Active        bool
 	NextBatch     string
 	AvgRating     float64
 	Ratings       int
+	Lead          *LeadMini // next batch's lead, filled in by handlers that need it
 }
 
 type Batch struct {
@@ -182,6 +187,7 @@ type Batch struct {
 	LeadName  string
 	LeadSlug  string
 	Bookings  int
+	Status    string
 }
 
 func (b Batch) Left() int { return b.Seats - b.Taken }
@@ -216,6 +222,7 @@ type Review struct {
 	CreatedAt  string
 	UserName   string
 	TrekName   string
+	Photo      string
 }
 
 type scanner interface{ Scan(dest ...any) error }
@@ -252,6 +259,10 @@ func openDB(path string) (*sql.DB, error) {
 	if err := migrateTrekDetails(db); err != nil {
 		return nil, fmt.Errorf("migrate trek details: %w", err)
 	}
+	migrateLeadDates(db)
+	if err := migrateInteractive(db); err != nil {
+		return nil, fmt.Errorf("migrate interactive: %w", err)
+	}
 	return db, nil
 }
 
@@ -261,7 +272,8 @@ const trekSelect = `
 SELECT t.id, t.slug, t.name, t.region, t.duration, t.distance_km, t.max_altitude, t.difficulty,
        t.price, t.summary, t.description, t.pickup_points, t.photo, t.active,
        t.best_season, t.itinerary, t.inclusions, t.exclusions, t.things_to_carry, t.faqs,
-       COALESCE((SELECT MIN(b.start_date) FROM batches b WHERE b.trek_id = t.id AND b.start_date >= date('now')), ''),
+       t.lat, t.lng, t.tags, t.elevation,
+       COALESCE((SELECT MIN(b.start_date) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now')), ''),
        (SELECT COALESCE(AVG(r.trek_rating), 0.0) FROM reviews r JOIN bookings k ON k.id = r.booking_id
           JOIN batches b ON b.id = k.batch_id WHERE b.trek_id = t.id),
        (SELECT COUNT(*) FROM reviews r JOIN bookings k ON k.id = r.booking_id
@@ -272,7 +284,8 @@ func scanTrek(s scanner) (Trek, error) {
 	var t Trek
 	err := s.Scan(&t.ID, &t.Slug, &t.Name, &t.Region, &t.Duration, &t.DistanceKm, &t.MaxAltitude, &t.Difficulty,
 		&t.Price, &t.Summary, &t.Description, &t.PickupPoints, &t.Photo, &t.Active,
-		&t.BestSeason, &t.Itinerary, &t.Inclusions, &t.Exclusions, &t.ThingsToCarry, &t.FAQs, &t.NextBatch, &t.AvgRating, &t.Ratings)
+		&t.BestSeason, &t.Itinerary, &t.Inclusions, &t.Exclusions, &t.ThingsToCarry, &t.FAQs,
+		&t.Lat, &t.Lng, &t.Tags, &t.Elevation, &t.NextBatch, &t.AvgRating, &t.Ratings)
 	return t, err
 }
 
@@ -307,19 +320,21 @@ const batchSelect = `
 SELECT b.id, b.trek_id, b.start_date, b.seats,
        (SELECT COALESCE(SUM(k.people), 0) FROM bookings k WHERE k.batch_id = b.id AND k.status IN ('approved', 'completed')),
        COALESCE(b.lead_id, 0), COALESCE(l.name, ''), COALESCE(l.slug, ''),
-       (SELECT COUNT(*) FROM bookings k WHERE k.batch_id = b.id)
+       (SELECT COUNT(*) FROM bookings k WHERE k.batch_id = b.id),
+       b.status
 FROM batches b LEFT JOIN leads l ON l.id = b.lead_id`
 
 func scanBatch(s scanner) (Batch, error) {
 	var b Batch
-	err := s.Scan(&b.ID, &b.TrekID, &b.StartDate, &b.Seats, &b.Taken, &b.LeadID, &b.LeadName, &b.LeadSlug, &b.Bookings)
+	err := s.Scan(&b.ID, &b.TrekID, &b.StartDate, &b.Seats, &b.Taken, &b.LeadID, &b.LeadName, &b.LeadSlug, &b.Bookings, &b.Status)
 	return b, err
 }
 
 func (a *App) batchesForTrek(trekID int64, upcomingOnly bool) ([]Batch, error) {
 	q := batchSelect + ` WHERE b.trek_id = ?`
 	if upcomingOnly {
-		q += ` AND b.start_date >= date('now')`
+		// The public view: only approved (live) dates that haven't happened yet.
+		q += ` AND b.start_date >= date('now') AND b.status = 'live'`
 	}
 	return a.queryBatches(q+` ORDER BY b.start_date`, trekID)
 }
@@ -436,13 +451,13 @@ func (a *App) queryBookings(where string, args ...any) ([]Booking, error) {
 
 func (a *App) queryReviews(where string, arg any) ([]Review, error) {
 	rows, err := a.db.Query(`
-SELECT r.trek_rating, r.lead_rating, r.comment, r.created_at, u.name, t.name
+SELECT r.trek_rating, r.lead_rating, r.comment, r.created_at, u.name, t.name, r.photo
 FROM reviews r
 JOIN bookings k ON k.id = r.booking_id
 JOIN users u ON u.id = k.user_id
 JOIN batches b ON b.id = k.batch_id
 JOIN treks t ON t.id = b.trek_id
-WHERE `+where+` ORDER BY r.id DESC LIMIT 50`, arg)
+WHERE `+where+` ORDER BY r.id DESC LIMIT 50`, args(arg)...)
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +465,7 @@ WHERE `+where+` ORDER BY r.id DESC LIMIT 50`, arg)
 	var out []Review
 	for rows.Next() {
 		var r Review
-		if err := rows.Scan(&r.TrekRating, &r.LeadRating, &r.Comment, &r.CreatedAt, &r.UserName, &r.TrekName); err != nil {
+		if err := rows.Scan(&r.TrekRating, &r.LeadRating, &r.Comment, &r.CreatedAt, &r.UserName, &r.TrekName, &r.Photo); err != nil {
 			return nil, err
 		}
 		out = append(out, r)
@@ -466,7 +481,7 @@ func seed(db *sql.DB) error {
 		return err
 	}
 	if n == 0 {
-		email := envOr("ADMIN_EMAIL", "admin@northstar.local")
+		email := envOr("ADMIN_EMAIL", "admin@beyondexpeditions.local")
 		pw := os.Getenv("ADMIN_PASSWORD")
 		if pw == "" {
 			pw = randomToken(6)
@@ -562,4 +577,12 @@ var sampleTreks = []Trek{
 		DistanceKm: 8, MaxAltitude: 1450, Difficulty: "Easy", Price: 1299,
 		Summary:     "Climb by headlamp and watch the sunrise over a sea of clouds, an hour from Bangalore.",
 		Description: "Leave Bangalore around midnight, trek up in the dark and reach the top for sunrise. Back in the city by late morning."},
+}
+
+// args turns an optional single query argument into a parameter list.
+func args(a any) []any {
+	if a == nil {
+		return nil
+	}
+	return []any{a}
 }

@@ -1,12 +1,12 @@
-# Northstar Treks (placeholder name)
+# Beyond Expeditions
 
 A trek listing and booking website written in Go. It builds to a single binary and stores everything in one SQLite file.
 
 ## Run it
 
 ```
-go build -o northstar.exe .
-./northstar.exe
+go build -o beyond.exe .
+./beyond.exe
 ```
 
 Open http://localhost:8080. On first run the log prints the admin email and a generated password, so note it down.
@@ -14,8 +14,8 @@ Open http://localhost:8080. On first run the log prints the admin email and a ge
 | Setting | Flag | Env var | Default |
 |---|---|---|---|
 | Listen address | `-addr` | `ADDR` | `:8080` |
-| Database file | `-db` | `DB_PATH` | `northstar.db` |
-| First admin email | | `ADMIN_EMAIL` | `admin@northstar.local` |
+| Database file | `-db` | `DB_PATH` | `beyond.db` |
+| First admin email | | `ADMIN_EMAIL` | `admin@beyondexpeditions.local` |
 | First admin password | | `ADMIN_PASSWORD` | random, printed once |
 
 ## Brand and contact details
@@ -56,6 +56,32 @@ Without photos, the site falls back to a green mountain graphic.
 
 There are no payments. Booking is request-only, and you confirm each request manually.
 
+## Interactive parts (Preact islands)
+
+The server renders every page. A few parts are upgraded in the browser by small Preact components ("islands"): the trek finder, the Western Ghats map, the elevation profile and the step-by-step booking flow. Each one loads only on pages that use it (the map only when scrolled into view), and the plain HTML still works if JavaScript fails.
+
+Source is in `web/src/`; the built files in `static/js/` are committed and embedded in the Go binary, so **Node is only needed to change the islands**, not to run the site:
+
+```
+cd web
+npm install
+npm run build              # writes ../static/js
+node test/islands.test.mjs # quick smoke tests
+```
+
+Trek coordinates, finder tags and elevation profiles are edited in Admin → Treks.
+
+## Demo data
+
+To see the site full of sample trek leads, trekkers, trek dates, bookings and reviews without touching real data:
+
+```
+cd web && npm run seed:demo      # copies beyond.db → beyond-demo.db and adds sample people (made with Faker)
+cd .. && ./beyond.exe -addr :8092 -db beyond-demo.db
+```
+
+Every demo account uses the password `demo1234` and an `@example.com` email, and demo phone numbers start with `00000`. **Never run the live site on the demo database**: the sample leads and reviews are made up.
+
 ## Trek-lead applications
 
 Anyone with an account can apply to lead treks at `/lead-with-us` (profile, treks done, certifications, photo upload). Applications stay hidden until an admin approves them in Admin → Trek Leads. Admins can also tick **Verified** once they've checked a lead's ID and experience, which adds a ✓ badge to the lead's profile. Uploaded photos are saved in `photos/leads/`.
@@ -88,5 +114,5 @@ On first run the app adds five Karnataka treks and three placeholder leads ("Fou
 Copy the binary to a server and run it behind a reverse proxy that handles HTTPS (e.g. Caddy). Back up the `.db` file regularly. To build for a Linux server from Windows:
 
 ```
-$env:GOOS="linux"; $env:GOARCH="amd64"; go build -o northstar .
+$env:GOOS="linux"; $env:GOARCH="amd64"; go build -o beyond .
 ```

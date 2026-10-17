@@ -20,6 +20,17 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
+	lead, err := a.nextLeads()
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	finder := []FinderTrek{}
+	for i := range treks {
+		if l, ok := lead[treks[i].ID]; ok {
+			treks[i].Lead = &l
+		}
+	}
 	var upcoming, soon []Trek
 	for _, t := range treks {
 		if t.NextBatch != "" {
@@ -34,7 +45,25 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 			minPrice = t.Price
 		}
 	}
+	// Bookable treks first, the same order the server-rendered grid uses.
+	for _, t := range append(append([]Trek{}, upcoming...), soon...) {
+		finder = append(finder, finderTrek(t))
+	}
+	stats, err := a.trustStats()
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	photoReviews, err := a.queryReviews(`r.photo != ''`, nil)
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	if len(photoReviews) > 6 {
+		photoReviews = photoReviews[:6]
+	}
 	a.render(w, r, "home.html", map[string]any{
+		"FinderData": finder, "Stats": stats, "PhotoReviews": photoReviews,
 		"Treks": treks, "Upcoming": upcoming, "Soon": soon, "Leads": leads, "MinPrice": minPrice, "HeroPhoto": a.heroPhoto(), "HeroSlides": a.heroSlides(treks), "Gallery": a.listPhotos("gallery"),
 	})
 }
@@ -59,7 +88,8 @@ func (a *App) trekPage(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
-	data := map[string]any{"Trek": t, "Batches": batches, "Reviews": reviews, "Existing": nil, "MetaDesc": t.Summary}
+	data := map[string]any{"Trek": t, "Batches": batches, "Reviews": reviews, "Existing": nil, "MetaDesc": t.Summary,
+		"MapData": []FinderTrek{finderTrek(t)}, "BookingData": bookingData(t, batches)}
 	if t.Photo != "" {
 		data["MetaImage"] = "/photos/" + t.Photo
 	}
@@ -89,7 +119,7 @@ func (a *App) bookTrek(w http.ResponseWriter, r *http.Request) {
 	back := "/treks/" + t.Slug
 
 	batch, err := a.batchByID(int64(formInt(r, "batch_id")))
-	if err != nil || batch.TrekID != t.ID || batch.StartDate < today() {
+	if err != nil || batch.TrekID != t.ID || batch.Status != BatchLive || batch.StartDate < today() {
 		redirect(w, r, "%s?err=bad_batch", back)
 		return
 	}
@@ -210,7 +240,7 @@ type LeadBatch struct {
 
 func (a *App) queryUpcomingForLead(leadID int64) ([]LeadBatch, error) {
 	rows, err := a.db.Query(`SELECT t.name, t.slug, b.start_date FROM batches b JOIN treks t ON t.id = b.trek_id
-WHERE b.lead_id = ? AND t.active = 1 AND b.start_date >= date('now') ORDER BY b.start_date LIMIT 20`, leadID)
+WHERE b.lead_id = ? AND t.active = 1 AND b.status = 'live' AND b.start_date >= date('now') ORDER BY b.start_date LIMIT 20`, leadID)
 	if err != nil {
 		return nil, err
 	}
@@ -247,6 +277,11 @@ func (a *App) cancelBooking(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) reviewBooking(w http.ResponseWriter, r *http.Request) {
 	u := currentUser(r)
+	r.Body = http.MaxBytesReader(w, r.Body, maxPhotoBytes+(1<<20))
+	if err := r.ParseMultipartForm(maxPhotoBytes); err != nil && !errors.Is(err, http.ErrNotMultipart) {
+		redirect(w, r, "/my?err=bad_photo")
+		return
+	}
 	list, err := a.queryBookings(`WHERE k.id = ? AND k.user_id = ?`, pathID(r), u.ID)
 	if err != nil {
 		a.serverError(w, err)
@@ -269,8 +304,16 @@ func (a *App) reviewBooking(w http.ResponseWriter, r *http.Request) {
 		redirect(w, r, "/my?err=bad_review")
 		return
 	}
-	if _, err := a.db.Exec(`INSERT INTO reviews (booking_id, trek_rating, lead_rating, comment) VALUES (?, ?, ?, ?)`,
-		k.ID, trekRating, leadRating, trimTo(r.FormValue("comment"), 1000)); err != nil {
+	photo := ""
+	if file, _, err := r.FormFile("photo"); err == nil {
+		defer file.Close()
+		if photo, err = a.savePhoto(file, "reviews", k.TrekSlug); err != nil {
+			redirect(w, r, "/my?err=bad_photo")
+			return
+		}
+	}
+	if _, err := a.db.Exec(`INSERT INTO reviews (booking_id, trek_rating, lead_rating, comment, photo) VALUES (?, ?, ?, ?, ?)`,
+		k.ID, trekRating, leadRating, trimTo(r.FormValue("comment"), 1000), photo); err != nil {
 		a.serverError(w, err)
 		return
 	}

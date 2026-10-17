@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,9 +14,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// sessionCookie is named after the database (see main), so the real site and the
+// demo site running on the same computer never share a login.
+var sessionCookie = "session"
+
 const (
-	sessionCookie = "session"
-	sessionTTL    = 30 * 24 * time.Hour
+	sessionTTL = 30 * 24 * time.Hour
 )
 
 type ctxKey struct{}
@@ -184,4 +189,25 @@ func (a *App) logout(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Value: "", Path: "/", MaxAge: -1})
 	redirect(w, r, "/")
+}
+
+// resetAdminPassword gives the first admin account a new random password and
+// prints the login. Run it with: beyond.exe -reset-admin-password
+func resetAdminPassword(db *sql.DB) error {
+	var id int64
+	var email string
+	if err := db.QueryRow(`SELECT id, email FROM users WHERE is_admin = 1 ORDER BY id LIMIT 1`).Scan(&id, &email); err != nil {
+		return fmt.Errorf("no admin account found: %w", err)
+	}
+	pw := randomToken(6)
+	hash, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec(`UPDATE users SET password_hash = ? WHERE id = ?`, string(hash), id); err != nil {
+		return err
+	}
+	db.Exec(`DELETE FROM sessions WHERE user_id = ?`, id) // log out old sessions
+	fmt.Printf("Admin login\n  email:    %s\n  password: %s\n", email, pw)
+	return nil
 }

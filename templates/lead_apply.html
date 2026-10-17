@@ -21,7 +21,11 @@
       {{else if eq .Form.Status "approved"}}
         <strong>Your trek-lead profile is live</strong>
         <span>Keep it up to date. Every trek you lead and every review adds to it.</span>
+        <a href="/lead"><strong>Open your lead dashboard →</strong></a>
         <a href="/leads/{{.Form.Slug}}">View your public profile →</a>
+      {{else if eq .Form.Status "removed"}}
+        <strong>Profile removed</strong>
+        <span>Your trek-lead profile has been taken off the platform. Contact us if you think this is a mistake.</span>
       {{else}}
         <strong>Not approved this time</strong>
         <span>Add more detail about your trekking experience and save to apply again.</span>

@@ -1,4 +1,4 @@
-module northstar
+module beyond
 
 go 1.26.0
 
