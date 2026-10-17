@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -210,4 +211,44 @@ func resetAdminPassword(db *sql.DB) error {
 	db.Exec(`DELETE FROM sessions WHERE user_id = ?`, id) // log out old sessions
 	fmt.Printf("Admin login\n  email:    %s\n  password: %s\n", email, pw)
 	return nil
+}
+
+// guestUser finds or creates a guest account for someone booking without
+// signing up, keyed by their phone number, and logs them in.
+func (a *App) guestUser(w http.ResponseWriter, r *http.Request, name, phone string) (*User, error) {
+	digits := strings.Map(func(c rune) rune {
+		if c >= '0' && c <= '9' {
+			return c
+		}
+		return -1
+	}, phone)
+	if len(digits) > 10 {
+		digits = digits[len(digits)-10:] // drop +91 / 0 prefixes
+	}
+	if name == "" || len(digits) != 10 {
+		return nil, fmt.Errorf("guest booking needs a name and a 10-digit phone")
+	}
+	email := "guest-" + digits + "@guest.beyondexpeditions.local"
+	var id int64
+	err := a.db.QueryRow(`SELECT id FROM users WHERE email = ?`, email).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		hash, herr := bcrypt.GenerateFromPassword([]byte(randomToken(16)), bcrypt.DefaultCost)
+		if herr != nil {
+			return nil, herr
+		}
+		res, ierr := a.db.Exec(`INSERT INTO users (name, email, phone, password_hash) VALUES (?, ?, ?, ?)`,
+			name, email, "+91 "+digits[:5]+" "+digits[5:], string(hash))
+		if ierr != nil {
+			return nil, ierr
+		}
+		id, _ = res.LastInsertId()
+	} else if err != nil {
+		return nil, err
+	} else {
+		a.db.Exec(`UPDATE users SET name = ? WHERE id = ?`, name, id)
+	}
+	if err := a.startSession(w, r, id); err != nil {
+		return nil, err
+	}
+	return &User{ID: id, Name: name, Phone: "+91 " + digits[:5] + " " + digits[5:]}, nil
 }

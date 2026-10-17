@@ -3,14 +3,11 @@
 <header class="page-head">
   <p class="eyebrow">Get in touch</p>
   <h1>Contact us</h1>
-  <p class="muted">Questions about a trek, a group booking or leading treks with us? We usually reply on WhatsApp within a few hours.</p>
+  <p class="muted">Questions about a trek, a group booking or leading treks with us? Give us a call, or reach us on WhatsApp, Instagram or email using the icons at the top and bottom of the page.</p>
 </header>
-<div class="contact-grid">
-  <a class="contact-card wa" href="{{whatsapp "Hi! I have a question about your treks."}}" target="_blank" rel="noopener">
-    {{template "waicon"}}<strong>WhatsApp</strong><span>{{.Site.Phone}}</span><em>Fastest way to reach us</em></a>
-  <a class="contact-card" href="tel:{{.Site.TelLink}}">{{template "icon" "phone"}}<strong>Call</strong><span>{{.Site.Phone}}</span><em>9 AM – 8 PM</em></a>
-  <a class="contact-card" href="mailto:{{.Site.Email}}">{{template "icon" "mail"}}<strong>Email</strong><span>{{.Site.Email}}</span><em>For detailed queries</em></a>
-  <a class="contact-card" href="https://instagram.com/{{.Site.Instagram}}" target="_blank" rel="noopener">{{template "icon" "instagram"}}<strong>Instagram</strong><span>@{{.Site.Instagram}}</span><em>Trek photos &amp; updates</em></a>
+<div class="contact-grid phones">
+  <a class="contact-card" href="tel:{{.Site.TelLink}}">{{template "icon" "phone"}}<strong>{{.Site.Phone}}</strong><em>Call or WhatsApp · 9 AM – 8 PM</em></a>
+  {{with .Site.Phone2}}<a class="contact-card" href="tel:{{$.Site.TelLink2}}">{{template "icon" "phone"}}<strong>{{.}}</strong><em>Call · 9 AM – 8 PM</em></a>{{end}}
 </div>
 <p class="muted small">Based in {{.Site.City}}. Treks depart from Bangalore most weekends. See the <a href="/cancellation-policy">cancellation policy</a> and <a href="/#treks">upcoming treks</a>.</p>
 {{end}}

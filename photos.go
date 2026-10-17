@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io/fs"
 	"net/http"
 	"os"
@@ -87,6 +88,41 @@ func (a *App) heroSlides(treks []Trek) []Slide {
 		out = append(out, Slide{Photo: ph, Num: fmt.Sprintf("%02d", len(out)+1)})
 	}
 	return out
+}
+
+// HeroLayers is a hero photo split into the full image and a cut-out of the
+// land (sky removed), so the title can sit between them, behind the hills.
+// Made from photos/hero-layers/{background.jpg,foreground.png,skyline.txt}.
+type HeroLayers struct {
+	Aspect  float64 // image height / width
+	Skyline float64 // typical skyline height, as a fraction of image height
+	Peak    float64 // highest point of the land, as a fraction of image height
+}
+
+func (a *App) heroLayers() *HeroLayers {
+	dir := filepath.Join(a.photosDir, "hero-layers")
+	for _, f := range []string{"background.webp", "foreground.webp"} {
+		if _, err := os.Stat(filepath.Join(dir, f)); err != nil {
+			return nil
+		}
+	}
+	raw, err := os.ReadFile(filepath.Join(dir, "skyline.txt"))
+	if err != nil {
+		return nil
+	}
+	var top, median, h, w float64
+	if n, _ := fmt.Sscan(string(raw), &top, &median, &h, &w); n < 3 || h == 0 {
+		return nil
+	}
+	if w == 0 {
+		w = h * 4 / 3
+	}
+	return &HeroLayers{Aspect: h / w, Skyline: median / h, Peak: top / h}
+}
+
+// Style is the CSS custom properties the layered hero is positioned with.
+func (l *HeroLayers) Style() template.CSS {
+	return template.CSS(fmt.Sprintf("--ar:%.4f;--sky:%.4f;--peak:%.4f", l.Aspect, l.Skyline, l.Peak))
 }
 
 // heroPhoto finds photos/hero.<ext>, or returns "" if there isn't one.

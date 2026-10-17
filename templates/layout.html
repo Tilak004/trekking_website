@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{block "title" .}}{{.Brand}} · {{.Site.Tagline}}{{end}}</title>
 <meta name="description" content="{{.MetaDesc}}">
-<meta name="theme-color" content="#0c1214">
+<meta name="theme-color" content="#ffffff">
 <link rel="icon" href="/static/logo/favicon.png" type="image/png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{.Brand}}">
@@ -23,8 +23,8 @@
 <header class="site-header{{if eq .Path "/"}} over-hero{{end}}">
   <div class="wrap nav">
     <a class="brand" href="/" aria-label="{{.Brand}} home">
-      <img class="logo" src="/static/logo/mark-small.png" alt="">
-      <span class="brand-text"><b>{{firstWord .Brand}}</b><i>{{restWords .Brand}}</i></span>
+      <img class="logo badge" src="/photos/logo/badge.png" alt="{{.Brand}}" onerror="this.onerror=null;this.src='/static/logo/mark-small.png';this.classList.remove('badge')">
+      
     </a>
     <input type="checkbox" id="menu-toggle" class="menu-toggle" aria-label="Menu">
     <nav class="menu">
@@ -68,8 +68,8 @@
   <div class="wrap footer-grid">
     <div class="footer-about">
       <a class="brand" href="/">
-        <img class="logo" src="/static/logo/mark-small.png" alt="">
-        <span class="brand-text"><b>{{firstWord .Brand}}</b><i>{{restWords .Brand}}</i></span>
+        <img class="logo badge" src="/photos/logo/badge.png" alt="{{.Brand}}" onerror="this.onerror=null;this.src='/static/logo/mark-small.png';this.classList.remove('badge')">
+        
       </a>
       <p>{{.Site.Description}}</p>
       <div class="socials">
@@ -100,8 +100,7 @@
     <div>
       <h4>Contact</h4>
       <a href="tel:{{.Site.TelLink}}">{{.Site.Phone}}</a>
-      <a href="mailto:{{.Site.Email}}">{{.Site.Email}}</a>
-      <a href="https://instagram.com/{{.Site.Instagram}}" target="_blank" rel="noopener">@{{.Site.Instagram}}</a>
+      {{with .Site.Phone2}}<a href="tel:{{$.Site.TelLink2}}">{{.}}</a>{{end}}
       <span>{{.Site.City}}</span>
     </div>
   </div>
@@ -118,10 +117,18 @@
 </div>
 {{end}}
 {{if not (hasPrefix .Path "/admin")}}
-<a class="wa-float" href="{{block "wa" .}}{{whatsapp "Hi! I'd like to know more about your treks."}}{{end}}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+<a class="wa-float{{if eq .Path "/"}} wait{{end}}" title="Chat with us on WhatsApp" href="{{block "wa" .}}{{whatsapp "Hi! I'd like to know more about your treks."}}{{end}}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
   {{template "waicon"}}<span>Chat with us</span>
 </a>
 {{end}}
+<script>
+(() => {
+  const wa = document.querySelector('.wa-float.wait'), hero = document.querySelector('.hero');
+  if (!wa || !hero) { if (wa) wa.classList.remove('wait'); return; }
+  const check = () => wa.classList.toggle('wait', window.scrollY < hero.offsetHeight * 0.75);
+  addEventListener('scroll', check, { passive: true }); check();
+})();
+</script>
 <script type="module" src="/static/js/islands.js"></script>
 </body>
 </html>

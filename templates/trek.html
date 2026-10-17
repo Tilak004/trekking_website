@@ -33,7 +33,6 @@
   {{if .ThingsToCarry}}<a href="#carry">What to carry</a>{{end}}
   <a href="#dates">Dates</a>
   {{if .FAQs}}<a href="#faqs">FAQs</a>{{end}}
-  {{if .Lat}}<a href="#map">Map</a>{{end}}
   <a href="#reviews">Reviews</a>
 </nav>
 
@@ -45,12 +44,6 @@
       {{with .Elevation}}<div class="elev-wrap" data-island="elevation" data-points="{{.}}"></div>{{end}}
     </section>
 
-    {{if .Lat}}
-    <section id="map" class="trek-section">
-      <h2>Where it is</h2>
-      <div class="trek-map" data-island="map" data-single="1"><script type="application/json" class="island-data">{{$.MapData}}</script></div>
-    </section>
-    {{end}}
 
     {{with blocks .Itinerary}}
     <section id="itinerary" class="trek-section">
@@ -124,10 +117,7 @@
   <aside class="panel book-panel">
     <h3>Request a booking</h3>
     {{if $.Batches}}<p class="price">₹{{inr .Price}} <span class="muted small">per person</span></p>{{else}}<p class="soon-note"><span class="soon-tag">Opening soon</span> Dates and price will be announced soon.</p>{{end}}
-    {{if not $.User}}
-      <p><a class="btn block" href="/login?next=/treks/{{.Slug}}">Log in to book</a></p>
-      <p class="muted small">New here? <a href="/signup">Create an account</a>. It takes a minute.</p>
-    {{else if $.Existing}}
+    {{if $.Existing}}
       <p>You already have a <span class="status {{$.Existing.Status}}">{{$.Existing.Status}}</span> booking for {{fmtDate $.Existing.StartDate}}.</p>
       <p><a href="/my">View my bookings →</a></p>
     {{else if not $.Batches}}
@@ -144,19 +134,19 @@
         </label>
         {{end}}
       </fieldset>
+      {{if not $.User}}
+      <label>Your name <input name="name" required maxlength="100" autocomplete="name"></label>
+      <label>WhatsApp number <input name="phone" type="tel" required inputmode="tel" placeholder="98765 43210" autocomplete="tel"></label>
+      {{end}}
       <label>Number of people <input type="number" name="people" min="1" max="10" value="1" required></label>
       {{with lines .PickupPoints}}
       <label>Pickup point
-        <select name="pickup" required>
+        <select name="pickup">
           {{range .}}<option>{{.}}</option>{{end}}
         </select>
       </label>
       {{end}}
-      <label>Your age <input type="number" name="age" min="5" max="100" required></label>
-      <label>Emergency contact name <input name="emergency_name" required maxlength="100"></label>
-      <label>Emergency contact phone <input name="emergency_phone" type="tel" required maxlength="30"></label>
-      <label>Medical conditions / fitness notes <textarea name="medical" rows="2" maxlength="1000" placeholder="Asthma, knee issues, allergies… or leave blank"></textarea></label>
-      <label>Anything else? <textarea name="note" rows="2" maxlength="1000" placeholder="Names of friends joining, questions…"></textarea></label>
+      <label>Anything else? (optional) <textarea name="note" rows="2" maxlength="1000" placeholder="Names of friends joining, questions…"></textarea></label>
       <button class="btn block">Send booking request</button>
     </form>
     </div>

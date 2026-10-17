@@ -12,6 +12,12 @@ const GHATS = [
 ];
 const BANGALORE = [12.97, 77.59];
 
+// Only well-known landmarks are pinned; exact trek trailheads are kept private.
+const LANDMARKS = [
+  ['Nandi Hills', 13.37, 77.68], ['Savandurga', 12.92, 77.29], ['Ramanagara', 12.72, 77.28],
+  ['Chikmagalur', 13.32, 75.77], ['Coorg', 12.42, 75.74], ['Sakleshpur', 12.94, 75.78], ['Agumbe', 13.50, 75.09],
+];
+
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 function ensureCss() {
@@ -67,6 +73,16 @@ export function mount(el, treks) {
     points.push(BANGALORE);
   }
 
+  if (!single) {
+    for (const [name, lat, lng] of LANDMARKS) {
+      L.marker([lat, lng], {
+        keyboard: false, title: name,
+        icon: L.divIcon({ className: 'trek-pin landmark', html: `<i></i><span>${esc(name)}</span>`, iconSize: null, iconAnchor: [9, 24] }),
+      }).addTo(map);
+      points.push([lat, lng]);
+    }
+    treks = [];
+  }
   for (const t of treks) {
     if (!t.lat || !t.lng) continue;
     const icon = L.divIcon({

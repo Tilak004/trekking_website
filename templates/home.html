@@ -1,6 +1,20 @@
 {{define "hero"}}
-<section class="hero"{{with .HeroPhoto}} style="background-image:url('/photos/{{.}}')"{{end}}>
-  {{with .HeroSlides}}
+{{with .HeroLayers}}
+<section class="hero layered ref" style="{{.Style}}">
+  <img class="hl-bg" src="/photos/hero-layers/background.webp" alt="Green hills of the Western Ghats">
+  <h1 class="sr-only">{{$.Brand}} · Weekend treks in the Western Ghats</h1>
+  <img class="hl-fg" src="/photos/hero-layers/foreground.webp" alt="" aria-hidden="true">
+  <div class="hl-corner hl-left">
+    <div class="hero-ctas">
+      <a class="btn" href="#treks">{{template "icon" "compass"}} Explore treks</a>
+      <a class="btn ghost-light" href="/leads">{{template "icon" "users"}} Meet the leads</a>
+    </div>
+  </div>
+</section>
+{{template "hero-features"}}
+{{else}}
+<section class="hero"{{with $.HeroPhoto}} style="background-image:url('/photos/{{.}}')"{{end}}>
+  {{with $.HeroSlides}}
   <div class="hero-slides" aria-hidden="true">
     {{range $i, $s := .}}<div class="slide{{if eq $i 0}} on{{end}}" style="background-image:url('/photos/{{$s.Photo}}')"></div>{{end}}
   </div>
@@ -15,15 +29,9 @@
       <a class="btn big ghost-light" href="/leads">{{template "icon" "users"}} Meet the leads</a>
     </div>
   </div>
-  <div class="hero-features">
-    <div class="wrap features">
-      <div class="feature">{{template "icon" "mountain"}}<span>Athlete<br>trek leads</span></div>
-      <div class="feature">{{template "icon" "users"}}<span>Small,<br>friendly groups</span></div>
-      <div class="feature">{{template "icon" "calendar"}}<span>Weekend departures<br>from Bangalore</span></div>
-      <div class="feature">{{template "icon" "wallet"}}<span>Free to<br>request a seat</span></div>
-    </div>
-  </div>
+  {{template "hero-features"}}
 </section>
+{{end}}
 <script>
 (() => {
   const slides = [...document.querySelectorAll('.hero-slides .slide')];
@@ -41,6 +49,17 @@
   start();
 })();
 </script>
+{{end}}
+
+{{define "hero-features"}}
+  <div class="hero-features">
+    <div class="wrap features">
+      <div class="feature">{{template "icon" "mountain"}}<span>Athlete<br>trek leads</span></div>
+      <div class="feature">{{template "icon" "users"}}<span>Small,<br>friendly groups</span></div>
+      <div class="feature">{{template "icon" "calendar"}}<span>Weekend departures<br>from Bangalore</span></div>
+      <div class="feature">{{template "icon" "wallet"}}<span>Free to<br>request a seat</span></div>
+    </div>
+  </div>
 {{end}}
 
 {{define "content"}}
@@ -70,7 +89,7 @@
   <div class="section-head">
     <p class="eyebrow">Where we trek</p>
     <h2>Trails on the map</h2>
-    <p class="muted">From the Western Ghats to the rocky hills around Bangalore. Tap a pin to see the trek.</p>
+    <p class="muted">From the shola grasslands of the Western Ghats to the rocky hills around Bangalore, this is the country we explore.</p>
   </div>
   <div class="ghats-map" data-island="map"><noscript><p class="muted">Turn on JavaScript to see the map.</p></noscript></div>
 </section>

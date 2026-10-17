@@ -13,7 +13,8 @@ type Site struct {
 	Name        string
 	Tagline     string
 	Description string // used for search engines and link previews
-	Phone       string // shown as text
+	Phone       string // primary number, shown as text
+	Phone2      string // secondary number
 	WhatsApp    string // digits only, with country code, for wa.me links
 	Email       string
 	Instagram   string // handle without @
@@ -24,15 +25,16 @@ var site = Site{
 	Name:        "Beyond Expeditions",
 	Tagline:     "Weekend treks in the Western Ghats, led by athletes.",
 	Description: "Small-group weekend treks across Karnataka's Western Ghats, led by an Ironman finisher, a 24-hour adventure racer and a trekker who has done every major trail in Karnataka.",
-	Phone:       "+91 94817 40319",
-	WhatsApp:    "919481740319",
-	Email:       "hello@beyondexpeditions.in", // PLACEHOLDER
-	Instagram:   "beyondexpeditions",          // PLACEHOLDER
+	Phone:       "+91 77604 24521",
+	Phone2:      "+91 94817 40319",
+	WhatsApp:    "917760424521",
+	Email:       "beyond.expiditions.kpt@gmail.com", // shown only as an "Email us" link
+	Instagram:   "beyond___expeditions",
 	City:        "Bangalore, Karnataka",
 }
 
 // defaultTheme is the theme every visitor sees. Others can be previewed with ?theme=<name>.
-const defaultTheme = "night"
+const defaultTheme = "editorial"
 
 type Theme struct {
 	Name, Label, Fonts string // Fonts is a Google Fonts css2 query
@@ -43,6 +45,8 @@ type Theme struct {
 func (t Theme) Attr() string { return strings.TrimSpace(t.Base + " " + t.Name) }
 
 var themes = []Theme{
+	{"editorial", "Editorial", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", "ghats sky"},
+	{"sky", "Sky", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", "ghats"},
 	{"night", "Shola Night", "family=Marcellus&family=Outfit:wght@600;700;800&family=Inter:wght@300;400;500;600", "ghats"},
 	{"ghats", "Western Ghats", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", ""},
 	{"explore", "Explore", "family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=Kaushan+Script", ""},
@@ -90,6 +94,9 @@ func pickTheme(w http.ResponseWriter, r *http.Request) (Theme, bool) {
 
 // TelLink is the phone number without spaces, for tel: links.
 func (s Site) TelLink() string { return strings.ReplaceAll(s.Phone, " ", "") }
+
+// TelLink2 is the secondary number without spaces, for tel: links.
+func (s Site) TelLink2() string { return strings.ReplaceAll(s.Phone2, " ", "") }
 
 // whatsAppLink opens a WhatsApp chat with an optional pre-filled message.
 func whatsAppLink(text string) string {

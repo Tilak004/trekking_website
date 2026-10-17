@@ -64,7 +64,7 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 	}
 	a.render(w, r, "home.html", map[string]any{
 		"FinderData": finder, "Stats": stats, "PhotoReviews": photoReviews,
-		"Treks": treks, "Upcoming": upcoming, "Soon": soon, "Leads": leads, "MinPrice": minPrice, "HeroPhoto": a.heroPhoto(), "HeroSlides": a.heroSlides(treks), "Gallery": a.listPhotos("gallery"),
+		"Treks": treks, "Upcoming": upcoming, "Soon": soon, "Leads": leads, "MinPrice": minPrice, "HeroPhoto": a.heroPhoto(), "HeroSlides": a.heroSlides(treks), "HeroLayers": a.heroLayers(), "Gallery": a.listPhotos("gallery"),
 	})
 }
 
@@ -89,7 +89,7 @@ func (a *App) trekPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := map[string]any{"Trek": t, "Batches": batches, "Reviews": reviews, "Existing": nil, "MetaDesc": t.Summary,
-		"MapData": []FinderTrek{finderTrek(t)}, "BookingData": bookingData(t, batches)}
+		"BookingData": bookingData(t, batches, u)}
 	if t.Photo != "" {
 		data["MetaImage"] = "/photos/" + t.Photo
 	}
@@ -118,6 +118,16 @@ func (a *App) bookTrek(w http.ResponseWriter, r *http.Request) {
 	}
 	back := "/treks/" + t.Slug
 
+	// No account needed: guests book with just a name and phone number. They get a
+	// lightweight guest account (and are logged in) so "My bookings" still works.
+	if u == nil {
+		u, err = a.guestUser(w, r, trimTo(r.FormValue("name"), 100), r.FormValue("phone"))
+		if err != nil {
+			redirect(w, r, "%s?err=bad_contact", back)
+			return
+		}
+	}
+
 	batch, err := a.batchByID(int64(formInt(r, "batch_id")))
 	if err != nil || batch.TrekID != t.ID || batch.Status != BatchLive || batch.StartDate < today() {
 		redirect(w, r, "%s?err=bad_batch", back)
@@ -129,8 +139,8 @@ func (a *App) bookTrek(w http.ResponseWriter, r *http.Request) {
 	emName := trimTo(r.FormValue("emergency_name"), 100)
 	emPhone := trimTo(r.FormValue("emergency_phone"), 30)
 	age := formInt(r, "age")
-	if people < 1 || people > 10 || emName == "" || emPhone == "" || age < 5 || age > 100 ||
-		(t.PickupPoints != "" && !slices.Contains(splitLines(t.PickupPoints), pickup)) {
+	if people < 1 || people > 10 || (age != 0 && (age < 5 || age > 100)) ||
+		(pickup != "" && !slices.Contains(splitLines(t.PickupPoints), pickup)) {
 		// The form enforces these with "required" fields, so this only happens on tampered input.
 		http.Error(w, "Please fill in all required booking details.", http.StatusBadRequest)
 		return

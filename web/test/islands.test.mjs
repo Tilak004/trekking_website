@@ -42,11 +42,11 @@ const treks = [
   console.log('finder ✓');
 }
 
-// ---- booking flow ----
+// ---- booking flow (guest: no account) ----
 {
   const el = document.createElement('div');
   document.body.appendChild(el);
-  const d = { slug: 'a', price: 999, pickups: ['Bangalore - Majestic', 'Base'], batches: [
+  const d = { slug: 'a', price: 999, loggedIn: false, name: '', phone: '', pickups: ['Bangalore - Majestic', 'Base'], batches: [
     { id: 7, label: 'Sat, 12 Dec 2026', left: 3, lead: 'Tilak' },
     { id: 8, label: 'Sat, 19 Dec 2026', left: 0, lead: '' },
   ] };
@@ -56,24 +56,19 @@ const treks = [
   const hidden = (n) => form.querySelector(`input[name="${n}"]`).value;
   assert.equal(hidden('batch_id'), '7', 'first open batch preselected');
   assert.ok(byText(el, '.bk-date', 'Sat, 19 Dec').disabled, 'full batch disabled');
-  await click(byText(el, '.bk-nav button', 'Continue'));                 // → group
-  for (let i = 0; i < 5; i++) await click(el.querySelector('[aria-label="More"]'));
-  assert.equal(hidden('people'), '3', 'people capped at seats left');
-  assert.match(el.textContent, /₹2,997/, 'total for 3');
+  await click(byText(el, '.bk-nav button', 'Continue'));                 // -> details
   await click(byText(el, '.bk-nav button', 'Continue'));
-  assert.match(el.querySelector('.bk-err').textContent, /age/, 'age required');
-  await type(el.querySelector('input[type=number]'), '29');
-  await click(byText(el, '.bk-nav button', 'Continue'));                 // → safety
-  await click(byText(el, '.chip', 'Base'));
+  assert.match(el.querySelector('.bk-err').textContent, /WhatsApp/, 'name + phone required');
   const [nameIn, phoneIn] = el.querySelectorAll('.bk-pane input');
   await type(nameIn, 'Ravi');
-  await type(phoneIn, '9999');
-  await click(byText(el, '.bk-nav button', 'Continue'));                 // → confirm
-  assert.match(el.textContent, /Ravi \(9999\)/, 'review shows contact');
-  assert.equal(form.getAttribute('action'), '/treks/a/book');
-  assert.deepEqual(
-    ['batch_id', 'people', 'age', 'pickup', 'emergency_name', 'emergency_phone'].map(hidden),
-    ['7', '3', '29', 'Base', 'Ravi', '9999'], 'posts the server form fields');
+  await type(phoneIn, '98765 43210');
+  for (let i = 0; i < 5; i++) await click(el.querySelector('[aria-label="More"]'));
+  assert.equal(hidden('people'), '3', 'people capped at seats left');
+  await click(byText(el, '.chip', 'Base'));
+  await click(byText(el, '.bk-nav button', 'Continue'));                 // -> confirm
+  assert.match(el.textContent, /₹2,997/, 'total for 3');
+  assert.deepEqual(['batch_id', 'people', 'pickup', 'name', 'phone'].map(hidden),
+    ['7', '3', 'Base', 'Ravi', '98765 43210'], 'posts the server form fields');
   console.log('booking ✓');
 }
 

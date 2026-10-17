@@ -71,7 +71,7 @@ func (a *App) routes() http.Handler {
 
 	mux.HandleFunc("GET /{$}", a.home)
 	mux.HandleFunc("GET /treks/{slug}", a.trekPage)
-	mux.HandleFunc("POST /treks/{slug}/book", a.requireUser(a.bookTrek))
+	mux.HandleFunc("POST /treks/{slug}/book", a.bookTrek)
 	mux.HandleFunc("GET /leads", a.leadsPage)
 	mux.HandleFunc("GET /leads/{slug}", a.leadPage)
 	mux.HandleFunc("GET /lead-with-us", a.leadApplyPage)
@@ -147,6 +147,7 @@ var flashErrors = map[string]string{
 	"batch_has_bookings": "This batch has bookings, so it can't be deleted.",
 	"bad_review":         "Please give a rating from 1 to 5.",
 	"cannot_review":      "You can only review a completed trek, once.",
+	"bad_contact":        "Please enter your name and a valid 10-digit phone number.",
 	"bad_photo":          "Please upload a JPG, PNG or WebP photo under 5 MB.",
 	"bad_date":           "Please pick a date at least 3 days from today.",
 	"bad_seats":          "Group size must be between 2 and 40.",

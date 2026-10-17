@@ -93,8 +93,8 @@ type FinderTrek struct {
 	Price      int       `json:"price"` // 0 when no dates are open
 	Next       string    `json:"next"`
 	Tags       []string  `json:"tags"`
-	Lat        float64   `json:"lat"`
-	Lng        float64   `json:"lng"`
+	Lat        float64   `json:"-"` // kept private: exact trailheads are not published
+	Lng        float64   `json:"-"`
 	Rating     float64   `json:"rating"`
 	Ratings    int       `json:"ratings"`
 	Lead       *LeadMini `json:"lead"`
@@ -140,10 +140,13 @@ func (a *App) trustStats() (TrustStats, error) {
 
 // BookingData drives the step-by-step booking flow on a trek page.
 type BookingData struct {
-	Slug    string         `json:"slug"`
-	Price   int            `json:"price"`
-	Pickups []string       `json:"pickups"`
-	Batches []BookingBatch `json:"batches"`
+	Slug     string         `json:"slug"`
+	LoggedIn bool           `json:"loggedIn"`
+	Name     string         `json:"name"`
+	Phone    string         `json:"phone"`
+	Price    int            `json:"price"`
+	Pickups  []string       `json:"pickups"`
+	Batches  []BookingBatch `json:"batches"`
 }
 
 type BookingBatch struct {
@@ -153,8 +156,11 @@ type BookingBatch struct {
 	Lead  string `json:"lead"`
 }
 
-func bookingData(t Trek, batches []Batch) BookingData {
+func bookingData(t Trek, batches []Batch, u *User) BookingData {
 	d := BookingData{Slug: t.Slug, Price: t.Price, Pickups: splitLines(t.PickupPoints), Batches: []BookingBatch{}}
+	if u != nil {
+		d.LoggedIn, d.Name, d.Phone = true, u.Name, u.Phone
+	}
 	if d.Pickups == nil {
 		d.Pickups = []string{}
 	}

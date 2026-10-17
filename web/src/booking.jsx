@@ -2,10 +2,12 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { inr } from './shared.jsx';
 
-// Step-by-step booking request. It posts the same fields as the plain form it
-// replaces, so all validation still happens on the server.
+// Step-by-step booking request. No account needed: guests give a name and a
+// WhatsApp number. It posts the same fields as the plain form it replaces, so
+// all validation still happens on the server.
 
-const STEPS = ['Date', 'Group', 'Safety', 'Confirm'];
+const STEPS = ['Date', 'Details', 'Confirm'];
+const digits = (s) => s.replace(/\D/g, '').slice(-10);
 
 function Booking({ d }) {
   const firstOpen = d.batches.find((b) => b.left > 0);
@@ -13,11 +15,9 @@ function Booking({ d }) {
   const [f, setF] = useState({
     batch: firstOpen ? firstOpen.id : null,
     people: 1,
-    age: '',
+    name: d.name || '',
+    phone: d.phone || '',
     pickup: d.pickups[0] || '',
-    emName: '',
-    emPhone: '',
-    medical: '',
     note: '',
   });
   const [touched, setTouched] = useState(false);
@@ -27,8 +27,7 @@ function Booking({ d }) {
 
   const problems = [
     !batch && 'Pick a date.',
-    (Number(f.age) < 5 || Number(f.age) > 100) && 'Enter your age.',
-    (!f.emName.trim() || !f.emPhone.trim()) && 'Add an emergency contact name and phone.',
+    !d.loggedIn && (!f.name.trim() || digits(f.phone).length !== 10) && 'Enter your name and a 10-digit WhatsApp number.',
     null,
   ];
   const next = () => {
@@ -43,12 +42,10 @@ function Booking({ d }) {
       onSubmit={(e) => { if (problems.some(Boolean)) { e.preventDefault(); setTouched(true); } }}>
       <input type="hidden" name="batch_id" value={f.batch || ''} />
       <input type="hidden" name="people" value={f.people} />
-      <input type="hidden" name="age" value={f.age} />
       <input type="hidden" name="pickup" value={f.pickup} />
-      <input type="hidden" name="emergency_name" value={f.emName} />
-      <input type="hidden" name="emergency_phone" value={f.emPhone} />
-      <input type="hidden" name="medical" value={f.medical} />
       <input type="hidden" name="note" value={f.note} />
+      {!d.loggedIn && <input type="hidden" name="name" value={f.name} />}
+      {!d.loggedIn && <input type="hidden" name="phone" value={f.phone} />}
 
       <ol class="bk-steps">
         {STEPS.map((s, i) => (
@@ -77,46 +74,45 @@ function Booking({ d }) {
 
         {step === 1 && (
           <div>
-            <h4>Who's coming?</h4>
+            <h4>Your details</h4>
+            {!d.loggedIn && (
+              <>
+                <label>Your name <input value={f.name} onInput={set('name')} maxLength={100} autocomplete="name" /></label>
+                <label>WhatsApp number <input type="tel" inputmode="tel" value={f.phone} onInput={set('phone')} placeholder="98765 43210" autocomplete="tel" /></label>
+              </>
+            )}
             <div class="bk-people">
               <span>People</span>
               <button type="button" aria-label="Fewer" onClick={() => setF({ ...f, people: Math.max(1, f.people - 1) })}>−</button>
               <b>{f.people}</b>
               <button type="button" aria-label="More" onClick={() => setF({ ...f, people: Math.min(maxPeople, f.people + 1) })}>+</button>
             </div>
-            <label>Your age <input type="number" min="5" max="100" value={f.age} onInput={set('age')} /></label>
-            {d.price > 0 && <p class="bk-total">₹{inr(d.price * f.people)} <span>for {f.people} · pay only after we confirm</span></p>}
+            {d.pickups.length > 0 && (
+              <>
+                <p class="bk-label">Pickup point</p>
+                <div class="chips">
+                  {d.pickups.map((p) => (
+                    <button type="button" class={p === f.pickup ? 'chip on' : 'chip'} onClick={() => setF({ ...f, pickup: p })}>{p}</button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {step === 2 && (
           <div>
-            <h4>Pickup &amp; safety</h4>
-            {d.pickups.length > 0 && (
-              <div class="chips">
-                {d.pickups.map((p) => (
-                  <button type="button" class={p === f.pickup ? 'chip on' : 'chip'} onClick={() => setF({ ...f, pickup: p })}>{p}</button>
-                ))}
-              </div>
-            )}
-            <label>Emergency contact name <input value={f.emName} onInput={set('emName')} maxLength={100} /></label>
-            <label>Emergency contact phone <input type="tel" value={f.emPhone} onInput={set('emPhone')} maxLength={30} /></label>
-            <label>Medical conditions / fitness notes <textarea rows="2" value={f.medical} onInput={set('medical')} maxLength={1000}
-              placeholder="Asthma, knee issues, allergies… or leave blank" /></label>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div>
             <h4>All good?</h4>
             <dl class="bk-review">
               <dt>Date</dt><dd>{batch && batch.label}</dd>
-              <dt>People</dt><dd>{f.people}{f.age && ` · you're ${f.age}`}</dd>
+              <dt>Name</dt><dd>{f.name}</dd>
+              {!d.loggedIn && <><dt>WhatsApp</dt><dd>{f.phone}</dd></>}
+              <dt>People</dt><dd>{f.people}</dd>
               {f.pickup && <><dt>Pickup</dt><dd>{f.pickup}</dd></>}
-              <dt>Emergency</dt><dd>{f.emName} ({f.emPhone})</dd>
             </dl>
-            <label>Anything else? <textarea rows="2" value={f.note} onInput={set('note')} maxLength={1000}
-              placeholder="Friends joining, questions…" /></label>
+            {d.price > 0 && <p class="bk-total">₹{inr(d.price * f.people)} <span>for {f.people} · pay only after we confirm</span></p>}
+            <label>Anything else? (optional) <textarea rows="2" value={f.note} onInput={set('note')} maxLength={1000}
+              placeholder="Friends joining, medical notes, questions…" /></label>
           </div>
         )}
       </div>
@@ -129,6 +125,7 @@ function Booking({ d }) {
           ? <button type="button" class="btn" onClick={next}>Continue</button>
           : <button type="submit" class="btn">Send booking request</button>}
       </div>
+      <p class="bk-hint">No account needed. We'll WhatsApp you to confirm your seat and add you to the trek group.</p>
     </form>
   );
 }
