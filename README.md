@@ -88,8 +88,8 @@ Without photos, the site falls back to a green mountain graphic.
 The admin area is not part of the public website. It runs as its own process on its own port, using the same database, so `/admin` does not exist on the public server at all.
 
 ```
-./northstar.exe                  # public site, http://localhost:8080
-./northstar.exe -mode admin      # admin console, http://localhost:8081
+./beyond.exe                  # public site, http://localhost:8080
+./beyond.exe -mode admin      # admin console, http://localhost:8081
 ```
 
 Start both from the same folder (they share the database and the `photos/` folder). Sign in with an admin account; non-admin accounts are refused. The admin login uses its own session cookie, separate from the public site's. Settings: `-mode` / `MODE`, `-addr` / `ADDR` (default `:8081` in admin mode), and `PUBLIC_URL` for the "View public site" link, and (on the public server) `ADMIN_URL` to show admins an "Admin console" link in their account menu. In production, keep the admin port off the public internet (firewall, VPN, or a private reverse-proxy route).
