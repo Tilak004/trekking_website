@@ -1,22 +1,57 @@
 # Beyond Expeditions
 
-A trek listing and booking website written in Go. It builds to a single binary and stores everything in one SQLite file.
+A trek listing and booking website. The backend is Go (one binary, everything stored in one SQLite file) and the frontend is a React app, for both the public website and the admin console.
+
+## What you need
+
+- **Go 1.26 or newer** (https://go.dev/dl/). This is all you need to run the site.
+- **Node.js 20 or newer** only if you want to change the frontend (`frontend/`). The built frontend is already committed in `static/app/`.
 
 ## Run it
 
+Two programs run from the same folder: the public website, and the admin console. They share one database.
+
 ```
 go build -o beyond.exe .
-./beyond.exe
+
+./beyond.exe                  # public website   -> http://localhost:8080
+./beyond.exe -mode admin      # admin console    -> http://localhost:8081   (in a second terminal)
 ```
 
-Open http://localhost:8080. On first run the log prints the admin email and a generated password, so note it down.
+On Windows PowerShell use `.\beyond.exe`. For quick testing you can skip the build step and use `go run .` and `go run . -mode admin` instead.
+
+On the very first run the log of the public site prints the admin email and a generated password. **Note it down**, it is shown once. Sign in to the admin console at http://localhost:8081 with that email and password.
+
+Forgot the admin password, or want to choose your own?
+
+```
+./beyond.exe -reset-admin-password                       # sets a new random password and prints it
+$env:ADMIN_EMAIL="you@example.com"; $env:ADMIN_PASSWORD="a-long-password"; ./beyond.exe -reset-admin-password
+```
+
+If you changed anything in `frontend/`, rebuild it **before** building the Go binary:
+
+```
+cd frontend
+npm install               # first time only
+npm run build             # writes ../static/app
+cd ..
+go build -o beyond.exe .
+```
 
 | Setting | Flag | Env var | Default |
 |---|---|---|---|
-| Listen address | `-addr` | `ADDR` | `:8080` |
+| Which server to run | `-mode` (`public` or `admin`) | `MODE` | `public` |
+| Listen address | `-addr` | `ADDR` | `:8080` (`:8081` in admin mode) |
 | Database file | `-db` | `DB_PATH` | `beyond.db` |
+| Photos folder | `-photos` | `PHOTOS_DIR` | `photos` |
 | First admin email | | `ADMIN_EMAIL` | `admin@beyondexpeditions.local` |
 | First admin password | | `ADMIN_PASSWORD` | random, printed once |
+| Public site address (link previews) | | `BASE_URL` | taken from the request |
+| "View public site" link in the console | | `PUBLIC_URL` | `http://localhost:8080` |
+| "Admin console" link for admins on the public site | | `ADMIN_URL` | none (link hidden) |
+
+Settings can be given as flags (`./beyond.exe -addr :9000`) or as environment variables. Backup settings are listed under Backups below.
 
 ## Brand and contact details
 
@@ -66,8 +101,6 @@ Start both from the same folder (they share the database and the `photos/` folde
 - **Treks, Trek leads, Users:** add or edit treks (itinerary, price, photos), lead profiles and applications, and the user list.
 
 **Money:** payments are UPI (see `payments.go`). "Collected" is the amount you've marked paid on bookings; "booked value" is trek price × people on approved or completed bookings, and "still to collect" is the booked value not yet marked paid. Registrations show the payment buttons (request payment, mark paid).
-
-There are no payments. Booking is request-only, and you confirm each request manually.
 
 ## Backups
 
@@ -135,7 +168,7 @@ requested ──approve──▶ approved ──complete──▶ completed (tre
 
 ## Files
 
-- `main.go`: startup, routes, template helpers
+- `main.go`: startup, routes, flash messages
 - `db.go`: schema, queries, sample data
 - `auth.go`: signup, login, sessions
 - `handlers.go`: public and trekker pages
@@ -149,7 +182,9 @@ On first run the app adds five Karnataka treks and three placeholder leads ("Fou
 
 ## Deploying
 
-Copy the binary to a server and run it behind a reverse proxy that handles HTTPS (e.g. Caddy). Back up the `.db` file regularly. To build for a Linux server from Windows:
+Copy the binary (and the `photos/` folder) to a server and run **both** programs, the public site and `-mode admin`, from the same folder so they share the database. Put the public site behind a reverse proxy that handles HTTPS (e.g. Caddy), and keep the admin port (8081) private: firewall it, or reach it over a VPN or SSH tunnel. Set `BASE_URL` to the public address. Back up the `.db` file regularly (see Backups).
+
+To build for a Linux server from Windows (run `npm run build` in `frontend/` first if you changed it):
 
 ```
 $env:GOOS="linux"; $env:GOARCH="amd64"; go build -o beyond .
