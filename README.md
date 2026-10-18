@@ -137,6 +137,8 @@ npm install
 npm run build        # writes ../static/app; then rebuild the Go binary
 ```
 
+**Responsive text.** Text scales smoothly with the screen instead of jumping at breakpoints. `html { font-size: clamp(...) }` in `static/style.css` grows from about 15.4px on a small phone to 20px on a very large screen, in `rem` so it still follows the browser's own font-size setting. Everything is sized in `rem` or `clamp()`, nothing renders below 12px, headings scale with the viewport, the page container is `76rem` so it grows with the text, and on touch devices every button and link is at least 44px tall. When adding CSS, use `rem` (not `px`) for font sizes so they follow this scale.
+
 Source layout: `src/public/` (website pages), `src/admin/` (console pages), `src/lib/` (API client, helpers), `src/components/` (shared pieces). Styling is still the hand-written `static/style.css` and `static/console.css`.
 
 Trek coordinates, finder tags and elevation profiles are edited in Admin → Treks.
