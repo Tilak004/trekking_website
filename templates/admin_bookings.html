@@ -1,42 +1,71 @@
 {{define "title"}}Bookings · Admin{{end}}
 {{define "content"}}
 {{template "adminnav" .}}
-<h1>Booking requests</h1>
+<div class="head-row">
+  <h1>Booking requests</h1>
+  <span class="muted small">{{len .Bookings}} {{if eq (len .Bookings) 1}}booking{{else}}bookings{{end}}</span>
+</div>
 <nav class="tabs">
   <a href="/admin" {{if eq .Filter ""}}class="on"{{end}}>All</a>
   {{range .Statuses}}<a href="/admin?status={{.}}" {{if eq . $.Filter}}class="on"{{end}}>{{.}}</a>{{end}}
 </nav>
-<div class="table-wrap">
-<table class="table">
-  <tr><th>#</th><th>Trekker</th><th>Trek &amp; date</th><th>Details</th><th>Status</th><th>Actions</th></tr>
-  {{range .Bookings}}
-  <tr>
-    <td>{{.ID}}<br><span class="muted small">{{.CreatedAt}}</span></td>
-    <td><strong>{{.UserName}}</strong><br><span class="small">{{.UserEmail}}<br>{{.UserPhone}}</span></td>
-    <td><a href="/treks/{{.TrekSlug}}">{{.TrekName}}</a><br><span class="small">{{fmtDate .StartDate}}</span>
-        <br><span class="muted small">Lead: {{or .LeadName "–"}}</span></td>
-    <td class="small">
-      <strong>{{.People}}</strong> {{if eq .People 1}}person{{else}}people{{end}} · age {{.Age}}<br>
-      Pickup: {{.Pickup}}<br>
-      Emergency: {{.EmergencyName}} ({{.EmergencyPhone}})
-      {{with .Medical}}<br><span class="warn">Medical:</span> {{.}}{{end}}
-      {{with .Note}}<br>Note: {{.}}{{end}}
-    </td>
-    <td><span class="status {{.Status}}">{{.Status}}</span></td>
-    <td class="actions">
-      {{$id := .ID}}
-      {{range nextActions .Status}}
-      <form method="post" action="/admin/bookings/{{$id}}/status" class="inline">
-        <input type="hidden" name="status" value="{{.}}">
-        <input type="hidden" name="back" value="{{$.Filter}}">
-        <button class="btn small act-{{.}}">{{actionLabel .}}</button>
-      </form>
+
+{{range .Groups}}
+<section class="bk-trek">
+  <h2 class="bk-trek-head"><a href="/treks/{{.Slug}}">{{.Name}}</a> <span class="muted small">{{.Count}} {{if eq .Count 1}}booking{{else}}bookings{{end}}</span></h2>
+  {{range .Dates}}
+  <div class="bk-date-group">
+    <div class="bk-date-head">
+      <strong>{{fmtDate .Batch.StartDate}}</strong>
+      <span class="muted small">{{.Batch.Taken}} / {{.Batch.Seats}} seats confirmed · Lead: {{or .Batch.LeadName "not assigned"}}{{if .Due}} · <b>₹{{inr .Due}} still to collect</b>{{end}}</span>
+    </div>
+    <div class="table-wrap">
+    <table class="table">
+      <tr><th>#</th><th>Trekker</th><th>Details</th><th>Status</th><th>Actions</th></tr>
+      {{range .Bookings}}
+      <tr>
+        <td>{{.ID}}<br><span class="muted small">{{.CreatedAt}}</span></td>
+        <td><strong>{{.UserName}}</strong><br><span class="small">{{.UserPhone}}{{if not (hasSuffix .UserEmail "@guest.beyondexpeditions.local")}}<br>{{.UserEmail}}{{end}}</span></td>
+        <td class="small">
+          <strong>{{.People}}</strong> {{if eq .People 1}}person{{else}}people{{end}}{{with .Age}} · age {{.}}{{end}}
+          {{with .Pickup}}<br>Pickup: {{.}}{{end}}
+          {{if .EmergencyName}}<br>Emergency: {{.EmergencyName}} ({{.EmergencyPhone}}){{end}}
+          {{with .Medical}}<br><span class="warn">Medical:</span> {{.}}{{end}}
+          {{with .Note}}<br>Note: {{.}}{{end}}
+        </td>
+        <td><span class="status {{.Status}}">{{.Status}}</span>
+          {{if .PaidAt}}<br><span class="status paid">Paid ₹{{inr .PaidAmount}}</span>{{else if or (eq .Status "approved") (eq .Status "requested")}}<br><span class="muted small">Due ₹{{inr .Amount}}</span>{{end}}
+        </td>
+        <td class="actions">
+          {{$id := .ID}}
+          {{if eq .Status "requested"}}
+          <form method="post" action="/admin/bookings/{{$id}}/status" class="inline">
+            <input type="hidden" name="status" value="approved"><input type="hidden" name="send_pay" value="1"><input type="hidden" name="back" value="{{$.Filter}}">
+            <button class="btn small act-approved">Approve &amp; send payment request</button>
+          </form>
+          {{end}}
+          {{if and .PayToken (not .PaidAt) (eq .Status "approved")}}
+          <a class="btn small ghost" href="/admin/bookings/{{.ID}}/payreq">Send payment request</a>
+          <form method="post" action="/admin/bookings/{{.ID}}/paid" class="inline"><input type="hidden" name="paid" value="1"><input type="hidden" name="amount" value="{{.Amount}}"><input type="hidden" name="back" value="{{$.Filter}}"><button class="btn small">Mark paid</button></form>
+          {{else if .PaidAt}}
+          <form method="post" action="/admin/bookings/{{.ID}}/paid" class="inline" onsubmit="return confirm('Mark booking #{{.ID}} as NOT paid?')"><input type="hidden" name="paid" value="0"><input type="hidden" name="back" value="{{$.Filter}}"><button class="linklike small">Undo paid</button></form>
+          {{end}}
+          {{range nextActions .Status}}
+          <form method="post" action="/admin/bookings/{{$id}}/status" class="inline">
+            <input type="hidden" name="status" value="{{.}}">
+            <input type="hidden" name="back" value="{{$.Filter}}">
+            <button class="btn small act-{{.}}">{{actionLabel .}}</button>
+          </form>
+          {{end}}
+        </td>
+      </tr>
       {{end}}
-    </td>
-  </tr>
-  {{else}}
-  <tr><td colspan="6" class="muted">No bookings here.</td></tr>
+    </table>
+    </div>
+  </div>
   {{end}}
-</table>
-</div>
+</section>
+{{else}}
+<p class="muted">No bookings here.</p>
+{{end}}
 {{end}}

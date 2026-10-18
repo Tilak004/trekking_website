@@ -43,10 +43,15 @@
         <summary aria-label="Account">{{initial .Name}}</summary>
         <div class="account-menu">
           <span class="acct-who">Signed in as <b>{{.Name}}</b><em class="role role-{{slug $.Role}}">{{$.Role}}</em></span>
+          {{if .IsAdmin}}
+          <a href="/admin">Bookings</a>
+          <a href="/admin/treks">Treks &amp; dates</a>
+          <a href="/admin/leads">Trek leads</a>
+          {{else}}
           <a href="/my">My bookings</a>
-          <a href="/lead">Lead dashboard</a>
-          <a href="/lead-with-us">Trek-lead profile</a>
-          {{if .IsAdmin}}<a href="/admin">Admin</a>{{end}}
+          {{if eq $.Role "Trek lead"}}<a href="/lead">Lead dashboard</a>{{end}}
+          <a href="/lead-with-us">{{if eq $.Role "Trek lead"}}My lead profile{{else}}Become a trek lead{{end}}</a>
+          {{end}}
           <form method="post" action="/logout"><button class="linklike">Log out</button></form>
         </div>
       </details>

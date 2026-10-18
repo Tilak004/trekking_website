@@ -168,6 +168,10 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, u.ID, batch.ID, people, pickup, emName, emP
 		return
 	}
 	id, _ := res.LastInsertId()
+	if _, err := a.db.Exec(`UPDATE bookings SET pay_token = ? WHERE id = ?`, randomToken(8), id); err != nil {
+		a.serverError(w, err)
+		return
+	}
 	redirect(w, r, "/my/bookings/%d/sent", id)
 }
 

@@ -5,30 +5,56 @@
   <h1>Trek leads</h1>
   <a class="btn" href="/admin/leads/new">+ New lead</a>
 </div>
-<div class="table-wrap">
-<table class="table">
-  <tr><th>Lead</th><th>Status</th><th>Treks led</th><th>Trekkers</th><th>Rating</th><th>Visible</th><th></th></tr>
-  {{range .Leads}}
-  <tr>
-    <td><strong>{{.Name}}</strong>{{if .Verified}} <span class="verified sm">✓</span>{{end}}<br><span class="muted small">{{.Headline}}{{with .City}} · {{.}}{{end}}</span>{{with .AppliedAt}}<br><span class="muted small">Applied {{.}}</span>{{end}}</td>
-    <td><span class="status {{.Status}}">{{.Status}}</span>
+<p class="muted small">Open a lead to see their full profile. Approve new applications, and assign approved leads to upcoming trek dates.</p>
+
+<div class="lead-admin-list">
+{{range .Leads}}
+<details class="lead-admin" id="lead-{{.ID}}">
+  <summary>
+    {{template "avatar" .}}
+    <span class="la-name"><strong>{{.Name}}</strong>{{if .Verified}} <span class="verified sm">✓</span>{{end}}<br><span class="muted small">{{.Headline}}{{with .City}} · {{.}}{{end}}</span></span>
+    <span class="status {{.Status}}">{{.Status}}</span>
+    <span class="la-stats small muted">{{.TreksLed}} treks · {{.TrekkersGuided}} trekkers · {{if .Ratings}}★ {{rating .AvgRating}}{{else}}no ratings{{end}}</span>
+  </summary>
+  <div class="la-body">
+    <div class="la-profile">
+      {{with .Bio}}<p>{{.}}</p>{{end}}
+      {{with lines .Achievements}}<h4>Treks &amp; achievements</h4><ul class="tight-list">{{range .}}<li>{{.}}</li>{{end}}</ul>{{end}}
+      {{with lines .Certifications}}<h4>Certifications</h4><ul class="tight-list">{{range .}}<li>{{.}}</li>{{end}}</ul>{{end}}
+      <p class="small muted">{{with .Phone}}Phone: <a href="tel:{{.}}">{{.}}</a> · {{end}}{{with .AppliedAt}}Applied {{.}} · {{end}}<a href="/leads/{{.Slug}}" target="_blank">Public profile</a> · <a href="/admin/leads/{{.ID}}">Edit profile</a></p>
+    </div>
+    <div class="la-side">
       {{$id := .ID}}
-      {{if and (ne .Status "approved") (ne .Status "removed")}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"><input type="hidden" name="status" value="approved"><button class="btn small act-approved">Approve</button></form>{{end}}
-      {{if eq .Status "pending"}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"><input type="hidden" name="status" value="rejected"><button class="btn small act-rejected">Reject</button></form>{{end}}
-      {{if and (ne .Status "removed") (ne .Status "rejected")}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"
-        onsubmit="return confirm('Remove {{.Name}} as a trek lead?\n\nTheir profile is hidden, they lose dashboard access, their upcoming trek dates become unassigned and their proposed dates are dropped.')">
-        <input type="hidden" name="status" value="removed"><button class="btn small act-cancelled">Remove</button></form>{{end}}
-    </td>
-    <td>{{.TreksLed}}</td>
-    <td>{{.TrekkersGuided}}</td>
-    <td>{{if .Ratings}}{{rating .AvgRating}} ({{.Ratings}}){{else}}–{{end}}</td>
-    <td>{{if .Active}}Yes{{else}}<span class="muted">Hidden</span>{{end}}</td>
-    <td><a href="/admin/leads/{{.ID}}">Edit →</a></td>
-  </tr>
-  {{else}}
-  <tr><td colspan="7" class="muted">No leads yet.</td></tr>
-  {{end}}
-</table>
+      <div class="la-actions">
+        {{if and (ne .Status "approved") (ne .Status "removed")}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"><input type="hidden" name="status" value="approved"><button class="btn small act-approved">Approve</button></form>{{end}}
+        {{if eq .Status "pending"}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"><input type="hidden" name="status" value="rejected"><button class="btn small act-rejected">Reject</button></form>{{end}}
+        {{if and (ne .Status "removed") (ne .Status "rejected")}}<form method="post" action="/admin/leads/{{$id}}/status" class="inline"
+          onsubmit="return confirm('Remove {{.Name}} as a trek lead?\n\nTheir profile is hidden, they lose dashboard access, their upcoming trek dates become unassigned and their proposed dates are dropped.')">
+          <input type="hidden" name="status" value="removed"><button class="btn small act-cancelled">Remove</button></form>{{end}}
+      </div>
+      {{if eq .Status "approved"}}
+      <h4>Leading</h4>
+      {{$mine := 0}}
+      <ul class="tight-list">
+        {{range $.Batches}}{{if eq .LeadID $id}}{{$mine = 1}}<li>{{.TrekName}} · {{fmtDate .StartDate}}</li>{{end}}{{end}}
+      </ul>
+      {{if not $mine}}<p class="muted small">No upcoming treks assigned.</p>{{end}}
+      {{with $.Batches}}
+      <form method="post" action="/admin/leads/{{$id}}/assign" class="la-assign">
+        <select name="batch_id" required>
+          <option value="">Assign to a trek date…</option>
+          {{range .}}{{if ne .LeadID $id}}<option value="{{.ID}}">{{.TrekName}} · {{fmtDate .StartDate}}{{with .LeadName}} (now: {{.}}){{end}}</option>{{end}}{{end}}
+        </select>
+        <button class="btn small act-approved">Assign</button>
+      </form>
+      {{end}}
+      {{end}}
+    </div>
+  </div>
+</details>
+{{else}}
+<p class="muted">No leads yet.</p>
+{{end}}
 </div>
 <p class="muted small">Treks led and trekkers guided count only bookings marked <em>completed</em>.</p>
 {{end}}

@@ -21,13 +21,18 @@ func (a *App) adminBookings(w http.ResponseWriter, r *http.Request) {
 	} else {
 		filter = ""
 	}
-	bookings, err := a.queryBookings(where+" ORDER BY k.id DESC LIMIT 500", args...)
+	bookings, err := a.queryBookings(where+" ORDER BY k.id DESC LIMIT 1000", args...)
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	groups, err := a.groupBookings(bookings)
 	if err != nil {
 		a.serverError(w, err)
 		return
 	}
 	a.render(w, r, "admin_bookings.html", map[string]any{
-		"Bookings": bookings, "Filter": filter, "Statuses": bookingStatuses,
+		"Bookings": bookings, "Groups": groups, "Filter": filter, "Statuses": bookingStatuses,
 	})
 }
 
@@ -57,6 +62,10 @@ func (a *App) adminSetBookingStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err := a.db.Exec(`UPDATE bookings SET status = ? WHERE id = ?`, status, k.ID); err != nil {
 		a.serverError(w, err)
+		return
+	}
+	if status == StatusApproved && r.FormValue("send_pay") == "1" {
+		redirect(w, r, "/admin/bookings/%d/payreq", k.ID)
 		return
 	}
 	redirect(w, r, "%s&msg=status", back)
@@ -250,7 +259,12 @@ func (a *App) adminLeads(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
-	a.render(w, r, "admin_leads.html", map[string]any{"Leads": leads})
+	batches, err := a.assignableBatches()
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	a.render(w, r, "admin_leads.html", map[string]any{"Leads": leads, "Batches": batches})
 }
 
 func (a *App) adminLeadForm(w http.ResponseWriter, r *http.Request) {
@@ -329,7 +343,7 @@ city = ?, certifications = ?, verified = ? WHERE id = ?`,
 
 func (a *App) adminUsers(w http.ResponseWriter, r *http.Request) {
 	rows, err := a.db.Query(`SELECT u.id, u.name, u.email, u.phone, u.is_admin, u.created_at,
-(SELECT COUNT(*) FROM bookings k WHERE k.user_id = u.id) FROM users u ORDER BY u.id DESC LIMIT 1000`)
+(SELECT COUNT(*) FROM bookings k WHERE k.user_id = u.id) FROM users u WHERE u.is_admin = 0 ORDER BY u.id DESC LIMIT 1000`)
 	if err != nil {
 		a.serverError(w, err)
 		return

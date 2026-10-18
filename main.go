@@ -95,11 +95,15 @@ func (a *App) routes() http.Handler {
 
 	mux.HandleFunc("GET /my", a.requireUser(a.myBookings))
 	mux.HandleFunc("GET /my/bookings/{id}/sent", a.requireUser(a.bookingSent))
+	mux.HandleFunc("GET /pay/{id}/{token}", a.payPage)
+	mux.HandleFunc("GET /pay/{id}/{token}/qr.png", a.payQR)
 	mux.HandleFunc("POST /my/bookings/{id}/cancel", a.requireUser(a.cancelBooking))
 	mux.HandleFunc("POST /my/bookings/{id}/review", a.requireUser(a.reviewBooking))
 
 	mux.HandleFunc("GET /admin", a.requireAdmin(a.adminBookings))
 	mux.HandleFunc("POST /admin/bookings/{id}/status", a.requireAdmin(a.adminSetBookingStatus))
+	mux.HandleFunc("POST /admin/bookings/{id}/paid", a.requireAdmin(a.adminSetPaid))
+	mux.HandleFunc("GET /admin/bookings/{id}/payreq", a.requireAdmin(a.adminPayRequest))
 	mux.HandleFunc("GET /admin/treks", a.requireAdmin(a.adminTreks))
 	mux.HandleFunc("GET /admin/treks/new", a.requireAdmin(a.adminTrekForm))
 	mux.HandleFunc("POST /admin/treks/new", a.requireAdmin(a.adminSaveTrek))
@@ -115,6 +119,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /admin/leads/{id}", a.requireAdmin(a.adminLeadForm))
 	mux.HandleFunc("POST /admin/leads/{id}", a.requireAdmin(a.adminSaveLead))
 	mux.HandleFunc("POST /admin/leads/{id}/status", a.requireAdmin(a.adminSetLeadStatus))
+	mux.HandleFunc("POST /admin/leads/{id}/assign", a.requireAdmin(a.adminAssignLead))
 	mux.HandleFunc("GET /admin/users", a.requireAdmin(a.adminUsers))
 
 	return a.withUser(mux)
@@ -135,6 +140,7 @@ var flashMessages = map[string]string{
 	"applied":       "Application received! We'll review it and get back to you.",
 	"lead_updated":  "Your trek-lead profile is updated.",
 	"lead_status":   "Trek lead updated.",
+	"lead_assigned": "Lead assigned to that trek date.",
 	"proposed":      "Date proposed! It goes live once our team approves it.",
 	"withdrawn":     "Date withdrawn.",
 	"date_reviewed": "Proposed date updated.",
@@ -147,6 +153,7 @@ var flashErrors = map[string]string{
 	"batch_has_bookings": "This batch has bookings, so it can't be deleted.",
 	"bad_review":         "Please give a rating from 1 to 5.",
 	"cannot_review":      "You can only review a completed trek, once.",
+	"lead_not_approved":  "Only approved leads can be assigned to treks.",
 	"bad_contact":        "Please enter your name and a valid 10-digit phone number.",
 	"bad_photo":          "Please upload a JPG, PNG or WebP photo under 5 MB.",
 	"bad_date":           "Please pick a date at least 3 days from today.",
@@ -247,10 +254,15 @@ var templateFuncs = template.FuncMap{
 	},
 	"nextActions": nextActions,
 	"blocks":      splitBlocks,
+	"whatsappTo":  whatsAppTo,
+	"payRequest":  payRequestLink,
+	"upi":         func(k Booking) template.URL { return template.URL(k.UPILink()) },
 	"slug":        slugify,
 	"paras":       splitParas,
-	"bookingWA":   func(k Booking) string { return whatsAppLink(bookingMessage(k)) },
+	"bookingWA":   func(k Booking) string { return bookingsWALink(bookingMessage(k)) },
+	"bookingsWA":  bookingsWALink,
 	"hasPrefix":   strings.HasPrefix,
+	"hasSuffix":   strings.HasSuffix,
 	"firstWord": func(s string) string {
 		f := strings.Fields(s)
 		if len(f) == 0 {

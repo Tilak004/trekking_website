@@ -1,0 +1,32 @@
+{{define "title"}}Pay for your trek · {{.Brand}}{{end}}
+{{define "content"}}
+{{with .Booking}}
+<section class="pay panel">
+  {{if .PaidAt}}
+    <p class="eyebrow">Booking #{{.ID}}</p>
+    <h1>Payment received ✓</h1>
+    <p class="muted">Thanks {{firstWord .UserName}}! Your seat on <strong>{{.TrekName}}</strong> ({{fmtDate .StartDate}}) is confirmed. See you on the trail.</p>
+  {{else}}
+    <p class="eyebrow">Booking #{{.ID}}</p>
+    <h1>Pay ₹{{inr .Amount}}</h1>
+    <p class="muted">{{.TrekName}} · {{fmtDate .StartDate}} · {{.People}} {{if eq .People 1}}person{{else}}people{{end}}</p>
+
+    <a class="btn big block pay-upi" href="{{upi .}}">Pay with UPI app</a>
+    <p class="small muted pay-apps">Opens Google Pay, PhonePe, Paytm or any UPI app with the amount filled in.</p>
+
+    <div class="pay-qr">
+      <img src="{{.PayPath}}/qr.png" alt="UPI QR code for ₹{{inr .Amount}}" width="200" height="200">
+      <div>
+        <strong>On a laptop?</strong>
+        <span class="small muted">Scan this QR with any UPI app.</span>
+        <span class="small">UPI ID: <code>{{$.Site.UPI}}</code></span>
+        <span class="small">Amount: <strong>₹{{inr .Amount}}</strong></span>
+      </div>
+    </div>
+
+    <a class="wa-inline" href="{{bookingsWA (printf "Hi! I've paid ₹%s for booking #%d (%s, %s). Sharing the screenshot here." (inr .Amount) .ID .TrekName (fmtDate .StartDate))}}" target="_blank" rel="noopener">{{template "waicon"}} Paid? Send us the screenshot on WhatsApp</a>
+    <p class="small muted">We'll mark your booking paid once we see it. Please pay only after we've confirmed your seat.</p>
+  {{end}}
+</section>
+{{end}}
+{{end}}
