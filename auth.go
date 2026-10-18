@@ -78,6 +78,10 @@ func (a *App) requireUser(h http.HandlerFunc) http.HandlerFunc {
 			if r.Method == http.MethodGet {
 				next = "?next=" + url.QueryEscape(r.URL.RequestURI())
 			}
+			if isAPI(r) { // the React app sends people to the login page itself
+				apiJSON(w, http.StatusUnauthorized, map[string]any{"error": "login", "redirect": "/login" + next})
+				return
+			}
 			http.Redirect(w, r, "/login"+next, http.StatusSeeOther)
 			return
 		}
@@ -182,7 +186,7 @@ func (a *App) login(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
-	http.Redirect(w, r, safeNext(next), http.StatusSeeOther)
+	redirectTo(w, r, safeNext(next))
 }
 
 func (a *App) logout(w http.ResponseWriter, r *http.Request) {

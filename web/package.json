@@ -1,20 +1,12 @@
 {
-  "name": "beyond-islands",
+  "name": "beyond-seed",
   "private": true,
-  "description": "Interactive islands (Preact) for the Go site. Output goes to ../static/js and is embedded in the Go binary.",
+  "description": "Demo-data seeding script (seed:demo). The website frontend lives in ../frontend.",
   "scripts": {
-    "build": "npm run clean && esbuild src/islands.js --bundle --splitting --format=esm --minify --target=es2019 --jsx=automatic --jsx-import-source=preact --outdir=../static/js --chunk-names=[name]-[hash] && node -e \"require('fs').copyFileSync('node_modules/leaflet/dist/leaflet.css','../static/js/leaflet.css')\"",
-    "clean": "node -e \"const fs=require('fs');for(const f of fs.readdirSync('../static/js'))if(f.endsWith('.js'))fs.unlinkSync('../static/js/'+f)\"",
     "seed:demo": "node seed/demo.mjs ../beyond.db ../beyond-demo.db"
-  },
-  "dependencies": {
-    "leaflet": "1.9.4",
-    "preact": "10.26.4"
   },
   "devDependencies": {
     "@faker-js/faker": "9.6.0",
-    "bcryptjs": "2.4.3",
-    "esbuild": "0.25.0",
-    "happy-dom": "15.11.7"
+    "bcryptjs": "2.4.3"
   }
 }

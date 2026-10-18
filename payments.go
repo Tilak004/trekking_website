@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -136,6 +135,6 @@ func (a *App) adminPayRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	k := list[0]
 	a.render(w, r, "admin_payreq.html", map[string]any{
-		"Booking": k, "Message": payRequestText(k, baseURL(r)), "WALink": template.URL(payRequestLink(k, baseURL(r))),
+		"Booking": k, "Message": payRequestText(k, baseURL(r)), "WALink": payRequestLink(k, baseURL(r)),
 	})
 }

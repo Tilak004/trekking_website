@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-// Data behind the interactive (Preact) parts of the site: trek finder, map,
+// Data behind the interactive parts of the React site: trek finder, map,
 // booking flow and trust stats. The server still renders every page; these
-// structs are embedded in the page as JSON for the islands to pick up.
+// structs are sent to the app as JSON.
 
 // migrateInteractive adds trek coordinates, finder tags, elevation profiles and
 // review photos. Known treks get approximate coordinates and tags the first time.

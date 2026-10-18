@@ -1,19 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"database/sql"
 	"embed"
 	"flag"
 	"fmt"
-	"html/template"
-	"io/fs"
 	"log"
 	"math"
 	"net/http"
-	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -23,16 +18,12 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-//go:embed templates/*.html
-var templateFS embed.FS
-
 //go:embed static
 var staticFS embed.FS
 
 type App struct {
 	demo      bool // running on a demo database: shows a banner
 	db        *sql.DB
-	pages     map[string]*template.Template
 	photosDir string
 	adminMode bool // the separate admin console process (see console.go)
 }
@@ -82,7 +73,7 @@ func main() {
 	if adminMode {
 		sessionCookie = "admin_" + sessionCookie // never shared with the public site's login
 	}
-	app := &App{db: db, pages: loadPages(), photosDir: *photosDir, demo: strings.Contains(base, "demo"), adminMode: adminMode}
+	app := &App{db: db, photosDir: *photosDir, demo: strings.Contains(base, "demo"), adminMode: adminMode}
 	srv := &http.Server{Addr: *addr, Handler: app.routes(), ReadHeaderTimeout: 10 * time.Second}
 	if adminMode {
 		log.Printf("%s admin console running on %s", site.Name, *addr)
@@ -136,7 +127,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /my/bookings/{id}/cancel", a.requireUser(a.cancelBooking))
 	mux.HandleFunc("POST /my/bookings/{id}/review", a.requireUser(a.reviewBooking))
 
-	return a.withUser(mux)
+	return a.spa(a.withUser(mux))
 }
 
 // Flash messages are passed as short codes in the query string (?msg=booked)
@@ -205,114 +196,18 @@ func (a *App) render(w http.ResponseWriter, r *http.Request, page string, data m
 	data["User"] = currentUser(r)
 	data["Path"] = r.URL.Path
 	data["BaseURL"] = baseURL(r)
-	theme, previewing := pickTheme(w, r)
-	data["Theme"] = theme
-	data["ThemePreview"] = previewing
-	data["Themes"] = themes
-	if _, ok := data["MetaDesc"]; !ok {
-		data["MetaDesc"] = site.Description
-	}
-	if _, ok := data["MetaImage"]; !ok && a.heroPhoto() != "" {
-		data["MetaImage"] = "/photos/" + a.heroPhoto()
-	}
 	if _, ok := data["Msg"]; !ok {
 		data["Msg"] = flashMessages[r.URL.Query().Get("msg")]
 	}
 	if _, ok := data["Err"]; !ok {
 		data["Err"] = flashErrors[r.URL.Query().Get("err")]
 	}
-	var buf bytes.Buffer
-	base := "layout.html"
-	if isConsolePage(page) {
-		base = "console_base.html"
-	}
-	if err := a.pages[page].ExecuteTemplate(&buf, base, data); err != nil {
-		a.serverError(w, err)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if status, ok := data["Status"].(int); ok {
-		w.WriteHeader(status)
-	}
-	buf.WriteTo(w)
+	a.renderJSON(w, r, page, data)
 }
 
 func (a *App) serverError(w http.ResponseWriter, err error) {
 	log.Printf("error: %v", err)
 	http.Error(w, "Something went wrong. Please try again.", http.StatusInternalServerError)
-}
-
-func loadPages() map[string]*template.Template {
-	files, err := fs.Glob(templateFS, "templates/*.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pages := map[string]*template.Template{}
-	for _, f := range files {
-		name := path.Base(f)
-		if name == "layout.html" || name == "console_base.html" {
-			continue
-		}
-		base := "layout.html"
-		if isConsolePage(name) {
-			base = "console_base.html"
-		}
-		pages[name] = template.Must(template.New(base).Funcs(templateFuncs).
-			ParseFS(templateFS, "templates/"+base, f))
-	}
-	return pages
-}
-
-var templateFuncs = template.FuncMap{
-	"inr":     formatINR,
-	"fmtDate": formatDate,
-	"lines":   splitLines,
-	"stars":   stars,
-	"starsN":  func(n int) string { return stars(float64(n)) },
-	"initial": func(s string) string {
-		r := []rune(strings.TrimSpace(s))
-		if len(r) == 0 {
-			return "?"
-		}
-		return strings.ToUpper(string(r[0]))
-	},
-	"rating": func(f float64) string { return strconv.FormatFloat(f, 'f', 1, 64) },
-	"seq": func(n int) []int {
-		s := make([]int, n)
-		for i := range s {
-			s[i] = i + 1
-		}
-		return s
-	},
-	"nextActions": nextActions,
-	"blocks":      splitBlocks,
-	"whatsappTo":  whatsAppTo,
-	"payRequest":  payRequestLink,
-	"upi":         func(k Booking) template.URL { return template.URL(k.UPILink()) },
-	"slug":        slugify,
-	"paras":       splitParas,
-	"bookingWA":   func(k Booking) string { return bookingsWALink(bookingMessage(k)) },
-	"bookingsWA":  bookingsWALink,
-	"hasPrefix":   strings.HasPrefix,
-	"hasSuffix":   strings.HasSuffix,
-	"firstWord": func(s string) string {
-		f := strings.Fields(s)
-		if len(f) == 0 {
-			return ""
-		}
-		return f[0]
-	},
-	"restWords": func(s string) string {
-		f := strings.Fields(s)
-		if len(f) < 2 {
-			return ""
-		}
-		return strings.Join(f[1:], " ")
-	},
-	"urlpath":     func(p string) string { return (&url.URL{Path: p}).EscapedPath() },
-	"whatsapp":    whatsAppLink,
-	"year":        func() int { return time.Now().Year() },
-	"actionLabel": func(s string) string { return actionLabels[s] },
 }
 
 // formatINR formats a rupee amount with Indian digit grouping (1,25,000).
@@ -391,5 +286,15 @@ func envOr(key, def string) string {
 }
 
 func redirect(w http.ResponseWriter, r *http.Request, format string, args ...any) {
-	http.Redirect(w, r, fmt.Sprintf(format, args...), http.StatusSeeOther)
+	redirectTo(w, r, fmt.Sprintf(format, args...))
+}
+
+// redirectTo sends the browser to url. For /api requests (the React app) it
+// answers {"redirect": url} instead, and the app navigates there itself.
+func redirectTo(w http.ResponseWriter, r *http.Request, url string) {
+	if isAPI(r) {
+		apiJSON(w, http.StatusOK, map[string]any{"redirect": url})
+		return
+	}
+	http.Redirect(w, r, url, http.StatusSeeOther)
 }

@@ -1596,3 +1596,8 @@ tr.done td { opacity: .6; }
 .book-panel .bk-actions { grid-template-columns: 1fr; }
 .banner-cta { margin-top: 12px; background: #fff !important; border-color: #fff !important; color: var(--accent, #0f4d2c) !important; }
 @media (max-width: 760px) { .book-grid { grid-template-columns: 1fr; } }
+
+/* phones: the opened menu is dark green, so its links must be light (the editorial theme made them dark) */
+@media (max-width: 640px) {
+  [data-theme~="editorial"] .site-header .menu a, [data-theme~="editorial"] .site-header .menu a.on { color: #fff; }
+}

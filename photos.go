@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"io/fs"
 	"net/http"
 	"os"
@@ -121,8 +120,8 @@ func (a *App) heroLayers() *HeroLayers {
 }
 
 // Style is the CSS custom properties the layered hero is positioned with.
-func (l *HeroLayers) Style() template.CSS {
-	return template.CSS(fmt.Sprintf("--ar:%.4f;--sky:%.4f;--peak:%.4f", l.Aspect, l.Skyline, l.Peak))
+func (l *HeroLayers) Style() string {
+	return (fmt.Sprintf("--ar:%.4f;--sky:%.4f;--peak:%.4f", l.Aspect, l.Skyline, l.Peak))
 }
 
 // heroPhoto finds photos/hero.<ext>, or returns "" if there isn't one.
@@ -133,6 +132,15 @@ func (a *App) findHero(exts map[string]bool) string {
 		if _, err := os.Stat(filepath.Join(a.photosDir, "hero"+ext)); err == nil {
 			return "hero" + ext
 		}
+	}
+	return ""
+}
+
+// heroStyle is the layered hero's CSS custom properties, for the React frontend
+// (which can't call the Style method).
+func (a *App) heroStyle() string {
+	if l := a.heroLayers(); l != nil {
+		return l.Style()
 	}
 	return ""
 }

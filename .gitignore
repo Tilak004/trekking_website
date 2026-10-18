@@ -13,3 +13,4 @@ web/node_modules/
 
 # Database backups (contain customer data)
 backups/
+frontend/node_modules/

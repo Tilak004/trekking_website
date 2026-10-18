@@ -26,7 +26,7 @@ Set `BASE_URL` (e.g. `https://yourdomain.in`) in production so WhatsApp/Instagra
 
 ## Policies
 
-`templates/cancellation.html`, `terms.html` and `privacy.html` are starting templates. Review the refund rules and amounts, and have the legal pages checked, before going live.
+`frontend/src/public/pages/Static.jsx` holds the cancellation, terms and privacy text; they are starting templates. Review the refund rules and amounts, and have the legal pages checked, before going live.
 
 ## Trek details
 
@@ -88,18 +88,23 @@ The public-site process backs up automatically every night at 02:00. Each backup
 
 Keep a copy **off the server** in Google Drive (set `BACKUP_UPLOAD`); a backup on the same disk is lost if the server is. Setup on the server: install rclone, run `rclone config` to add a Google Drive remote named `gdrive` (authorise it with `rclone authorize "drive"` on a laptop, since the server has no browser), then run `beyond -backup-now` and check the file appears in Drive.
 
-## Interactive parts (Preact islands)
+## Frontend (React)
 
-The server renders every page. A few parts are upgraded in the browser by small Preact components ("islands"): the trek finder, the Western Ghats map, the elevation profile and the step-by-step booking flow. Each one loads only on pages that use it (the map only when scrolled into view), and the plain HTML still works if JavaScript fails.
+The whole frontend is a React app in `frontend/`: the public website and the admin console, each its own entry (`index.html` and `admin.html`) sharing one codebase (React 18, React Router, Vite, plus Leaflet for the map). The Go server no longer renders HTML pages. It answers JSON, and the React app draws it:
 
-Source is in `web/src/`; the built files in `static/js/` are committed and embedded in the Go binary, so **Node is only needed to change the islands**, not to run the site:
+- Every page's data comes from `GET /api/<page path>` (for example `/api/treks/kudremukh`). Forms `POST` to `/api/...` and get `{"redirect": "/where/next"}` back. The Go handlers are the same ones as before; `render()` and `redirect()` simply answer in JSON for `/api` requests (see `api.go`).
+- Any other browser request gets the app's HTML shell, so refreshing or sharing a deep link works. The server fills in the page title and link-preview tags (WhatsApp/Instagram show the right trek photo) before sending it.
+- Private data never reaches public pages: `api.go` strips fields such as exact trailhead coordinates, lead phone numbers and other people's emails from public responses.
+
+The built app is committed in `static/app/` and embedded in the Go binary, so **Node is only needed to change the frontend**, not to run the site:
 
 ```
-cd web
+cd frontend
 npm install
-npm run build              # writes ../static/js
-node test/islands.test.mjs # quick smoke tests
+npm run build        # writes ../static/app; then rebuild the Go binary
 ```
+
+Source layout: `src/public/` (website pages), `src/admin/` (console pages), `src/lib/` (API client, helpers), `src/components/` (shared pieces). Styling is still the hand-written `static/style.css` and `static/console.css`.
 
 Trek coordinates, finder tags and elevation profiles are edited in Admin → Treks.
 
@@ -135,7 +140,8 @@ requested ──approve──▶ approved ──complete──▶ completed (tre
 - `auth.go`: signup, login, sessions
 - `handlers.go`: public and trekker pages
 - `admin.go`: trek, lead and user admin handlers; `console.go`, `analytics.go`: the admin console (events, registrations, dashboard, analytics)
-- `templates/`, `static/`: HTML and CSS, embedded into the binary
+- `api.go`: the JSON API layer and the React app shell
+- `frontend/`: the React app; `static/`: CSS, logos and the built app, embedded into the binary
 
 ## Sample data
 

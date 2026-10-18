@@ -1,7 +1,6 @@
 package main
 
 import (
-	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
@@ -37,71 +36,6 @@ var site = Site{
 	City:        "Bangalore, Karnataka",
 }
 
-// defaultTheme is the theme every visitor sees. Others can be previewed with ?theme=<name>.
-const defaultTheme = "editorial"
-
-type Theme struct {
-	Name, Label, Fonts string // Fonts is a Google Fonts css2 query
-	Base               string // optional theme whose layout this one builds on
-}
-
-// Attr is the value of <html data-theme>, e.g. "ghats night".
-func (t Theme) Attr() string { return strings.TrimSpace(t.Base + " " + t.Name) }
-
-var themes = []Theme{
-	{"editorial", "Editorial", "family=Source+Sans+3:wght@400;500;600;700", "ghats sky"},
-	{"sky", "Sky", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", "ghats"},
-	{"night", "Shola Night", "family=Marcellus&family=Outfit:wght@600;700;800&family=Inter:wght@300;400;500;600", "ghats"},
-	{"ghats", "Western Ghats", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", ""},
-	{"explore", "Explore", "family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=Kaushan+Script", ""},
-	{"forest", "Forest & sunrise", "family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700", ""},
-	{"alpine", "Alpine", "family=Montserrat:wght@600;700&family=Inter:wght@400;500;600;700", ""},
-	{"earth", "Earth", "family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=DM+Sans:wght@400;500;600;700", ""},
-	{"bold", "Bold", "family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700", ""},
-}
-
-// FontsHref is the stylesheet link for the theme's fonts. It's a fixed string from
-// the themes list above, so it's safe to mark as a trusted URL.
-func (t Theme) FontsHref() template.URL {
-	return template.URL("https://fonts.googleapis.com/css2?" + t.Fonts + "&display=swap")
-}
-
-func findTheme(name string) (Theme, bool) {
-	for _, t := range themes {
-		if t.Name == name {
-			return t, true
-		}
-	}
-	return Theme{}, false
-}
-
-// pickTheme returns the theme for this request. ?theme=<name> starts a preview
-// (remembered in a cookie); ?theme=off ends it.
-func pickTheme(w http.ResponseWriter, r *http.Request) (Theme, bool) {
-	def, _ := findTheme(defaultTheme)
-	q := r.URL.Query().Get("theme")
-	if q == "off" {
-		http.SetCookie(w, &http.Cookie{Name: "theme", Path: "/", MaxAge: -1})
-		return def, false
-	}
-	if t, ok := findTheme(q); ok {
-		http.SetCookie(w, &http.Cookie{Name: "theme", Value: t.Name, Path: "/", MaxAge: 7 * 24 * 3600, SameSite: http.SameSiteLaxMode})
-		return t, true
-	}
-	if c, err := r.Cookie("theme"); err == nil {
-		if t, ok := findTheme(c.Value); ok {
-			return t, true
-		}
-	}
-	return def, false
-}
-
-// TelLink is the phone number without spaces, for tel: links.
-func (s Site) TelLink() string { return strings.ReplaceAll(s.Phone, " ", "") }
-
-// TelLink2 is the secondary number without spaces, for tel: links.
-func (s Site) TelLink2() string { return strings.ReplaceAll(s.Phone2, " ", "") }
-
 // whatsAppLink opens a WhatsApp chat with an optional pre-filled message.
 func whatsAppLink(text string) string {
 	link := "https://wa.me/" + site.WhatsApp
@@ -123,46 +57,6 @@ func baseURL(r *http.Request) string {
 	return scheme + "://" + r.Host
 }
 
-// Block is a titled chunk of text: the first line is the title, the rest the body.
-// Admins write itineraries and FAQs as blocks separated by a blank line.
-type Block struct {
-	Title string
-	Body  string
-}
-
-func splitBlocks(s string) []Block {
-	var out []Block
-	for _, chunk := range strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n\n") {
-		chunk = strings.TrimSpace(chunk)
-		if chunk == "" {
-			continue
-		}
-		title, body, _ := strings.Cut(chunk, "\n")
-		out = append(out, Block{Title: strings.TrimSpace(title), Body: strings.TrimSpace(body)})
-	}
-	return out
-}
-
-// splitParas splits text into paragraphs on blank lines.
-func splitParas(s string) []string {
-	var out []string
-	for _, p := range strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n\n") {
-		if p = strings.TrimSpace(p); p != "" {
-			out = append(out, p)
-		}
-	}
-	return out
-}
-
-// staticPage renders a template that needs no data (About, Terms, ...).
-func (a *App) staticPage(page string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) { a.render(w, r, page, nil) }
-}
-
-func (a *App) notFound(w http.ResponseWriter, r *http.Request) {
-	a.render(w, r, "notfound.html", map[string]any{"Status": http.StatusNotFound})
-}
-
 // whatsAppTo opens a WhatsApp chat with someone else's number (e.g. a trekker),
 // with a message filled in. Indian numbers without a country code get +91.
 func whatsAppTo(phone, text string) string {
@@ -181,4 +75,14 @@ func whatsAppTo(phone, text string) string {
 // bookingsWALink opens a WhatsApp chat with the bookings desk (Site.BookingsWA).
 func bookingsWALink(text string) string {
 	return whatsAppTo(site.BookingsWA, text)
+}
+
+// staticPage answers pages that need no data of their own (About, Terms, ...). The
+// React app draws them; this call gives it the site details and the signed-in user.
+func (a *App) staticPage(page string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) { a.render(w, r, page, nil) }
+}
+
+func (a *App) notFound(w http.ResponseWriter, r *http.Request) {
+	a.render(w, r, "notfound.html", map[string]any{"Status": http.StatusNotFound})
 }

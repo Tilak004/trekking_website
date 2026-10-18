@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/csv"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -22,26 +23,6 @@ import (
 // "to collect" is the booked value that has not been marked paid yet.
 
 const BatchDraft = "draft" // saved by an admin but not yet published
-
-func init() {
-	// regctx is the context for the "regtable" template when it is drawn once per date group.
-	templateFuncs["regctx"] = func(bookings []Booking, back string) map[string]any {
-		return map[string]any{"Bookings": bookings, "Back": back}
-	}
-	// waTo turns a phone number into the digits wa.me expects (10-digit numbers get India's +91).
-	templateFuncs["waTo"] = func(phone string) string {
-		var d strings.Builder
-		for _, c := range phone {
-			if c >= '0' && c <= '9' {
-				d.WriteRune(c)
-			}
-		}
-		if d.Len() == 10 {
-			return "91" + d.String()
-		}
-		return d.String()
-	}
-}
 
 func isConsolePage(name string) bool {
 	return strings.HasPrefix(name, "admin_") || strings.HasPrefix(name, "console_")
@@ -79,6 +60,8 @@ func (a *App) adminRoutes() http.Handler {
 	mux.HandleFunc("POST /admin/bookings/{id}/cancel", adm(a.adminCancelBooking))
 	mux.HandleFunc("POST /admin/bookings/{id}/refunded", adm(a.adminMarkRefunded))
 	mux.HandleFunc("GET /admin/bookings/{id}/payreq", adm(a.adminPayRequest))
+	// The payment request page shows this QR; the public site serves the same image.
+	mux.HandleFunc("GET /pay/{id}/{token}/qr.png", adm(a.payQR))
 
 	mux.HandleFunc("GET /admin/analytics", adm(a.consoleAnalytics))
 	mux.HandleFunc("GET /admin/enquiries", adm(a.consoleEnquiries))
@@ -100,7 +83,7 @@ func (a *App) adminRoutes() http.Handler {
 	mux.HandleFunc("POST /admin/leads/{id}/status", adm(a.adminSetLeadStatus))
 	mux.HandleFunc("POST /admin/leads/{id}/assign", adm(a.adminAssignLead))
 	mux.HandleFunc("GET /admin/users", adm(a.adminUsers))
-	return a.withUser(mux)
+	return a.spa(a.withUser(mux))
 }
 
 // ---- login ----
@@ -133,7 +116,7 @@ func (a *App) adminLogin(w http.ResponseWriter, r *http.Request) {
 	if dest == "/" {
 		dest = "/admin"
 	}
-	http.Redirect(w, r, dest, http.StatusSeeOther)
+	redirectTo(w, r, dest)
 }
 
 func (a *App) adminLogout(w http.ResponseWriter, r *http.Request) {
@@ -169,6 +152,16 @@ func (e Event) Fill() int       { return pct(e.Taken, e.Seats) }
 func (e Event) IsDraft() bool   { return e.Status == BatchDraft }
 func (e Event) IsLive() bool    { return e.Status == BatchLive }
 func (e Event) IsPending() bool { return e.Status == BatchPending }
+
+// MarshalJSON adds the values the console templates computed with Event's methods.
+func (e Event) MarshalJSON() ([]byte, error) {
+	type plain Event
+	return json.Marshal(struct {
+		plain
+		Left, Revenue, Fill          int
+		Past, IsDraft, IsLive, IsPending bool
+	}{plain(e), e.Left(), e.Revenue(), e.Fill(), e.Past(), e.IsDraft(), e.IsLive(), e.IsPending()})
+}
 
 func pct(n, of int) int {
 	if of <= 0 {
@@ -215,7 +208,10 @@ func (a *App) eventByID(id int64) (Event, error) {
 	return scanEvent(a.db.QueryRow(eventSelect+` WHERE b.id = ?`, id))
 }
 
-var eventFilters = []struct{ Key, Label, Where string }{
+var eventFilters = []struct {
+	Key, Label string
+	Where      string `json:"-"`
+}{
 	{"upcoming", "Upcoming", `WHERE b.start_date >= date('now') AND b.status IN ('live', 'draft', 'pending') ORDER BY b.start_date, b.id`},
 	{"draft", "Drafts", `WHERE b.status = 'draft' ORDER BY b.start_date, b.id`},
 	{"pending", "Proposed by leads", `WHERE b.status = 'pending' ORDER BY b.start_date, b.id`},

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Cancellations follow the cancellation policy (templates/cancellation.html):
+// Cancellations follow the cancellation policy (frontend/src/public/pages/Static.jsx):
 //
 //	customer cancels 7+ days before the trek  → full refund minus ₹200
 //	customer cancels 3–6 days before          → 50% refund
