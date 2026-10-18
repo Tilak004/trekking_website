@@ -188,5 +188,5 @@ func (a *App) adminReviewBatch(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
-	redirect(w, r, "/admin/treks?msg=date_reviewed")
+	redirect(w, r, "/admin/events?show=pending&msg=date_reviewed")
 }

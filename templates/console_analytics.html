@@ -1,0 +1,82 @@
+{{define "title"}}Analytics{{end}}
+{{define "content"}}
+<div class="c-head"><h1>Analytics</h1></div>
+<p class="note">Money figures are <strong>estimates</strong>: trek price × people on approved or completed bookings. Payments aren't connected yet, so this is not money received.</p>
+
+<h2 class="c-h">Money</h2>
+<div class="c-kpis">
+  <div class="kpi"><span>Confirmed value</span><strong>₹{{inr .ConfirmedValue}}</strong><em>approved + completed</em></div>
+  <div class="kpi"><span>Completed treks</span><strong>₹{{inr .CompletedValue}}</strong><em>trek already done</em></div>
+  <div class="kpi"><span>In the pipeline</span><strong>₹{{inr .PipelineValue}}</strong><em>requests not yet approved</em></div>
+  <div class="kpi"><span>Lost</span><strong>₹{{inr .LostValue}}</strong><em>cancelled + rejected</em></div>
+</div>
+<div class="c-kpis">
+  <div class="kpi"><span>Avg. booking value</span><strong>₹{{inr .AvgValue}}</strong></div>
+</div>
+
+<section class="c-block">
+  <h3>Estimated value by month of trek</h3>
+  {{template "columns" .Monthly}}
+</section>
+
+<h2 class="c-h">People</h2>
+<div class="c-kpis">
+  <div class="kpi"><span>Trekkers confirmed</span><strong>{{.People}}</strong><em>across {{.Bookings}} bookings</em></div>
+  <div class="kpi"><span>Avg. group per booking</span><strong>{{printf "%.1f" .AvgGroup}}</strong></div>
+  <div class="kpi"><span>Repeat trekkers</span><strong>{{.Repeat}}</strong><em>{{.RepeatPct}}% of {{.Unique}} who booked</em></div>
+  <div class="kpi"><span>Seats filled</span><strong>{{.FillPct}}%</strong><em>across all published events</em></div>
+</div>
+
+<div class="c-two">
+  <section class="c-block"><h3>Bookings by status</h3>
+    <div class="hbars">
+      {{range .Funnel}}<div class="hbar"><span>{{.Status}}</span><div><i class="s-{{.Status}}" style="width:{{.Pct}}%"></i></div><b>{{.Bookings}}</b></div>{{end}}
+    </div>
+  </section>
+  <section class="c-block"><h3>Age of the person booking</h3>{{template "hbars" .Ages}}</section>
+  <section class="c-block"><h3>Where people board (people)</h3>{{template "hbars" .Pickups}}</section>
+  <section class="c-block"><h3>New accounts per month</h3>{{template "columns" .Signups}}</section>
+</div>
+
+<h2 class="c-h">By trek</h2>
+<div class="table-wrap">
+<table class="table">
+  <tr><th>Trek</th><th>Events</th><th>People</th><th>Seats filled</th><th>Est. value</th><th>Rating</th></tr>
+  {{range .Treks}}
+  <tr><td><strong>{{.Name}}</strong></td><td>{{.Events}}</td><td>{{.People}}</td>
+    <td class="small"><div class="meter"><i style="width:{{.Fill}}%"></i></div>{{.Fill}}%</td>
+    <td>₹{{inr .Value}}</td><td>{{if .Ratings}}{{rating .Rating}} ({{.Ratings}}){{else}}—{{end}}</td></tr>
+  {{else}}<tr><td colspan="6" class="muted">No treks yet.</td></tr>{{end}}
+</table>
+</div>
+
+<h2 class="c-h">By trek lead</h2>
+<div class="table-wrap">
+<table class="table">
+  <tr><th>Lead</th><th>Events</th><th>People guided</th><th>Est. value</th></tr>
+  {{range .Leads}}<tr><td><strong>{{.Name}}</strong></td><td>{{.Events}}</td><td>{{.People}}</td><td>₹{{inr .Value}}</td></tr>
+  {{else}}<tr><td colspan="4" class="muted">No published events with a lead yet.</td></tr>{{end}}
+</table>
+</div>
+{{end}}
+
+{{define "hbars"}}
+<div class="hbars">
+  {{range .}}<div class="hbar"><span>{{.Label}}</span><div><i style="width:{{.Pct}}%"></i></div><b>{{.Value}}</b></div>
+  {{else}}<p class="muted">No data yet.</p>{{end}}
+</div>
+{{end}}
+
+{{define "columns"}}
+{{if .}}
+<div class="cols">
+  {{range .}}
+  <div class="col" title="{{.Label}}: {{.Value}}{{with .Sub}} · {{.}}{{end}}">
+    <b>{{inr .Value}}</b>
+    <div class="col-bar"><i style="height:{{.Pct}}%"></i></div>
+    <span>{{.Label}}</span>{{with .Sub}}<em>{{.}}</em>{{end}}
+  </div>
+  {{end}}
+</div>
+{{else}}<p class="muted">No data yet.</p>{{end}}
+{{end}}

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -192,15 +193,30 @@ func (a *App) logout(w http.ResponseWriter, r *http.Request) {
 	redirect(w, r, "/")
 }
 
-// resetAdminPassword gives the first admin account a new random password and
-// prints the login. Run it with: beyond.exe -reset-admin-password
+// resetAdminPassword gives the first admin account a new password and prints the
+// login. By default the password is random; set ADMIN_PASSWORD (and optionally
+// ADMIN_EMAIL) to choose them. Run it with: northstar.exe -reset-admin-password
 func resetAdminPassword(db *sql.DB) error {
 	var id int64
 	var email string
 	if err := db.QueryRow(`SELECT id, email FROM users WHERE is_admin = 1 ORDER BY id LIMIT 1`).Scan(&id, &email); err != nil {
 		return fmt.Errorf("no admin account found: %w", err)
 	}
-	pw := randomToken(6)
+	if e := strings.ToLower(strings.TrimSpace(os.Getenv("ADMIN_EMAIL"))); e != "" && e != email {
+		if !strings.Contains(e, "@") {
+			return fmt.Errorf("ADMIN_EMAIL %q is not a valid email", e)
+		}
+		if _, err := db.Exec(`UPDATE users SET email = ? WHERE id = ?`, e, id); err != nil {
+			return fmt.Errorf("set admin email: %w", err)
+		}
+		email = e
+	}
+	pw := os.Getenv("ADMIN_PASSWORD")
+	if pw == "" {
+		pw = randomToken(6)
+	} else if len(pw) < 8 || len(pw) > 72 {
+		return fmt.Errorf("ADMIN_PASSWORD must be 8 to 72 characters long")
+	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -209,7 +225,10 @@ func resetAdminPassword(db *sql.DB) error {
 		return err
 	}
 	db.Exec(`DELETE FROM sessions WHERE user_id = ?`, id) // log out old sessions
-	fmt.Printf("Admin login\n  email:    %s\n  password: %s\n", email, pw)
+	fmt.Printf("Admin login updated\n  email: %s\n", email)
+	if os.Getenv("ADMIN_PASSWORD") == "" {
+		fmt.Printf("  password: %s\n", pw)
+	}
 	return nil
 }
 

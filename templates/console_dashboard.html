@@ -1,0 +1,48 @@
+{{define "title"}}Dashboard{{end}}
+{{define "content"}}
+<div class="c-head"><h1>Dashboard</h1><a class="btn" href="/admin/events/new">+ New event</a></div>
+
+<div class="c-kpis">
+  <div class="kpi"><span>Confirmed value</span><strong>₹{{inr .D.ConfirmedValue}}</strong><em>estimate · all time</em></div>
+  <div class="kpi"><span>Upcoming value</span><strong>₹{{inr .D.UpcomingValue}}</strong><em>estimate · upcoming events</em></div>
+  <div class="kpi"><span>Trekkers confirmed</span><strong>{{.D.Trekkers}}</strong><em>all time</em></div>
+  <div class="kpi"><span>Seats filled</span><strong>{{.Fill}}%</strong><em>{{.D.SeatsTaken}} of {{.D.SeatsTotal}} · {{.D.UpcomingLive}} live events</em></div>
+</div>
+
+{{if or .D.Requested .D.Pending .D.Drafts .D.LeadApps}}
+<section class="c-todo">
+  <h2>Needs your attention</h2>
+  <ul>
+    {{if .D.Requested}}<li><a href="/admin/registrations?status=requested"><b>{{.D.Requested}}</b> registration {{if eq .D.Requested 1}}request{{else}}requests{{end}} waiting for approval</a></li>{{end}}
+    {{if .D.Pending}}<li><a href="/admin/events?show=pending"><b>{{.D.Pending}}</b> {{if eq .D.Pending 1}}date{{else}}dates{{end}} proposed by trek leads</a></li>{{end}}
+    {{if .D.Drafts}}<li><a href="/admin/events?show=draft"><b>{{.D.Drafts}}</b> draft {{if eq .D.Drafts 1}}event{{else}}events{{end}} not yet published</a></li>{{end}}
+    {{if .D.LeadApps}}<li><a href="/admin/leads"><b>{{.D.LeadApps}}</b> trek-lead {{if eq .D.LeadApps 1}}application{{else}}applications{{end}} to review</a></li>{{end}}
+  </ul>
+</section>
+{{end}}
+
+<section class="c-block">
+  <div class="c-head"><h2>Upcoming events</h2><a href="/admin/events">All events →</a></div>
+  {{template "eventlist" .Upcoming}}
+</section>
+<section class="c-block">
+  <div class="c-head"><h2>Waiting for approval</h2><a href="/admin/registrations?status=requested">All →</a></div>
+  {{template "regtable" .}}
+</section>
+{{end}}
+
+{{define "eventlist"}}
+<div class="table-wrap">
+<table class="table">
+  <tr><th>Event</th><th>Seats</th><th>Status</th><th></th></tr>
+  {{range .}}
+  <tr>
+    <td><strong>{{.TrekName}}</strong><br><span class="small">{{fmtDate .StartDate}}{{with .LeadName}} · Lead: {{.}}{{end}}</span></td>
+    <td class="small">{{.Taken}} / {{.Seats}}{{if .Requested}}<br><span class="warn">{{.Requested}} waiting</span>{{end}}</td>
+    <td><span class="status {{.Status}}">{{.Status}}</span></td>
+    <td><a href="/admin/events/{{.ID}}">Open →</a></td>
+  </tr>
+  {{else}}<tr><td colspan="4" class="muted">No upcoming events. <a href="/admin/events/new">Create one</a>.</td></tr>{{end}}
+</table>
+</div>
+{{end}}

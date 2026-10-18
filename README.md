@@ -48,11 +48,24 @@ Without photos, the site falls back to a green mountain graphic.
 
 **Trek leads:** each lead has a public profile page. Its stats come from real data: treks led and trekkers guided count only *completed* bookings, and the rating is the average of trekker reviews. This is the starting point for the lead "score".
 
-**Admin** (`/admin`):
-- Bookings: approve or reject requests, then mark them completed or cancelled. Seats are only counted as taken once a booking is approved.
-- Treks & batches: add or edit treks, add dates, assign a lead and change seats on each batch.
-- Leads: add or edit lead profiles.
-- Users: view the list.
+## Admin console (separate server)
+
+The admin area is not part of the public website. It runs as its own process on its own port, using the same database, so `/admin` does not exist on the public server at all.
+
+```
+./northstar.exe                  # public site, http://localhost:8080
+./northstar.exe -mode admin      # admin console, http://localhost:8081
+```
+
+Start both from the same folder (they share the database and the `photos/` folder). Sign in with an admin account; non-admin accounts are refused. The admin login uses its own session cookie, separate from the public site's. Settings: `-mode` / `MODE`, `-addr` / `ADDR` (default `:8081` in admin mode), and `PUBLIC_URL` for the "View public site" link. In production, keep the admin port off the public internet (firewall, VPN, or a private reverse-proxy route).
+
+- **Dashboard:** key numbers, upcoming events and what needs attention (requests to approve, proposed dates, drafts, lead applications).
+- **Events:** an event is a trek on a date. Create it as a **draft** (invisible to trekkers), fill in the date, group size and lead, then **Publish**. Unpublishing is blocked while an event has active registrations. Dates proposed by trek leads show up here for approval.
+- **Registrations:** everyone who registered, with phone/WhatsApp, group size, age, pickup, emergency contact and medical notes. Filter by event and status, approve/reject/complete, and download a CSV.
+- **Analytics:** money and people: value by month, bookings by status, age and pickup split, new accounts, and per-trek and per-lead tables.
+- **Treks, Trek leads, Users:** add or edit treks (itinerary, price, photos), lead profiles and applications, and the user list.
+
+**Money is an estimate.** There are no payments yet, so every rupee figure is trek price × people on approved or completed bookings. When a payment gateway is added, swap the queries in `console.go` and `analytics.go` for real payment amounts.
 
 There are no payments. Booking is request-only, and you confirm each request manually.
 
@@ -102,7 +115,7 @@ requested ──approve──▶ approved ──complete──▶ completed (tre
 - `db.go`: schema, queries, sample data
 - `auth.go`: signup, login, sessions
 - `handlers.go`: public and trekker pages
-- `admin.go`: admin panel
+- `admin.go`: trek, lead and user admin handlers; `console.go`, `analytics.go`: the admin console (events, registrations, dashboard, analytics)
 - `templates/`, `static/`: HTML and CSS, embedded into the binary
 
 ## Sample data

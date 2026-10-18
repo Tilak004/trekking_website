@@ -1,0 +1,87 @@
+{{define "title"}}{{if .Event.ID}}{{.Event.TrekName}} · {{fmtDate .Event.StartDate}}{{else}}New event{{end}}{{end}}
+{{define "content"}}
+{{$e := .Event}}
+<p class="crumb"><a href="/admin/events">← Events</a></p>
+<div class="c-head">
+  <h1>{{if $e.ID}}{{$e.TrekName}}{{else}}New event{{end}}</h1>
+  {{if $e.ID}}<span class="status {{$e.Status}} big">{{$e.Status}}</span>{{end}}
+</div>
+
+{{if $e.ID}}
+<div class="c-kpis">
+  <div class="kpi"><span>Date</span><strong class="sm">{{fmtDate $e.StartDate}}</strong></div>
+  <div class="kpi"><span>Seats confirmed</span><strong>{{$e.Taken}} / {{$e.Seats}}</strong><em>{{$e.Left}} left</em></div>
+  <div class="kpi"><span>Waiting for approval</span><strong>{{$e.Requested}}</strong></div>
+  <div class="kpi"><span>Est. value</span><strong>₹{{inr $e.Revenue}}</strong><em>₹{{inr $e.Price}} per person</em></div>
+</div>
+
+<section class="c-publish {{$e.Status}}">
+  {{if $e.IsDraft}}
+    <div><strong>This event is a draft.</strong> Trekkers can't see or book it yet.{{if $e.TrekHidden}} <span class="warn">The trek itself is hidden, so also make it visible in <a href="/admin/treks/{{$e.TrekID}}">trek settings</a>.</span>{{end}}</div>
+    <form method="post" action="/admin/events/{{$e.ID}}/status"><input type="hidden" name="status" value="live"><button class="btn">Publish event</button></form>
+  {{else if $e.IsPending}}
+    <div><strong>Proposed by a trek lead.</strong> Approve it to publish, or reject it.</div>
+    <div class="row-btns">
+      <form method="post" action="/admin/batches/{{$e.ID}}/review"><input type="hidden" name="status" value="live"><button class="btn act-approved">Approve &amp; publish</button></form>
+      <form method="post" action="/admin/batches/{{$e.ID}}/review"><input type="hidden" name="status" value="rejected"><button class="btn ghost act-rejected">Reject</button></form>
+    </div>
+  {{else if $e.IsLive}}
+    <div><strong>Published.</strong> Trekkers can see and book this event.{{if $e.TrekHidden}} <span class="warn">The trek is hidden, so it won't show on the site until you make it visible in <a href="/admin/treks/{{$e.TrekID}}">trek settings</a>.</span>{{end}}</div>
+    <form method="post" action="/admin/events/{{$e.ID}}/status"><input type="hidden" name="status" value="draft"><button class="btn ghost">Unpublish</button></form>
+  {{else}}
+    <div><strong>Rejected.</strong> This proposed date is not visible to trekkers.</div>
+  {{end}}
+</section>
+{{end}}
+
+<form method="post" action="{{if $e.ID}}/admin/events/{{$e.ID}}{{else}}/admin/events/new{{end}}" class="form panel c-form">
+  <h2>{{if $e.ID}}Event details{{else}}Details{{end}}</h2>
+  <div class="row">
+    <label>Trek
+      {{if $e.ID}}
+        <input value="{{$e.TrekName}}" disabled>
+        <span class="hint">The trek can't change after the event is created. <a href="/admin/treks/{{$e.TrekID}}">Edit trek details (itinerary, price, photos…)</a></span>
+      {{else}}
+        <select name="trek_id" required>
+          <option value="">Choose a trek…</option>
+          {{range .Treks}}<option value="{{.ID}}" {{if eq .ID $e.TrekID}}selected{{end}}>{{.Name}} · ₹{{inr .Price}}{{if not .Active}} (hidden){{end}}</option>{{end}}
+        </select>
+        <span class="hint">Not listed? <a href="/admin/treks/new">Create a new trek</a> first, with its itinerary and price, then come back.</span>
+      {{end}}
+    </label>
+    <label>Start date <input type="date" name="start_date" value="{{$e.StartDate}}" {{if not $e.ID}}min="{{.Today}}"{{end}} required></label>
+    <label>Group size (seats) <input type="number" name="seats" value="{{$e.Seats}}" min="1" max="500" required></label>
+    <label>Trek lead
+      <select name="lead_id">
+        <option value="0">— assign later —</option>
+        {{range .Leads}}<option value="{{.ID}}" {{if eq .ID $e.LeadID}}selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+    </label>
+  </div>
+  <div class="row-btns">
+    {{if $e.ID}}
+      <button class="btn">Save changes</button>
+      {{if $e.IsDraft}}<button class="btn ghost" name="action" value="publish">Save &amp; publish</button>{{end}}
+    {{else}}
+      <button class="btn ghost">Save as draft</button>
+      <button class="btn" name="action" value="publish">Save &amp; publish</button>
+    {{end}}
+  </div>
+</form>
+
+{{if $e.ID}}
+<section class="c-block">
+  <div class="c-head">
+    <h2>Registrations</h2>
+    <a href="/admin/registrations.csv?event={{$e.ID}}">Download CSV</a>
+  </div>
+  {{template "regtable" .}}
+</section>
+
+{{if not .Bookings}}
+<form method="post" action="/admin/events/{{$e.ID}}/delete" onsubmit="return confirm('Delete this event?')">
+  <button class="linklike danger">Delete this event</button>
+</form>
+{{end}}
+{{end}}
+{{end}}

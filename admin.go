@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -13,27 +12,16 @@ import (
 // today returns the current UTC date, matching SQLite's date('now').
 func today() string { return time.Now().UTC().Format("2006-01-02") }
 
-func (a *App) adminBookings(w http.ResponseWriter, r *http.Request) {
-	filter := r.URL.Query().Get("status")
-	where, args := "", []any{}
-	if slices.Contains(bookingStatuses, filter) {
-		where, args = "WHERE k.status = ?", append(args, filter)
-	} else {
-		filter = ""
-	}
-	bookings, err := a.queryBookings(where+" ORDER BY k.id DESC LIMIT 500", args...)
-	if err != nil {
-		a.serverError(w, err)
-		return
-	}
-	a.render(w, r, "admin_bookings.html", map[string]any{
-		"Bookings": bookings, "Filter": filter, "Statuses": bookingStatuses,
-	})
-}
-
 func (a *App) adminSetBookingStatus(w http.ResponseWriter, r *http.Request) {
 	status := r.FormValue("status")
-	back := "/admin?status=" + url.QueryEscape(r.FormValue("back"))
+	back := safeNext(r.FormValue("back"))
+	if back == "/" {
+		back = "/admin/registrations"
+	}
+	sep := "?"
+	if strings.Contains(back, "?") {
+		sep = "&"
+	}
 	list, err := a.queryBookings(`WHERE k.id = ?`, pathID(r))
 	if err != nil {
 		a.serverError(w, err)
@@ -51,7 +39,7 @@ func (a *App) adminSetBookingStatus(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if k.People > batch.Left() {
-			redirect(w, r, "%s&err=full", back)
+			redirect(w, r, "%s%serr=full", back, sep)
 			return
 		}
 	}
@@ -59,7 +47,7 @@ func (a *App) adminSetBookingStatus(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
-	redirect(w, r, "%s&msg=status", back)
+	redirect(w, r, "%s%smsg=status", back, sep)
 }
 
 // ---- treks ----
@@ -192,12 +180,15 @@ func (a *App) adminAddBatch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Please give a valid date and at least 1 seat.", http.StatusBadRequest)
 		return
 	}
-	if _, err := a.db.Exec(`INSERT INTO batches (trek_id, lead_id, start_date, seats) VALUES (?, ?, ?, ?)`,
-		trekID, nullID(formInt(r, "lead_id")), date, seats); err != nil {
+	// New dates start as drafts; publish them from the event page.
+	res, err := a.db.Exec(`INSERT INTO batches (trek_id, lead_id, start_date, seats, status) VALUES (?, ?, ?, ?, 'draft')`,
+		trekID, nullID(formInt(r, "lead_id")), date, seats)
+	if err != nil {
 		a.serverError(w, err)
 		return
 	}
-	redirect(w, r, "/admin/treks/%d?msg=batch_added", trekID)
+	id, _ := res.LastInsertId()
+	redirect(w, r, "/admin/events/%d?msg=event_created", id)
 }
 
 func (a *App) adminSetBatchLead(w http.ResponseWriter, r *http.Request) {

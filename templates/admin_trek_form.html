@@ -72,7 +72,7 @@
   <tr><th>Date</th><th>Seats taken</th><th>Requests</th><th>Lead &amp; seats</th><th></th></tr>
   {{range .Batches}}
   <tr {{if lt .StartDate $.Today}}class="past"{{end}}>
-    <td>{{fmtDate .StartDate}}{{if ne .Status "live"}} <span class="status {{.Status}}">{{.Status}}</span>{{end}}</td>
+    <td><a href="/admin/events/{{.ID}}">{{fmtDate .StartDate}}</a>{{if ne .Status "live"}} <span class="status {{.Status}}">{{.Status}}</span>{{end}}</td>
     <td>{{.Taken}} / {{.Seats}}</td>
     <td>{{.Bookings}}</td>
     <td>
@@ -112,7 +112,7 @@
       </select>
     </label>
   </div>
-  <button class="btn">Add batch</button>
+  <button class="btn">Add as draft</button>
 </form>
 {{end}}
 {{end}}

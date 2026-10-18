@@ -34,14 +34,26 @@ type App struct {
 	db        *sql.DB
 	pages     map[string]*template.Template
 	photosDir string
+	adminMode bool // the separate admin console process (see console.go)
 }
 
 func main() {
-	addr := flag.String("addr", envOr("ADDR", ":8080"), "HTTP listen address")
+	mode := flag.String("mode", envOr("MODE", "public"), `"public" serves the website, "admin" serves the admin console`)
+	addr := flag.String("addr", os.Getenv("ADDR"), "HTTP listen address (default :8080, or :8081 in admin mode)")
 	dbPath := flag.String("db", envOr("DB_PATH", "beyond.db"), "path to the SQLite database file")
 	photosDir := flag.String("photos", envOr("PHOTOS_DIR", "photos"), "folder with site photos")
 	resetAdmin := flag.Bool("reset-admin-password", false, "set a new random admin password, print it and exit")
 	flag.Parse()
+	if *mode != "public" && *mode != "admin" {
+		log.Fatalf("unknown -mode %q (use public or admin)", *mode)
+	}
+	adminMode := *mode == "admin"
+	if *addr == "" {
+		*addr = ":8080"
+		if adminMode {
+			*addr = ":8081"
+		}
+	}
 	os.MkdirAll(*photosDir+"/gallery", 0o755)
 
 	db, err := openDB(*dbPath)
@@ -58,13 +70,23 @@ func main() {
 
 	base := strings.TrimSuffix(filepath.Base(*dbPath), filepath.Ext(*dbPath))
 	sessionCookie = "session_" + slugify(base)
-	app := &App{db: db, pages: loadPages(), photosDir: *photosDir, demo: strings.Contains(base, "demo")}
+	if adminMode {
+		sessionCookie = "admin_" + sessionCookie // never shared with the public site's login
+	}
+	app := &App{db: db, pages: loadPages(), photosDir: *photosDir, demo: strings.Contains(base, "demo"), adminMode: adminMode}
 	srv := &http.Server{Addr: *addr, Handler: app.routes(), ReadHeaderTimeout: 10 * time.Second}
-	log.Printf("%s running on %s", site.Name, *addr)
+	if adminMode {
+		log.Printf("%s admin console running on %s", site.Name, *addr)
+	} else {
+		log.Printf("%s running on %s", site.Name, *addr)
+	}
 	log.Fatal(srv.ListenAndServe())
 }
 
 func (a *App) routes() http.Handler {
+	if a.adminMode {
+		return a.adminRoutes()
+	}
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/", http.FileServerFS(staticFS))
 	mux.Handle("GET /photos/", a.servePhotos())
@@ -98,24 +120,6 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /my/bookings/{id}/cancel", a.requireUser(a.cancelBooking))
 	mux.HandleFunc("POST /my/bookings/{id}/review", a.requireUser(a.reviewBooking))
 
-	mux.HandleFunc("GET /admin", a.requireAdmin(a.adminBookings))
-	mux.HandleFunc("POST /admin/bookings/{id}/status", a.requireAdmin(a.adminSetBookingStatus))
-	mux.HandleFunc("GET /admin/treks", a.requireAdmin(a.adminTreks))
-	mux.HandleFunc("GET /admin/treks/new", a.requireAdmin(a.adminTrekForm))
-	mux.HandleFunc("POST /admin/treks/new", a.requireAdmin(a.adminSaveTrek))
-	mux.HandleFunc("GET /admin/treks/{id}", a.requireAdmin(a.adminTrekForm))
-	mux.HandleFunc("POST /admin/treks/{id}", a.requireAdmin(a.adminSaveTrek))
-	mux.HandleFunc("POST /admin/treks/{id}/batches", a.requireAdmin(a.adminAddBatch))
-	mux.HandleFunc("POST /admin/batches/{id}/lead", a.requireAdmin(a.adminSetBatchLead))
-	mux.HandleFunc("POST /admin/batches/{id}/delete", a.requireAdmin(a.adminDeleteBatch))
-	mux.HandleFunc("POST /admin/batches/{id}/review", a.requireAdmin(a.adminReviewBatch))
-	mux.HandleFunc("GET /admin/leads", a.requireAdmin(a.adminLeads))
-	mux.HandleFunc("GET /admin/leads/new", a.requireAdmin(a.adminLeadForm))
-	mux.HandleFunc("POST /admin/leads/new", a.requireAdmin(a.adminSaveLead))
-	mux.HandleFunc("GET /admin/leads/{id}", a.requireAdmin(a.adminLeadForm))
-	mux.HandleFunc("POST /admin/leads/{id}", a.requireAdmin(a.adminSaveLead))
-	mux.HandleFunc("POST /admin/leads/{id}/status", a.requireAdmin(a.adminSetLeadStatus))
-	mux.HandleFunc("GET /admin/users", a.requireAdmin(a.adminUsers))
 
 	return a.withUser(mux)
 }
@@ -138,6 +142,10 @@ var flashMessages = map[string]string{
 	"proposed":      "Date proposed! It goes live once our team approves it.",
 	"withdrawn":     "Date withdrawn.",
 	"date_reviewed": "Proposed date updated.",
+	"event_created":     "Event saved as a draft. Publish it when you're ready.",
+	"event_saved":       "Event updated.",
+	"event_published":   "Event published. Trekkers can now book it.",
+	"event_unpublished": "Event moved back to drafts. Trekkers can no longer see it.",
 }
 
 var flashErrors = map[string]string{
@@ -153,6 +161,7 @@ var flashErrors = map[string]string{
 	"bad_seats":          "Group size must be between 2 and 40.",
 	"bad_trek":           "Please pick a trek from the list.",
 	"dup_date":           "You have already proposed that trek on that date.",
+	"event_has_bookings": "This event has active registrations, so it can't go back to draft. Cancel or reject them first.",
 }
 
 func (a *App) render(w http.ResponseWriter, r *http.Request, page string, data map[string]any) {
@@ -162,6 +171,7 @@ func (a *App) render(w http.ResponseWriter, r *http.Request, page string, data m
 	data["Brand"] = site.Name
 	data["Site"] = site
 	data["Demo"] = a.demo
+	data["PublicURL"] = envOr("PUBLIC_URL", "http://localhost:8080")
 	if u := currentUser(r); u != nil {
 		role := "Trekker"
 		if u.IsAdmin {
@@ -191,7 +201,11 @@ func (a *App) render(w http.ResponseWriter, r *http.Request, page string, data m
 		data["Err"] = flashErrors[r.URL.Query().Get("err")]
 	}
 	var buf bytes.Buffer
-	if err := a.pages[page].ExecuteTemplate(&buf, "layout.html", data); err != nil {
+	base := "layout.html"
+	if isConsolePage(page) {
+		base = "console_base.html"
+	}
+	if err := a.pages[page].ExecuteTemplate(&buf, base, data); err != nil {
 		a.serverError(w, err)
 		return
 	}
@@ -215,11 +229,15 @@ func loadPages() map[string]*template.Template {
 	pages := map[string]*template.Template{}
 	for _, f := range files {
 		name := path.Base(f)
-		if name == "layout.html" {
+		if name == "layout.html" || name == "console_base.html" {
 			continue
 		}
-		pages[name] = template.Must(template.New("layout.html").Funcs(templateFuncs).
-			ParseFS(templateFS, "templates/layout.html", f))
+		base := "layout.html"
+		if isConsolePage(name) {
+			base = "console_base.html"
+		}
+		pages[name] = template.Must(template.New(base).Funcs(templateFuncs).
+			ParseFS(templateFS, "templates/"+base, f))
 	}
 	return pages
 }
