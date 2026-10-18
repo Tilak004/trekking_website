@@ -12,7 +12,7 @@
   <div class="kpi"><span>Date</span><strong class="sm">{{fmtDate $e.StartDate}}</strong></div>
   <div class="kpi"><span>Seats confirmed</span><strong>{{$e.Taken}} / {{$e.Seats}}</strong><em>{{$e.Left}} left</em></div>
   <div class="kpi"><span>Waiting for approval</span><strong>{{$e.Requested}}</strong></div>
-  <div class="kpi"><span>Est. value</span><strong>₹{{inr $e.Revenue}}</strong><em>₹{{inr $e.Price}} per person</em></div>
+  <div class="kpi"><span>Collected</span><strong>₹{{inr $e.Collected}}</strong><em>{{if $e.Due}}₹{{inr $e.Due}} still to collect · {{end}}₹{{inr $e.Price}} per person</em></div>
 </div>
 
 <section class="c-publish {{$e.Status}}">

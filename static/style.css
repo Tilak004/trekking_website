@@ -624,7 +624,7 @@ img.avatar.photo { border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18
 .card-link { margin-top: auto; padding-top: 6px; font-weight: 600; font-size: .9rem; color: var(--sun-dark); }
 .card:hover .card-link { text-decoration: underline; }
 
-/* ================= Western Ghats theme =================
+/* ================= Western Ghats theme ==========
    Shola-forest greens, monsoon-mist light pages, laterite red-orange accent,
    bold geometric uppercase headings, hero slideshow, portrait trek cards,
    and a faint topographic contour texture on dark areas. */
@@ -1426,3 +1426,80 @@ img.avatar.photo { border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18
 .finder .chip { padding: 7px 14px; font-size: .88rem; }
 .finder .finder-meta { padding: 12px 4px 0; border-top: 0; font-size: 1rem; }
 @media (max-width: 640px) { .finder .finder-panel { gap: 10px; } .finder .finder-q { padding: 12px 14px 14px; } }
+=======
+/* UPI payment page */
+.pay { max-width: 460px; margin: 8px auto; text-align: center; }
+.pay h1 { margin: 2px 0 4px; }
+.pay-upi { margin: 14px 0 4px; }
+.pay-apps { margin: 0 0 14px; }
+.pay-qr { display: flex; gap: 14px; align-items: center; text-align: left; background: var(--surface-2); border-radius: 14px; padding: 12px; margin-bottom: 12px; }
+.pay-qr img { width: 150px; height: 150px; border-radius: 8px; background: #fff; flex: none; }
+.pay-qr div { display: flex; flex-direction: column; gap: 3px; }
+.status.paid { background: #e6f4ea; color: #1e7b3a; }
+@media (max-width: 480px) { .pay-qr { flex-direction: column; text-align: center; } .pay-qr div { align-items: center; } }
+
+/* admin: active tab text must stay visible (beats the editorial link colour) */
+[data-theme~="editorial"] main .subnav a.on, [data-theme~="editorial"] main .tabs a.on { color: #fff; }
+
+/* payment request page */
+.payreq { max-width: 560px; }
+.payreq h1 { margin: 2px 0 2px; font-size: 1.4rem; }
+.payreq-body { display: flex; gap: 16px; align-items: center; margin: 14px 0; padding: 12px; background: var(--surface-2); border-radius: 14px; }
+.payreq-body img { width: 180px; height: 180px; background: #fff; border-radius: 10px; flex: none; }
+.payreq-info { display: flex; flex-direction: column; gap: 4px; }
+.payreq-amt { font-size: 1.8rem; }
+.payreq-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 520px) { .payreq-body { flex-direction: column; text-align: center; } }
+
+/* ===== admin bookings: calm, organised actions ===== */
+[data-theme~="editorial"] .table td.actions { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; min-width: 230px; }
+[data-theme~="editorial"] .table td.actions form { margin: 0; }
+[data-theme~="editorial"] .table td.actions .btn {
+  background: #fff; color: var(--text); border: 1px solid var(--line); box-shadow: none;
+  font-size: .76rem; font-weight: 600; padding: 5px 12px; border-radius: 999px;
+}
+[data-theme~="editorial"] .table td.actions .btn:hover { border-color: var(--text); background: #fff; box-shadow: none; }
+/* the main next step stands out: soft green */
+[data-theme~="editorial"] .table td.actions .btn.act-approved,
+[data-theme~="editorial"] .table td.actions a.btn.ghost { background: #e7f3ec; border-color: #c4e2cf; color: #1d6b3b; }
+[data-theme~="editorial"] .table td.actions .btn.act-approved:hover,
+[data-theme~="editorial"] .table td.actions a.btn.ghost:hover { background: #d8ecdf; border-color: #1d6b3b; }
+/* cancel / reject read as quiet text links */
+[data-theme~="editorial"] .table td.actions .btn.act-cancelled,
+[data-theme~="editorial"] .table td.actions .btn.act-rejected { background: none; border-color: transparent; color: #b4433a; padding: 5px 4px; text-decoration: underline; text-underline-offset: 2px; }
+[data-theme~="editorial"] .table td.actions .btn.act-completed { background: #f3f4f6; }
+[data-theme~="editorial"] .status.approved { background: #e7f3ec; color: #1d6b3b; }
+[data-theme~="editorial"] .status.requested { background: #fff4dc; color: #8a5a00; }
+[data-theme~="editorial"] .status.paid { background: #e7f3ec; color: #1d6b3b; }
+[data-theme~="editorial"] .status.completed { background: #e8eef6; color: #2b4f80; }
+[data-theme~="editorial"] .table td.actions { display: table-cell; min-width: 240px; }
+[data-theme~="editorial"] .table td.actions > form, [data-theme~="editorial"] .table td.actions > a { display: inline-block; margin: 0 6px 6px 0; vertical-align: middle; }
+
+/* admin bookings grouped by trek → date */
+.bk-trek { margin: 14px 0 6px; }
+.bk-trek-head { font-size: 1.15rem; margin: 0 0 6px; display: flex; align-items: baseline; gap: 10px; }
+.bk-trek-head a { color: var(--text); text-decoration: none; }
+.bk-date-group { margin: 0 0 10px; }
+.bk-date-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; padding: 6px 2px; }
+.bk-date-head b { color: #8a5a00; }
+
+/* admin trek leads: expandable profile cards */
+.lead-admin-list { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.lead-admin { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.lead-admin > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 44px 1fr auto auto; gap: 12px; align-items: center; padding: 10px 14px; }
+.lead-admin > summary::-webkit-details-marker { display: none; }
+.lead-admin > summary .avatar, .lead-admin > summary img.avatar { width: 44px; height: 44px; font-size: 1rem; }
+.lead-admin[open] > summary { border-bottom: 1px solid var(--line); }
+.la-body { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; padding: 12px 14px 14px; }
+.la-body h4 { margin: 8px 0 4px; font-size: .85rem; }
+.la-profile p { margin: 0 0 6px; }
+.la-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.la-actions form { margin: 0; }
+.la-assign { display: flex; gap: 6px; margin-top: 6px; }
+.la-assign select { flex: 1; font: inherit; font-size: .82rem; padding: 6px 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+[data-theme~="editorial"] .la-actions .btn, [data-theme~="editorial"] .la-assign .btn { background: #fff; color: var(--text); border: 1px solid var(--line); font-size: .76rem; padding: 5px 12px; }
+[data-theme~="editorial"] .la-actions .btn.act-approved, [data-theme~="editorial"] .la-assign .btn { background: #e7f3ec; border-color: #c4e2cf; color: #1d6b3b; }
+[data-theme~="editorial"] .la-actions .btn.act-cancelled, [data-theme~="editorial"] .la-actions .btn.act-rejected { background: none; border-color: transparent; color: #b4433a; text-decoration: underline; padding: 5px 4px; }
+@media (max-width: 760px) { .la-body { grid-template-columns: 1fr; } .lead-admin > summary { grid-template-columns: 40px 1fr auto; } .la-stats { display: none; } }
+
+.lead-admin .muted { color: var(--muted) !important; }

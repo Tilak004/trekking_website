@@ -16,14 +16,18 @@ import (
 // default) on the same database as the public site. It has its own login and
 // session cookie, so nothing here is reachable from the public server.
 //
-// Money: there are no payments in the app yet, so every rupee figure is an
-// ESTIMATE = trek price x people on bookings that are approved or completed.
-// When a payment gateway is added, replace confirmedValue below with real
-// amounts and the console's numbers become actual collections.
+// Money: payments are UPI, checked by the team and marked paid on a booking
+// (see payments.go), so "collected" is the sum of paid_amount on paid bookings.
+// "Booked value" is trek price x people on approved or completed bookings, and
+// "to collect" is the booked value that has not been marked paid yet.
 
 const BatchDraft = "draft" // saved by an admin but not yet published
 
 func init() {
+	// regctx is the context for the "regtable" template when it is drawn once per date group.
+	templateFuncs["regctx"] = func(bookings []Booking, back string) map[string]any {
+		return map[string]any{"Bookings": bookings, "Back": back}
+	}
 	// waTo turns a phone number into the digits wa.me expects (10-digit numbers get India's +91).
 	templateFuncs["waTo"] = func(phone string) string {
 		var d strings.Builder
@@ -71,6 +75,8 @@ func (a *App) adminRoutes() http.Handler {
 	mux.HandleFunc("GET /admin/registrations", adm(a.consoleRegistrations))
 	mux.HandleFunc("GET /admin/registrations.csv", adm(a.consoleRegistrationsCSV))
 	mux.HandleFunc("POST /admin/bookings/{id}/status", adm(a.adminSetBookingStatus))
+	mux.HandleFunc("POST /admin/bookings/{id}/paid", adm(a.adminSetPaid))
+	mux.HandleFunc("GET /admin/bookings/{id}/payreq", adm(a.adminPayRequest))
 
 	mux.HandleFunc("GET /admin/analytics", adm(a.consoleAnalytics))
 
@@ -88,6 +94,7 @@ func (a *App) adminRoutes() http.Handler {
 	mux.HandleFunc("GET /admin/leads/{id}", adm(a.adminLeadForm))
 	mux.HandleFunc("POST /admin/leads/{id}", adm(a.adminSaveLead))
 	mux.HandleFunc("POST /admin/leads/{id}/status", adm(a.adminSetLeadStatus))
+	mux.HandleFunc("POST /admin/leads/{id}/assign", adm(a.adminAssignLead))
 	mux.HandleFunc("GET /admin/users", adm(a.adminUsers))
 	return a.withUser(mux)
 }
@@ -141,6 +148,7 @@ type Event struct {
 	Region             string
 	Price              int
 	StartDate          string
+	Collected, Due     int // rupees marked paid / booked but not yet paid
 	Seats, Taken       int // taken = people on approved/completed bookings
 	Active             int // registrations still alive (not rejected/cancelled)
 	Requested          int // registrations waiting for approval
@@ -151,7 +159,7 @@ type Event struct {
 }
 
 func (e Event) Left() int       { return e.Seats - e.Taken }
-func (e Event) Revenue() int    { return e.Taken * e.Price }
+func (e Event) Revenue() int    { return e.Taken * e.Price } // booked value
 func (e Event) Past() bool      { return e.StartDate < today() }
 func (e Event) Fill() int       { return pct(e.Taken, e.Seats) }
 func (e Event) IsDraft() bool   { return e.Status == BatchDraft }
@@ -170,13 +178,15 @@ SELECT b.id, b.trek_id, t.name, t.slug, t.region, t.price, b.start_date, b.seats
        COALESCE(b.lead_id, 0), COALESCE(l.name, ''), t.active = 0,
        COALESCE((SELECT SUM(k.people) FROM bookings k WHERE k.batch_id = b.id AND k.status IN (` + confirmedStatuses + `)), 0),
        (SELECT COUNT(*) FROM bookings k WHERE k.batch_id = b.id AND k.status NOT IN ('rejected', 'cancelled')),
-       (SELECT COUNT(*) FROM bookings k WHERE k.batch_id = b.id AND k.status = 'requested')
+       (SELECT COUNT(*) FROM bookings k WHERE k.batch_id = b.id AND k.status = 'requested'),
+       COALESCE((SELECT SUM(k.paid_amount) FROM bookings k WHERE k.batch_id = b.id AND k.paid_at != ''), 0),
+       COALESCE((SELECT SUM(k.people) FROM bookings k WHERE k.batch_id = b.id AND k.status IN (` + confirmedStatuses + `) AND k.paid_at = ''), 0) * t.price
 FROM batches b JOIN treks t ON t.id = b.trek_id LEFT JOIN leads l ON l.id = b.lead_id`
 
 func scanEvent(s scanner) (Event, error) {
 	var e Event
 	err := s.Scan(&e.ID, &e.TrekID, &e.TrekName, &e.TrekSlug, &e.Region, &e.Price, &e.StartDate, &e.Seats, &e.Status,
-		&e.LeadID, &e.LeadName, &e.TrekHidden, &e.Taken, &e.Active, &e.Requested)
+		&e.LeadID, &e.LeadName, &e.TrekHidden, &e.Taken, &e.Active, &e.Requested, &e.Collected, &e.Due)
 	return e, err
 }
 
@@ -432,8 +442,13 @@ func (a *App) consoleRegistrations(w http.ResponseWriter, r *http.Request) {
 			people += k.People
 		}
 	}
-	f["Bookings"], f["Events"], f["Statuses"], f["People"] = bookings, events, bookingStatuses, people
-	f["Back"], f["ShowEvent"] = r.URL.RequestURI(), true
+	groups, err := a.groupBookings(bookings)
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	f["Bookings"], f["Groups"], f["Events"], f["Statuses"], f["People"] = bookings, groups, events, bookingStatuses, people
+	f["Back"] = r.URL.RequestURI()
 	f["Query"] = r.URL.RawQuery
 	a.render(w, r, "console_registrations.html", f)
 }
@@ -449,7 +464,7 @@ func (a *App) consoleRegistrationsCSV(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", `attachment; filename="registrations-`+today()+`.csv"`)
 	c := csv.NewWriter(w)
 	c.Write([]string{"Booking", "Status", "Trek", "Date", "Name", "Phone", "Email", "People", "Age", "Pickup",
-		"Emergency contact", "Emergency phone", "Medical", "Note", "Booked on"})
+		"Emergency contact", "Emergency phone", "Medical", "Note", "Booked on", "Amount due", "Paid amount", "Paid on"})
 	for _, k := range bookings {
 		email := k.UserEmail
 		if strings.HasPrefix(email, "guest-") { // placeholder address of a guest booking
@@ -457,7 +472,7 @@ func (a *App) consoleRegistrationsCSV(w http.ResponseWriter, r *http.Request) {
 		}
 		c.Write([]string{fmt.Sprint(k.ID), k.Status, k.TrekName, k.StartDate, csvSafe(k.UserName), k.UserPhone, email,
 			fmt.Sprint(k.People), fmt.Sprint(k.Age), csvSafe(k.Pickup), csvSafe(k.EmergencyName), k.EmergencyPhone,
-			csvSafe(k.Medical), csvSafe(k.Note), k.CreatedAt})
+			csvSafe(k.Medical), csvSafe(k.Note), k.CreatedAt, fmt.Sprint(k.Amount()), fmt.Sprint(k.PaidAmount), k.PaidAt})
 	}
 	c.Flush()
 }
@@ -475,7 +490,7 @@ func csvSafe(s string) string {
 func (a *App) consoleDashboard(w http.ResponseWriter, r *http.Request) {
 	var d struct {
 		Requested, Pending, Drafts, LeadApps, UpcomingLive int
-		ConfirmedValue, UpcomingValue, Trekkers, WeekRegs  int
+		Collected, ToCollect, Trekkers, WeekRegs           int
 		SeatsTaken, SeatsTotal                             int
 	}
 	q := func(dest *int, sqlText string) { a.db.QueryRow(sqlText).Scan(dest) }
@@ -484,8 +499,8 @@ func (a *App) consoleDashboard(w http.ResponseWriter, r *http.Request) {
 	q(&d.Drafts, `SELECT COUNT(*) FROM batches WHERE status = 'draft'`)
 	q(&d.LeadApps, `SELECT COUNT(*) FROM leads WHERE status = 'pending'`)
 	q(&d.UpcomingLive, `SELECT COUNT(*) FROM batches WHERE status = 'live' AND start_date >= date('now')`)
-	q(&d.ConfirmedValue, `SELECT COALESCE(SUM(k.people * t.price), 0) FROM bookings k JOIN batches b ON b.id = k.batch_id JOIN treks t ON t.id = b.trek_id WHERE k.status IN (`+confirmedStatuses+`)`)
-	q(&d.UpcomingValue, `SELECT COALESCE(SUM(k.people * t.price), 0) FROM bookings k JOIN batches b ON b.id = k.batch_id JOIN treks t ON t.id = b.trek_id WHERE k.status IN (`+confirmedStatuses+`) AND b.start_date >= date('now')`)
+	q(&d.Collected, `SELECT COALESCE(SUM(paid_amount), 0) FROM bookings WHERE paid_at != ''`)
+	q(&d.ToCollect, `SELECT COALESCE(SUM(k.people * t.price), 0) FROM bookings k JOIN batches b ON b.id = k.batch_id JOIN treks t ON t.id = b.trek_id WHERE k.status IN (`+confirmedStatuses+`) AND k.paid_at = ''`)
 	q(&d.Trekkers, `SELECT COALESCE(SUM(people), 0) FROM bookings WHERE status IN (`+confirmedStatuses+`)`)
 	q(&d.WeekRegs, `SELECT COUNT(*) FROM bookings WHERE created_at >= datetime('now', '-7 days')`)
 	q(&d.SeatsTotal, `SELECT COALESCE(SUM(seats), 0) FROM batches WHERE status = 'live' AND start_date >= date('now')`)
@@ -501,6 +516,6 @@ func (a *App) consoleDashboard(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
-	a.render(w, r, "console_dashboard.html", map[string]any{"D": d, "Upcoming": upcoming, "Bookings": waiting, "Back": "/admin",
+	a.render(w, r, "console_dashboard.html", map[string]any{"D": d, "Upcoming": upcoming, "Bookings": waiting, "ShowEvent": true, "Back": "/admin",
 		"Fill": pct(d.SeatsTaken, d.SeatsTotal)})
 }

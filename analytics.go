@@ -5,8 +5,8 @@ import (
 	"slices"
 )
 
-// Analytics for the admin console. Rupee figures are estimates (price x people
-// on approved/completed bookings); see the note at the top of console.go.
+// Analytics for the admin console. "Collected" is money marked paid on bookings;
+// "booked value" is price x people on approved/completed bookings (see console.go).
 
 type Bar struct {
 	Label string
@@ -38,6 +38,7 @@ type TrekRow struct {
 	Name           string
 	Events         int
 	People, Value  int
+	Collected      int
 	Fill           int
 	Rating         float64
 	Ratings        int
@@ -86,6 +87,11 @@ FROM bookings k JOIN batches b ON b.id = k.batch_id JOIN treks t ON t.id = b.tre
 	confirmedBookings := confirmed.Bookings + completed.Bookings
 	lost := byStatus[StatusCancelled].Value + byStatus[StatusRejected].Value
 
+	var collected, toCollect int
+	a.db.QueryRow(`SELECT COALESCE(SUM(paid_amount), 0) FROM bookings WHERE paid_at != ''`).Scan(&collected)
+	a.db.QueryRow(`SELECT COALESCE(SUM(k.people * t.price), 0) FROM bookings k JOIN batches b ON b.id = k.batch_id JOIN treks t ON t.id = b.trek_id
+WHERE k.status IN (` + confirmedStatuses + `) AND k.paid_at = ''`).Scan(&toCollect)
+
 	var unique, repeat int
 	a.db.QueryRow(`SELECT COUNT(DISTINCT user_id) FROM bookings WHERE status IN (` + confirmedStatuses + `)`).Scan(&unique)
 	a.db.QueryRow(`SELECT COUNT(*) FROM (SELECT user_id FROM bookings WHERE status IN (` + confirmedStatuses + `) GROUP BY user_id HAVING COUNT(*) >= 2)`).Scan(&repeat)
@@ -99,7 +105,18 @@ FROM bookings k JOIN batches b ON b.id = k.batch_id JOIN treks t ON t.id = b.tre
 		avgValue = confirmedValue / confirmedBookings
 	}
 
-	// Money by month of the trek date (last 12 months with bookings).
+	// Money actually collected, by the month it was marked paid.
+	collectedMonthly, err := a.barQuery(`SELECT substr(paid_at, 1, 7), COALESCE(SUM(paid_amount), 0), COUNT(*)
+FROM bookings WHERE paid_at != '' GROUP BY 1 ORDER BY 1 DESC LIMIT 12`, func(label string, v, n int) Bar {
+		return Bar{Label: monthLabel(label), Value: v, Sub: plural(n, "payment", "payments")}
+	})
+	if err != nil {
+		fail(err)
+		return
+	}
+	slices.Reverse(collectedMonthly)
+
+	// Booked value by month of the trek date (last 12 months with bookings).
 	monthly, err := a.barQuery(`SELECT substr(b.start_date, 1, 7), COALESCE(SUM(k.people * t.price), 0), COALESCE(SUM(k.people), 0)
 FROM bookings k JOIN batches b ON b.id = k.batch_id JOIN treks t ON t.id = b.trek_id
 WHERE k.status IN (`+confirmedStatuses+`) GROUP BY 1 ORDER BY 1 DESC LIMIT 12`, func(label string, v, p int) Bar {
@@ -149,6 +166,7 @@ GROUP BY 1 ORDER BY 1 DESC LIMIT 6`, func(label string, v, guests int) Bar {
   COALESCE((SELECT SUM(k.people) FROM bookings k JOIN batches b ON b.id = k.batch_id WHERE b.trek_id = t.id AND k.status IN (`+confirmedStatuses+`)), 0),
   COALESCE((SELECT SUM(b.seats) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live'), 0),
   t.price,
+  COALESCE((SELECT SUM(k.paid_amount) FROM bookings k JOIN batches b ON b.id = k.batch_id WHERE b.trek_id = t.id AND k.paid_at != ''), 0),
   COALESCE((SELECT AVG(r.trek_rating) FROM reviews r JOIN bookings k ON k.id = r.booking_id JOIN batches b ON b.id = k.batch_id WHERE b.trek_id = t.id), 0),
   (SELECT COUNT(*) FROM reviews r JOIN bookings k ON k.id = r.booking_id JOIN batches b ON b.id = k.batch_id WHERE b.trek_id = t.id)
 FROM treks t`)
@@ -159,7 +177,7 @@ FROM treks t`)
 	for rows.Next() {
 		var t TrekRow
 		var seats, price int
-		if err := rows.Scan(&t.Name, &t.Events, &t.People, &seats, &price, &t.Rating, &t.Ratings); err != nil {
+		if err := rows.Scan(&t.Name, &t.Events, &t.People, &seats, &price, &t.Collected, &t.Rating, &t.Ratings); err != nil {
 			rows.Close()
 			fail(err)
 			return
@@ -191,10 +209,10 @@ GROUP BY l.id ORDER BY 4 DESC LIMIT 15`)
 	rows.Close()
 
 	a.render(w, r, "console_analytics.html", map[string]any{
-		"ConfirmedValue": confirmedValue, "CompletedValue": completed.Value, "PipelineValue": byStatus[StatusRequested].Value,
+		"Collected": collected, "ToCollect": toCollect, "ConfirmedValue": confirmedValue, "PipelineValue": byStatus[StatusRequested].Value,
 		"LostValue": lost, "People": confirmedPeople, "Bookings": confirmedBookings, "AvgGroup": avgGroup, "AvgValue": avgValue,
 		"Unique": unique, "Repeat": repeat, "RepeatPct": pct(repeat, unique), "FillPct": pct(taken, seats),
-		"Funnel": funnel, "Monthly": bars(monthly), "Ages": bars(ages), "Pickups": bars(pickups), "Signups": bars(signups),
+		"Funnel": funnel, "CollectedMonthly": bars(collectedMonthly), "Monthly": bars(monthly), "Ages": bars(ages), "Pickups": bars(pickups), "Signups": bars(signups),
 		"Treks": treks, "Leads": leads,
 	})
 }

@@ -27,5 +27,21 @@
   </label>
 </form>
 
-{{template "regtable" .}}
+{{range .Groups}}
+<section class="bk-trek c-block">
+  <h2 class="bk-trek-head"><a href="/treks/{{.Slug}}" target="_blank" rel="noopener">{{.Name}}</a> <span class="muted small">{{.Count}} {{if eq .Count 1}}registration{{else}}registrations{{end}}</span></h2>
+  {{range .Dates}}
+  <div class="bk-date-group">
+    <div class="bk-date-head">
+      <strong>{{fmtDate .Batch.StartDate}}</strong>
+      <span class="muted small">{{.Batch.Taken}} / {{.Batch.Seats}} seats confirmed · Lead: {{or .Batch.LeadName "not assigned"}}{{if .Due}} · <b>₹{{inr .Due}} still to collect</b>{{end}}</span>
+      <a class="small" href="/admin/events/{{.Batch.ID}}">Open event →</a>
+    </div>
+    {{template "regtable" (regctx .Bookings $.Back)}}
+  </div>
+  {{end}}
+</section>
+{{else}}
+<p class="muted">No registrations here yet.</p>
+{{end}}
 {{end}}

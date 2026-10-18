@@ -117,6 +117,8 @@ func (a *App) routes() http.Handler {
 
 	mux.HandleFunc("GET /my", a.requireUser(a.myBookings))
 	mux.HandleFunc("GET /my/bookings/{id}/sent", a.requireUser(a.bookingSent))
+	mux.HandleFunc("GET /pay/{id}/{token}", a.payPage)
+	mux.HandleFunc("GET /pay/{id}/{token}/qr.png", a.payQR)
 	mux.HandleFunc("POST /my/bookings/{id}/cancel", a.requireUser(a.cancelBooking))
 	mux.HandleFunc("POST /my/bookings/{id}/review", a.requireUser(a.reviewBooking))
 
@@ -139,6 +141,7 @@ var flashMessages = map[string]string{
 	"applied":       "Application received! We'll review it and get back to you.",
 	"lead_updated":  "Your trek-lead profile is updated.",
 	"lead_status":   "Trek lead updated.",
+	"lead_assigned": "Lead assigned to that trek date.",
 	"proposed":      "Date proposed! It goes live once our team approves it.",
 	"withdrawn":     "Date withdrawn.",
 	"date_reviewed": "Proposed date updated.",
@@ -155,6 +158,7 @@ var flashErrors = map[string]string{
 	"batch_has_bookings": "This batch has bookings, so it can't be deleted.",
 	"bad_review":         "Please give a rating from 1 to 5.",
 	"cannot_review":      "You can only review a completed trek, once.",
+	"lead_not_approved":  "Only approved leads can be assigned to treks.",
 	"bad_contact":        "Please enter your name and a valid 10-digit phone number.",
 	"bad_photo":          "Please upload a JPG, PNG or WebP photo under 5 MB.",
 	"bad_date":           "Please pick a date at least 3 days from today.",
@@ -172,6 +176,7 @@ func (a *App) render(w http.ResponseWriter, r *http.Request, page string, data m
 	data["Site"] = site
 	data["Demo"] = a.demo
 	data["PublicURL"] = envOr("PUBLIC_URL", "http://localhost:8080")
+	data["AdminURL"] = os.Getenv("ADMIN_URL") // shown to admins on the public site only if set
 	if u := currentUser(r); u != nil {
 		role := "Trekker"
 		if u.IsAdmin {
@@ -265,10 +270,15 @@ var templateFuncs = template.FuncMap{
 	},
 	"nextActions": nextActions,
 	"blocks":      splitBlocks,
+	"whatsappTo":  whatsAppTo,
+	"payRequest":  payRequestLink,
+	"upi":         func(k Booking) template.URL { return template.URL(k.UPILink()) },
 	"slug":        slugify,
 	"paras":       splitParas,
-	"bookingWA":   func(k Booking) string { return whatsAppLink(bookingMessage(k)) },
+	"bookingWA":   func(k Booking) string { return bookingsWALink(bookingMessage(k)) },
+	"bookingsWA":  bookingsWALink,
 	"hasPrefix":   strings.HasPrefix,
+	"hasSuffix":   strings.HasSuffix,
 	"firstWord": func(s string) string {
 		f := strings.Fields(s)
 		if len(f) == 0 {

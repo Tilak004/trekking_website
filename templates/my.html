@@ -14,6 +14,7 @@
     </div>
     <div class="booking-side">
       <span class="status {{.Status}}">{{.Status}}</span>
+      {{if .PaidAt}}<span class="status paid">Paid</span>{{else if and (eq .Status "approved") .PayToken}}<a class="btn small" href="{{.PayPath}}">Pay ₹{{inr .Amount}}</a>{{end}}
       {{if eq .Status "requested"}}<a class="wa-link" href="{{bookingWA .}}" target="_blank" rel="noopener">{{template "waicon"}} Send on WhatsApp</a>{{end}}
       {{if or (eq .Status "requested") (eq .Status "approved")}}
       <form method="post" action="/my/bookings/{{.ID}}/cancel" class="inline" onsubmit="return confirm('Cancel this booking?')">

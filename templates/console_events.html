@@ -7,7 +7,7 @@
 </nav>
 <div class="table-wrap">
 <table class="table">
-  <tr><th>Event</th><th>Lead</th><th>Seats</th><th>Est. value</th><th>Status</th><th></th></tr>
+  <tr><th>Event</th><th>Lead</th><th>Seats</th><th>Money</th><th>Status</th><th></th></tr>
   {{range .Events}}
   <tr {{if .Past}}class="past"{{end}}>
     <td><strong>{{.TrekName}}</strong><br><span class="small">{{fmtDate .StartDate}} · {{.Region}}</span></td>
@@ -16,7 +16,7 @@
       <div class="meter" title="{{.Fill}}% full"><i style="width:{{.Fill}}%"></i></div>
       {{.Taken}} / {{.Seats}} seats{{if .Requested}} · <span class="warn">{{.Requested}} waiting</span>{{end}}
     </td>
-    <td class="small">₹{{inr .Revenue}}</td>
+    <td class="small">₹{{inr .Collected}} collected{{if .Due}}<br><span class="muted">₹{{inr .Due}} to collect</span>{{end}}</td>
     <td><span class="status {{.Status}}">{{.Status}}</span>{{if .TrekHidden}}<br><span class="muted small" title="The trek itself is hidden from trekkers">trek hidden</span>{{end}}</td>
     <td class="actions">
       <a class="btn small ghost" href="/admin/events/{{.ID}}">Open</a>

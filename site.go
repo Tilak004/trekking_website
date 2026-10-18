@@ -16,6 +16,8 @@ type Site struct {
 	Phone       string // primary number, shown as text
 	Phone2      string // secondary number
 	WhatsApp    string // digits only, with country code, for wa.me links
+	UPI         string // UPI ID payments go to
+	BookingsWA  string // WhatsApp number (digits, with country code) that receives booking requests and payment screenshots
 	Email       string
 	Instagram   string // handle without @
 	City        string
@@ -28,6 +30,8 @@ var site = Site{
 	Phone:       "+91 77604 24521",
 	Phone2:      "+91 94817 40319",
 	WhatsApp:    "917760424521",
+	UPI:         "9481740319@ibl",
+	BookingsWA:  "919481740319",
 	Email:       "beyond.expiditions.kpt@gmail.com", // shown only as an "Email us" link
 	Instagram:   "beyond___expeditions",
 	City:        "Bangalore, Karnataka",
@@ -157,4 +161,24 @@ func (a *App) staticPage(page string) http.HandlerFunc {
 
 func (a *App) notFound(w http.ResponseWriter, r *http.Request) {
 	a.render(w, r, "notfound.html", map[string]any{"Status": http.StatusNotFound})
+}
+
+// whatsAppTo opens a WhatsApp chat with someone else's number (e.g. a trekker),
+// with a message filled in. Indian numbers without a country code get +91.
+func whatsAppTo(phone, text string) string {
+	d := strings.Map(func(c rune) rune {
+		if c >= '0' && c <= '9' {
+			return c
+		}
+		return -1
+	}, phone)
+	if len(d) == 10 {
+		d = "91" + d
+	}
+	return "https://wa.me/" + d + "?text=" + strings.ReplaceAll(url.QueryEscape(text), "+", "%20")
+}
+
+// bookingsWALink opens a WhatsApp chat with the bookings desk (Site.BookingsWA).
+func bookingsWALink(text string) string {
+	return whatsAppTo(site.BookingsWA, text)
 }

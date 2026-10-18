@@ -49,6 +49,9 @@
 </html>
 {{define "adminnav"}}{{end}}
 
+{{/* Same as the public layout's avatar, used by the trek-lead pages. */}}
+{{define "avatar"}}{{if .Photo}}<img class="avatar photo" src="/photos/{{.Photo}}" alt="{{.Name}}">{{else}}<div class="avatar">{{initial .Name}}</div>{{end}}{{end}}
+
 {{/* Registrations table, shared by the registrations page, the dashboard and each
      event page. Needs .Bookings and .Back; set .ShowEvent to add the event column. */}}
 {{define "regtable"}}
@@ -65,9 +68,23 @@
     <td class="small"><strong>{{.People}}</strong> {{if eq .People 1}}person{{else}}people{{end}}{{if .Age}}<br>Age {{.Age}}{{end}}</td>
     <td class="small">{{or .Pickup "—"}}<br><span class="muted">Emergency:</span> {{or .EmergencyName "—"}}{{with .EmergencyPhone}} · <a href="tel:{{.}}">{{.}}</a>{{end}}</td>
     <td class="small">{{with .Medical}}<span class="warn">Medical:</span> {{.}}{{end}}{{with .Note}}<br>Note: {{.}}{{end}}{{if and (not .Medical) (not .Note)}}<span class="muted">—</span>{{end}}</td>
-    <td><span class="status {{.Status}}">{{.Status}}</span></td>
+    <td><span class="status {{.Status}}">{{.Status}}</span>
+      {{if .PaidAt}}<br><span class="status paid">Paid ₹{{inr .PaidAmount}}</span>{{else if or (eq .Status "approved") (eq .Status "requested")}}<br><span class="muted small">Due ₹{{inr .Amount}}</span>{{end}}
+    </td>
     <td class="actions">
       {{$id := .ID}}
+      {{if eq .Status "requested"}}
+      <form method="post" action="/admin/bookings/{{$id}}/status" class="inline">
+        <input type="hidden" name="status" value="approved"><input type="hidden" name="send_pay" value="1"><input type="hidden" name="back" value="{{$.Back}}">
+        <button class="btn small act-approved">Approve &amp; request payment</button>
+      </form>
+      {{end}}
+      {{if and .PayToken (not .PaidAt) (eq .Status "approved")}}
+      <a class="btn small ghost" href="/admin/bookings/{{.ID}}/payreq">Send payment request</a>
+      <form method="post" action="/admin/bookings/{{$id}}/paid" class="inline"><input type="hidden" name="paid" value="1"><input type="hidden" name="amount" value="{{.Amount}}"><input type="hidden" name="back" value="{{$.Back}}"><button class="btn small">Mark paid</button></form>
+      {{else if .PaidAt}}
+      <form method="post" action="/admin/bookings/{{$id}}/paid" class="inline" onsubmit="return confirm('Mark booking #{{.ID}} as NOT paid?')"><input type="hidden" name="paid" value="0"><input type="hidden" name="back" value="{{$.Back}}"><button class="linklike small">Undo paid</button></form>
+      {{end}}
       {{range nextActions .Status}}
       <form method="post" action="/admin/bookings/{{$id}}/status" class="inline">
         <input type="hidden" name="status" value="{{.}}">

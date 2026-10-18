@@ -1,0 +1,57 @@
+{{define "title"}}Payment request #{{.Booking.ID}} · Admin{{end}}
+{{define "content"}}
+{{template "adminnav" .}}
+{{with .Booking}}
+<section class="payreq panel">
+  <p class="eyebrow">Booking #{{.ID}} approved</p>
+  <h1>Send the payment request to {{firstWord .UserName}}</h1>
+  <p class="muted small">{{.TrekName}} · {{fmtDate .StartDate}} · {{.People}} {{if eq .People 1}}person{{else}}people{{end}} · {{.UserPhone}}</p>
+
+  <div class="payreq-body">
+    <img id="qr" src="{{.PayPath}}/qr.png" alt="UPI QR for ₹{{inr .Amount}}" width="220" height="220">
+    <div class="payreq-info">
+      <strong class="payreq-amt">₹{{inr .Amount}}</strong>
+      <span class="small">UPI ID <code>{{$.Site.UPI}}</code></span>
+      <span class="small muted">She can scan this QR with any UPI app and pay directly.</span>
+    </div>
+  </div>
+
+  <div class="payreq-actions">
+    <button type="button" class="btn" id="share" hidden>Share QR + message on WhatsApp</button>
+    <button type="button" class="btn" id="copy">1. Copy QR image</button>
+    <a class="btn" id="open" href="{{$.WALink}}" target="_blank" rel="noopener">2. Open WhatsApp chat</a>
+  </div>
+  <p class="small muted" id="hint">Copy the QR, open the chat (the message is already typed), then press <b>Ctrl + V</b> to paste the QR and send.</p>
+  <p class="small"><a href="/admin/registrations?status=approved">← Back to registrations</a></p>
+</section>
+<script type="application/json" id="payreq-text">{{$.Message}}</script>
+<script>
+(async () => {
+  const text = JSON.parse(document.getElementById('payreq-text').textContent);
+  const blob = () => fetch(document.getElementById('qr').src).then(r => r.blob());
+  const hint = document.getElementById('hint');
+
+  // Phones: share the QR image and the message to WhatsApp in one go.
+  try {
+    const file = new File([await blob()], 'pay-booking-{{.ID}}.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      const share = document.getElementById('share');
+      share.hidden = false;
+      share.onclick = () => navigator.share({ files: [file], text }).catch(() => {});
+      hint.textContent = 'On your phone: tap "Share", choose WhatsApp and pick ' + {{.UserName}} + '. Or use the steps below.';
+    }
+  } catch {}
+
+  // Laptops: copy the QR to the clipboard, then paste it into the chat.
+  document.getElementById('copy').onclick = async (e) => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob() })]);
+      e.target.textContent = '✓ QR copied';
+    } catch {
+      e.target.textContent = 'Copy failed: right-click the QR → Copy image';
+    }
+  };
+})();
+</script>
+{{end}}
+{{end}}

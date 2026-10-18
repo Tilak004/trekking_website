@@ -3,8 +3,8 @@
 <div class="c-head"><h1>Dashboard</h1><a class="btn" href="/admin/events/new">+ New event</a></div>
 
 <div class="c-kpis">
-  <div class="kpi"><span>Confirmed value</span><strong>₹{{inr .D.ConfirmedValue}}</strong><em>estimate · all time</em></div>
-  <div class="kpi"><span>Upcoming value</span><strong>₹{{inr .D.UpcomingValue}}</strong><em>estimate · upcoming events</em></div>
+  <div class="kpi"><span>Collected</span><strong>₹{{inr .D.Collected}}</strong><em>marked paid · all time</em></div>
+  <div class="kpi"><span>Still to collect</span><strong>₹{{inr .D.ToCollect}}</strong><em>confirmed, not yet paid</em></div>
   <div class="kpi"><span>Trekkers confirmed</span><strong>{{.D.Trekkers}}</strong><em>all time</em></div>
   <div class="kpi"><span>Seats filled</span><strong>{{.Fill}}%</strong><em>{{.D.SeatsTaken}} of {{.D.SeatsTotal}} · {{.D.UpcomingLive}} live events</em></div>
 </div>
