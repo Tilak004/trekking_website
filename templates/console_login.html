@@ -7,8 +7,9 @@
   {{with .Err}}<div class="flash err">{{.}}</div>{{end}}
   <form method="post" action="/login" class="form">
     <input type="hidden" name="next" value="{{.Next}}">
-    <label>Email <input type="email" name="email" value="{{.Email}}" autocomplete="username" required autofocus></label>
+    <label>Email <input type="email" name="email" value="{{.Email}}" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></label>
     <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
+    <label class="check small"><input type="checkbox" onchange="this.form.password.type = this.checked ? 'text' : 'password'"> Show password</label>
     <button class="btn big">Sign in</button>
   </form>
 </section>

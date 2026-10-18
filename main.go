@@ -43,6 +43,7 @@ func main() {
 	dbPath := flag.String("db", envOr("DB_PATH", "beyond.db"), "path to the SQLite database file")
 	photosDir := flag.String("photos", envOr("PHOTOS_DIR", "photos"), "folder with site photos")
 	resetAdmin := flag.Bool("reset-admin-password", false, "set a new random admin password, print it and exit")
+	backupNow := flag.Bool("backup-now", false, "write a backup of the database and uploaded photos, then exit")
 	flag.Parse()
 	if *mode != "public" && *mode != "admin" {
 		log.Fatalf("unknown -mode %q (use public or admin)", *mode)
@@ -67,6 +68,14 @@ func main() {
 		}
 		return
 	}
+	if *backupNow {
+		path, err := runBackup(db, *photosDir, loadBackupConfig())
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("backup written:", path)
+		return
+	}
 
 	base := strings.TrimSuffix(filepath.Base(*dbPath), filepath.Ext(*dbPath))
 	sessionCookie = "session_" + slugify(base)
@@ -79,6 +88,10 @@ func main() {
 		log.Printf("%s admin console running on %s", site.Name, *addr)
 	} else {
 		log.Printf("%s running on %s", site.Name, *addr)
+		// Only the public process runs the nightly backup, so it happens once.
+		if !strings.Contains(base, "demo") {
+			startBackups(db, *photosDir, loadBackupConfig())
+		}
 	}
 	log.Fatal(srv.ListenAndServe())
 }
@@ -94,6 +107,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /{$}", a.home)
 	mux.HandleFunc("GET /treks/{slug}", a.trekPage)
 	mux.HandleFunc("POST /treks/{slug}/book", a.bookTrek)
+	mux.HandleFunc("POST /treks/{slug}/enquire", a.enquire)
 	mux.HandleFunc("GET /leads", a.leadsPage)
 	mux.HandleFunc("GET /leads/{slug}", a.leadPage)
 	mux.HandleFunc("GET /lead-with-us", a.leadApplyPage)
@@ -122,29 +136,30 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /my/bookings/{id}/cancel", a.requireUser(a.cancelBooking))
 	mux.HandleFunc("POST /my/bookings/{id}/review", a.requireUser(a.reviewBooking))
 
-
 	return a.withUser(mux)
 }
 
 // Flash messages are passed as short codes in the query string (?msg=booked)
 // so arbitrary text can never be injected into a page through a link.
 var flashMessages = map[string]string{
-	"welcome":       "Welcome aboard! Pick a trek and send us a booking request.",
-	"booked":        "Booking request sent. We'll confirm your seat shortly.",
-	"cancelled":     "Booking cancelled.",
-	"reviewed":      "Thanks for the review!",
-	"saved":         "Saved.",
-	"batch_added":   "Batch added.",
-	"batch_updated": "Batch updated.",
-	"batch_deleted": "Batch deleted.",
-	"status":        "Booking updated.",
-	"applied":       "Application received! We'll review it and get back to you.",
-	"lead_updated":  "Your trek-lead profile is updated.",
-	"lead_status":   "Trek lead updated.",
-	"lead_assigned": "Lead assigned to that trek date.",
-	"proposed":      "Date proposed! It goes live once our team approves it.",
-	"withdrawn":     "Date withdrawn.",
-	"date_reviewed": "Proposed date updated.",
+	"welcome":           "Welcome aboard! Pick a trek and send us a booking request.",
+	"booked":            "Booking request sent. We'll confirm your seat shortly.",
+	"refunded":          "Refund marked as sent.",
+	"enquired":          "Thanks! We've got your enquiry and will call or WhatsApp you soon.",
+	"cancelled":         "Booking cancelled.",
+	"reviewed":          "Thanks for the review!",
+	"saved":             "Saved.",
+	"batch_added":       "Batch added.",
+	"batch_updated":     "Batch updated.",
+	"batch_deleted":     "Batch deleted.",
+	"status":            "Booking updated.",
+	"applied":           "Application received! We'll review it and get back to you.",
+	"lead_updated":      "Your trek-lead profile is updated.",
+	"lead_status":       "Trek lead updated.",
+	"lead_assigned":     "Lead assigned to that trek date.",
+	"proposed":          "Date proposed! It goes live once our team approves it.",
+	"withdrawn":         "Date withdrawn.",
+	"date_reviewed":     "Proposed date updated.",
 	"event_created":     "Event saved as a draft. Publish it when you're ready.",
 	"event_saved":       "Event updated.",
 	"event_published":   "Event published. Trekkers can now book it.",
@@ -160,6 +175,7 @@ var flashErrors = map[string]string{
 	"cannot_review":      "You can only review a completed trek, once.",
 	"lead_not_approved":  "Only approved leads can be assigned to treks.",
 	"bad_contact":        "Please enter your name and a valid 10-digit phone number.",
+	"bad_enquiry":        "Enquiry not sent: please enter your name and a valid 10-digit phone number.",
 	"bad_photo":          "Please upload a JPG, PNG or WebP photo under 5 MB.",
 	"bad_date":           "Please pick a date at least 3 days from today.",
 	"bad_seats":          "Group size must be between 2 and 40.",

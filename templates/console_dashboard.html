@@ -9,13 +9,14 @@
   <div class="kpi"><span>Seats filled</span><strong>{{.Fill}}%</strong><em>{{.D.SeatsTaken}} of {{.D.SeatsTotal}} · {{.D.UpcomingLive}} live events</em></div>
 </div>
 
-{{if or .D.Requested .D.Pending .D.Drafts .D.LeadApps}}
+{{if or .D.Requested .D.Pending .D.Drafts .D.LeadApps .D.Enquiries}}
 <section class="c-todo">
   <h2>Needs your attention</h2>
   <ul>
     {{if .D.Requested}}<li><a href="/admin/registrations?status=requested"><b>{{.D.Requested}}</b> registration {{if eq .D.Requested 1}}request{{else}}requests{{end}} waiting for approval</a></li>{{end}}
     {{if .D.Pending}}<li><a href="/admin/events?show=pending"><b>{{.D.Pending}}</b> {{if eq .D.Pending 1}}date{{else}}dates{{end}} proposed by trek leads</a></li>{{end}}
     {{if .D.Drafts}}<li><a href="/admin/events?show=draft"><b>{{.D.Drafts}}</b> draft {{if eq .D.Drafts 1}}event{{else}}events{{end}} not yet published</a></li>{{end}}
+    {{if .D.Enquiries}}<li><a href="/admin/enquiries"><b>{{.D.Enquiries}}</b> {{if eq .D.Enquiries 1}}enquiry{{else}}enquiries{{end}} waiting for a reply</a></li>{{end}}
     {{if .D.LeadApps}}<li><a href="/admin/leads"><b>{{.D.LeadApps}}</b> trek-lead {{if eq .D.LeadApps 1}}application{{else}}applications{{end}} to review</a></li>{{end}}
   </ul>
 </section>

@@ -8,6 +8,7 @@
     <span class="tag diff">{{.Difficulty}}</span>
     <h1>{{.Name}}</h1>
     <p class="banner-sub">{{.Region}}</p>
+    <a class="btn banner-cta" href="#book">Book now</a>
   </div>
 </section>
 <div class="wrap">
@@ -31,12 +32,12 @@
   {{if .Itinerary}}<a href="#itinerary">Itinerary</a>{{end}}
   {{if or .Inclusions .Exclusions}}<a href="#inclusions">Inclusions</a>{{end}}
   {{if .ThingsToCarry}}<a href="#carry">What to carry</a>{{end}}
-  <a href="#dates">Dates</a>
+  <a href="#book">Book</a>
   {{if .FAQs}}<a href="#faqs">FAQs</a>{{end}}
   <a href="#reviews">Reviews</a>
 </nav>
 
-<div class="two-col">
+<div class="two-col single">
   <div class="trek-main">
     <section id="overview" class="trek-section">
       <p class="lead">{{.Summary}}</p>
@@ -81,22 +82,72 @@
     </section>
     {{end}}
 
-    <section id="dates" class="trek-section">
-      <h2>Upcoming dates</h2>
-      {{if $.Batches}}
-      <div class="table-wrap">
-      <table class="table">
-        <tr><th>Date</th><th>Trek lead</th><th>Seats</th></tr>
-        {{range $.Batches}}
-        <tr>
-          <td>{{fmtDate .StartDate}}</td>
-          <td>{{if .LeadSlug}}<a href="/leads/{{.LeadSlug}}">{{.LeadName}}</a>{{else}}<span class="muted">To be assigned</span>{{end}}</td>
-          <td>{{if le .Left 0}}<span class="tag full">Full</span>{{else}}{{.Left}} left{{end}}</td>
-        </tr>
-        {{end}}
-      </table>
+    <section id="book" class="trek-section book-section">
+      <span id="dates"></span>
+      <h2>Book or enquire</h2>
+      <div class="book-grid">
+        <div class="panel book-panel">
+          <h3>Book now</h3>
+          {{if .Price}}<p class="bp-price">₹{{inr .Price}} <span class="bp-badge">per person</span></p>{{end}}
+          {{if $.Existing}}
+            <p>You already have a <span class="status {{$.Existing.Status}}">{{$.Existing.Status}}</span> booking for {{fmtDate $.Existing.StartDate}}.</p>
+            <p><a href="/my">View my bookings →</a></p>
+          {{else if not $.Batches}}
+            <p class="bk-label">Select date to register</p>
+            <div class="bp-none"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5v5.5M12 16.5v.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg> No fixed departures right now</div>
+            <div class="bk-actions">
+              <button class="btn big" disabled>No departures available</button>
+            </div>
+            <p class="bk-hint">Online booking opens once dates are announced. Send an enquiry and we'll tell you first.</p>
+          {{else}}
+          <div data-island="booking"><script type="application/json" class="island-data">{{$.BookingData}}</script>
+          <form method="post" action="/treks/{{.Slug}}/book" class="form">
+            <fieldset>
+              <legend>Date</legend>
+              {{range $.Batches}}
+              <label class="radio{{if le .Left 0}} disabled{{end}}">
+                <input type="radio" name="batch_id" value="{{.ID}}" required {{if le .Left 0}}disabled{{end}}>
+                {{fmtDate .StartDate}} <span class="muted small">{{if le .Left 0}}Full{{else}}{{.Left}} seats left{{end}}</span>
+              </label>
+              {{end}}
+            </fieldset>
+            {{if not $.User}}
+            <label>Your name <input name="name" required maxlength="100" autocomplete="name"></label>
+            <label>WhatsApp number <input name="phone" type="tel" required inputmode="tel" placeholder="98765 43210" autocomplete="tel"></label>
+            {{end}}
+            <label>Number of people <input type="number" name="people" min="1" max="10" value="1" required></label>
+            {{with lines .PickupPoints}}
+            <label>Pickup point
+              <select name="pickup">
+                {{range .}}<option>{{.}}</option>{{end}}
+              </select>
+            </label>
+            {{end}}
+            <label>Anything else? (optional) <textarea name="note" rows="2" maxlength="1000" placeholder="Names of friends joining, questions…"></textarea></label>
+            <button class="btn block">Send booking request</button>
+          </form>
+          </div>
+          {{end}}
+          <ul class="assurances">
+            <li>No payment to request a seat</li>
+            <li>Seat confirmed personally on WhatsApp</li>
+            <li><a href="/cancellation-policy">Clear cancellation &amp; refund policy</a></li>
+          </ul>
+        </div>
+        <div class="panel enquire-panel" id="enquire">
+          <h3>Enquire now</h3>
+          <p class="muted small">Not ready to book, or have a question? Leave your details and we'll call or WhatsApp you about {{.Name}}.</p>
+          <form method="post" action="/treks/{{.Slug}}/enquire" class="form">
+            
+            <label>Your name <input name="name" required maxlength="100" autocomplete="name" value="{{with $.User}}{{.Name}}{{end}}"></label>
+            <label>Phone (WhatsApp) <input name="phone" type="tel" required inputmode="tel" placeholder="98765 43210" autocomplete="tel" value="{{with $.User}}{{.Phone}}{{end}}"></label>
+            <label>Email (optional) <input name="email" type="email" maxlength="200" autocomplete="email" autocapitalize="none" spellcheck="false"{{with $.User}}{{if not (hasSuffix .Email "@guest.beyondexpeditions.local")}} value="{{.Email}}"{{end}}{{end}}></label>
+            <label>Your question <textarea name="message" rows="3" maxlength="2000" placeholder="Fitness needed, what to wear, group bookings…"></textarea></label>
+            <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <button class="btn block">Send enquiry</button>
+          </form>
+        </div>
       </div>
-      {{else}}<p class="muted">No dates announced yet. <a href="{{whatsapp (printf "Hi! When is the next %s trek?" .Name)}}" target="_blank" rel="noopener">Ask us on WhatsApp</a> and we'll let you know first.</p>{{end}}
     </section>
 
     {{with blocks .FAQs}}
@@ -114,50 +165,6 @@
     </section>
   </div>
 
-  <aside class="panel book-panel">
-    <h3>Request a booking</h3>
-    {{if $.Batches}}<p class="price">₹{{inr .Price}} <span class="muted small">per person</span></p>{{else}}<p class="soon-note"><span class="soon-tag">Opening soon</span> Dates and price will be announced soon.</p>{{end}}
-    {{if $.Existing}}
-      <p>You already have a <span class="status {{$.Existing.Status}}">{{$.Existing.Status}}</span> booking for {{fmtDate $.Existing.StartDate}}.</p>
-      <p><a href="/my">View my bookings →</a></p>
-    {{else if not $.Batches}}
-      <p class="muted">No upcoming dates to book right now.</p>
-    {{else}}
-    <div data-island="booking"><script type="application/json" class="island-data">{{$.BookingData}}</script>
-    <form method="post" action="/treks/{{.Slug}}/book" class="form">
-      <fieldset>
-        <legend>Date</legend>
-        {{range $.Batches}}
-        <label class="radio{{if le .Left 0}} disabled{{end}}">
-          <input type="radio" name="batch_id" value="{{.ID}}" required {{if le .Left 0}}disabled{{end}}>
-          {{fmtDate .StartDate}} <span class="muted small">{{if le .Left 0}}Full{{else}}{{.Left}} seats left{{end}}</span>
-        </label>
-        {{end}}
-      </fieldset>
-      {{if not $.User}}
-      <label>Your name <input name="name" required maxlength="100" autocomplete="name"></label>
-      <label>WhatsApp number <input name="phone" type="tel" required inputmode="tel" placeholder="98765 43210" autocomplete="tel"></label>
-      {{end}}
-      <label>Number of people <input type="number" name="people" min="1" max="10" value="1" required></label>
-      {{with lines .PickupPoints}}
-      <label>Pickup point
-        <select name="pickup">
-          {{range .}}<option>{{.}}</option>{{end}}
-        </select>
-      </label>
-      {{end}}
-      <label>Anything else? (optional) <textarea name="note" rows="2" maxlength="1000" placeholder="Names of friends joining, questions…"></textarea></label>
-      <button class="btn block">Send booking request</button>
-    </form>
-    </div>
-    {{end}}
-    <ul class="assurances">
-      <li>No payment to request a seat</li>
-      <li>Seat confirmed personally on WhatsApp</li>
-      <li><a href="/cancellation-policy">Clear cancellation &amp; refund policy</a></li>
-    </ul>
-    <a class="wa-inline" href="{{whatsapp (printf "Hi! I have a question about the %s trek." .Name)}}" target="_blank" rel="noopener">{{template "waicon"}} Questions? Chat on WhatsApp</a>
-  </aside>
 </div>
 {{end}}
 {{end}}

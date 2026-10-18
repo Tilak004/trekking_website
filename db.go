@@ -217,6 +217,9 @@ type Booking struct {
 	PayToken       string
 	PaidAt         string
 	PaidAmount     int
+	RefundAmount   int
+	RefundReason   string
+	RefundedAt     string
 }
 
 type Review struct {
@@ -265,6 +268,8 @@ func openDB(path string) (*sql.DB, error) {
 	}
 	migrateLeadDates(db)
 	migratePayments(db)
+	migrateRefunds(db)
+	migrateEnquiries(db)
 	if err := migrateInteractive(db); err != nil {
 		return nil, fmt.Errorf("migrate interactive: %w", err)
 	}
@@ -421,7 +426,7 @@ SELECT k.id, k.status, k.people, k.pickup, k.emergency_name, k.emergency_phone, 
        b.id, b.start_date, t.name, t.slug, COALESCE(l.name, ''), b.lead_id IS NOT NULL,
        u.name, u.email, u.phone,
        EXISTS (SELECT 1 FROM reviews r WHERE r.booking_id = k.id),
-       t.price, k.pay_token, k.paid_at, k.paid_amount
+       t.price, k.pay_token, k.paid_at, k.paid_amount, k.refund_amount, k.refund_reason, k.refunded_at
 FROM bookings k
 JOIN batches b ON b.id = k.batch_id
 JOIN treks t ON t.id = b.trek_id
@@ -432,7 +437,7 @@ func scanBooking(s scanner) (Booking, error) {
 	var k Booking
 	err := s.Scan(&k.ID, &k.Status, &k.People, &k.Pickup, &k.EmergencyName, &k.EmergencyPhone, &k.Age, &k.Medical,
 		&k.Note, &k.CreatedAt, &k.BatchID, &k.StartDate, &k.TrekName, &k.TrekSlug, &k.LeadName, &k.HasLead,
-		&k.UserName, &k.UserEmail, &k.UserPhone, &k.Reviewed, &k.Price, &k.PayToken, &k.PaidAt, &k.PaidAmount)
+		&k.UserName, &k.UserEmail, &k.UserPhone, &k.Reviewed, &k.Price, &k.PayToken, &k.PaidAt, &k.PaidAmount, &k.RefundAmount, &k.RefundReason, &k.RefundedAt)
 	return k, err
 }
 

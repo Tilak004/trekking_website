@@ -49,7 +49,7 @@ type Theme struct {
 func (t Theme) Attr() string { return strings.TrimSpace(t.Base + " " + t.Name) }
 
 var themes = []Theme{
-	{"editorial", "Editorial", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", "ghats sky"},
+	{"editorial", "Editorial", "family=Source+Sans+3:wght@400;500;600;700", "ghats sky"},
 	{"sky", "Sky", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", "ghats"},
 	{"night", "Shola Night", "family=Marcellus&family=Outfit:wght@600;700;800&family=Inter:wght@300;400;500;600", "ghats"},
 	{"ghats", "Western Ghats", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", ""},

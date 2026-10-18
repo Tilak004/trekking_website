@@ -280,11 +280,16 @@ func (a *App) myBookings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) cancelBooking(w http.ResponseWriter, r *http.Request) {
-	_, err := a.db.Exec(`UPDATE bookings SET status = 'cancelled' WHERE id = ? AND user_id = ? AND status IN ('requested', 'approved')`,
-		pathID(r), currentUser(r).ID)
+	list, err := a.queryBookings(`WHERE k.id = ? AND k.user_id = ? AND k.status IN ('requested', 'approved')`, pathID(r), currentUser(r).ID)
 	if err != nil {
 		a.serverError(w, err)
 		return
+	}
+	if len(list) > 0 {
+		if err := a.cancelWithRefund(list[0], RefundCustomer); err != nil {
+			a.serverError(w, err)
+			return
+		}
 	}
 	redirect(w, r, "/my?msg=cancelled")
 }

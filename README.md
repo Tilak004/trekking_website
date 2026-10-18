@@ -69,6 +69,25 @@ Start both from the same folder (they share the database and the `photos/` folde
 
 There are no payments. Booking is request-only, and you confirm each request manually.
 
+## Backups
+
+The public-site process backs up automatically every night at 02:00. Each backup is one file, `backups/beyond-YYYY-MM-DD_HHMMSS.tar.gz`, containing a **complete** snapshot of the database plus the photos people uploaded (`photos/leads`, `photos/reviews`). The newest 30 are kept.
+
+```
+./beyond.exe -backup-now          # make a backup right now (e.g. before an update)
+```
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `BACKUP_DIR` | `backups` | where backups go; `off` disables them |
+| `BACKUP_AT` | `02:00` | time of the nightly backup |
+| `BACKUP_KEEP` | `30` | how many backups to keep |
+| `BACKUP_UPLOAD` | – | command to copy each backup to Google Drive: `rclone copy {file} gdrive:beyond-backups` |
+
+**Restore:** stop both processes, extract the archive (`tar -xzf beyond-….tar.gz`), put `beyond.db` and the `photos/` folders in place, and start again.
+
+Keep a copy **off the server** in Google Drive (set `BACKUP_UPLOAD`); a backup on the same disk is lost if the server is. Setup on the server: install rclone, run `rclone config` to add a Google Drive remote named `gdrive` (authorise it with `rclone authorize "drive"` on a laptop, since the server has no browser), then run `beyond -backup-now` and check the file appears in Drive.
+
 ## Interactive parts (Preact islands)
 
 The server renders every page. A few parts are upgraded in the browser by small Preact components ("islands"): the trek finder, the Western Ghats map, the elevation profile and the step-by-step booking flow. Each one loads only on pages that use it (the map only when scrolled into view), and the plain HTML still works if JavaScript fails.

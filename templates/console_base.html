@@ -24,6 +24,7 @@
       <a href="/admin" {{if eq .Path "/admin"}}class="on"{{end}}>Dashboard</a>
       <a href="/admin/events" {{if hasPrefix .Path "/admin/events"}}class="on"{{end}}>Events</a>
       <a href="/admin/registrations" {{if hasPrefix .Path "/admin/registrations"}}class="on"{{end}}>Registrations</a>
+      <a href="/admin/enquiries" {{if eq .Path "/admin/enquiries"}}class="on"{{end}}>Enquiries</a>
       <a href="/admin/analytics" {{if eq .Path "/admin/analytics"}}class="on"{{end}}>Analytics</a>
       <span class="c-sep">Manage</span>
       <a href="/admin/treks" {{if hasPrefix .Path "/admin/treks"}}class="on"{{end}}>Treks</a>
@@ -70,6 +71,8 @@
     <td class="small">{{with .Medical}}<span class="warn">Medical:</span> {{.}}{{end}}{{with .Note}}<br>Note: {{.}}{{end}}{{if and (not .Medical) (not .Note)}}<span class="muted">—</span>{{end}}</td>
     <td><span class="status {{.Status}}">{{.Status}}</span>
       {{if .PaidAt}}<br><span class="status paid">Paid ₹{{inr .PaidAmount}}</span>{{else if or (eq .Status "approved") (eq .Status "requested")}}<br><span class="muted small">Due ₹{{inr .Amount}}</span>{{end}}
+      {{if eq .Status "cancelled"}}{{if .RefundedAt}}<br><span class="status completed">Refunded ₹{{inr .RefundAmount}}</span>{{else if .RefundAmount}}<br><span class="status requested">Refund ₹{{inr .RefundAmount}} pending</span>{{end}}
+      {{with .RefundReason}}<br><span class="muted small">{{if eq . "us"}}Cancelled by us{{else}}Cancelled by trekker{{end}}</span>{{end}}{{end}}
     </td>
     <td class="actions">
       {{$id := .ID}}
@@ -78,19 +81,44 @@
         <input type="hidden" name="status" value="approved"><input type="hidden" name="send_pay" value="1"><input type="hidden" name="back" value="{{$.Back}}">
         <button class="btn small act-approved">Approve &amp; request payment</button>
       </form>
-      {{end}}
-      {{if and .PayToken (not .PaidAt) (eq .Status "approved")}}
-      <a class="btn small ghost" href="/admin/bookings/{{.ID}}/payreq">Send payment request</a>
-      <form method="post" action="/admin/bookings/{{$id}}/paid" class="inline"><input type="hidden" name="paid" value="1"><input type="hidden" name="amount" value="{{.Amount}}"><input type="hidden" name="back" value="{{$.Back}}"><button class="btn small">Mark paid</button></form>
-      {{else if .PaidAt}}
-      <form method="post" action="/admin/bookings/{{$id}}/paid" class="inline" onsubmit="return confirm('Mark booking #{{.ID}} as NOT paid?')"><input type="hidden" name="paid" value="0"><input type="hidden" name="back" value="{{$.Back}}"><button class="linklike small">Undo paid</button></form>
-      {{end}}
-      {{range nextActions .Status}}
-      <form method="post" action="/admin/bookings/{{$id}}/status" class="inline">
-        <input type="hidden" name="status" value="{{.}}">
-        <input type="hidden" name="back" value="{{$.Back}}">
-        <button class="btn small act-{{.}}">{{actionLabel .}}</button>
-      </form>
+      <form method="post" action="/admin/bookings/{{$id}}/status" class="inline"><input type="hidden" name="status" value="rejected"><input type="hidden" name="back" value="{{$.Back}}"><button class="btn small act-rejected">Reject</button></form>
+
+      {{else if eq .Status "approved"}}
+        {{if not .PaidAt}}
+        <a class="btn small ghost" href="/admin/bookings/{{.ID}}/payreq">Send payment request</a>
+        <form method="post" action="/admin/bookings/{{$id}}/paid" class="inline"><input type="hidden" name="paid" value="1"><input type="hidden" name="amount" value="{{.Amount}}"><input type="hidden" name="back" value="{{$.Back}}"><button class="btn small">Mark paid</button></form>
+        {{end}}
+        {{if .TrekPassed}}
+        <form method="post" action="/admin/bookings/{{$id}}/status" class="inline"><input type="hidden" name="status" value="completed"><input type="hidden" name="back" value="{{$.Back}}"><button class="btn small act-approved" title="The trek has happened: unlocks the trekker's review">Mark trek done</button></form>
+        {{else if .PaidAt}}
+        <details class="cancel-menu">
+          <summary>Cancel booking</summary>
+          <div class="cancel-opts">
+            <form method="post" action="/admin/bookings/{{$id}}/cancel" onsubmit="return confirm('Cancel booking #{{$id}}? Refund ₹{{inr .CustomerRefund}} (policy: {{.RefundRule}}).')">
+              <input type="hidden" name="reason" value="customer"><input type="hidden" name="back" value="{{$.Back}}">
+              <button class="btn small">Trekker cancelled · refund ₹{{inr .CustomerRefund}}</button>
+              <span class="muted small">{{.DaysToTrek}} days to go · {{.RefundRule}}</span>
+            </form>
+            <form method="post" action="/admin/bookings/{{$id}}/cancel" onsubmit="return confirm('Cancel booking #{{$id}} from our side? Full refund ₹{{inr .PaidAmount}}.')">
+              <input type="hidden" name="reason" value="us"><input type="hidden" name="back" value="{{$.Back}}">
+              <button class="btn small">We cancelled · full refund ₹{{inr .PaidAmount}}</button>
+              <span class="muted small">Weather, closures, too few trekkers</span>
+            </form>
+          </div>
+        </details>
+        {{else}}
+        <form method="post" action="/admin/bookings/{{$id}}/cancel" class="inline" onsubmit="return confirm('Cancel booking #{{$id}}? Nothing was paid, so there is no refund.')"><input type="hidden" name="back" value="{{$.Back}}"><button class="btn small act-cancelled">Cancel</button></form>
+        {{end}}
+
+      {{else if eq .Status "cancelled"}}
+        {{if and .RefundAmount (not .RefundedAt)}}
+        <form method="post" action="/admin/bookings/{{$id}}/refunded" class="inline" onsubmit="return confirm('Have you sent the ₹{{inr .RefundAmount}} refund to {{.UserName}}?')"><input type="hidden" name="back" value="{{$.Back}}"><button class="btn small act-approved">Mark refunded</button></form>
+        {{else if not .PaidAt}}
+        <form method="post" action="/admin/bookings/{{$id}}/status" class="inline"><input type="hidden" name="status" value="requested"><input type="hidden" name="back" value="{{$.Back}}"><button class="btn small">Reopen</button></form>
+        {{end}}
+
+      {{else if eq .Status "rejected"}}
+        <form method="post" action="/admin/bookings/{{$id}}/status" class="inline"><input type="hidden" name="status" value="requested"><input type="hidden" name="back" value="{{$.Back}}"><button class="btn small">Reopen</button></form>
       {{end}}
     </td>
   </tr>

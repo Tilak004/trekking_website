@@ -76,9 +76,13 @@ func (a *App) adminRoutes() http.Handler {
 	mux.HandleFunc("GET /admin/registrations.csv", adm(a.consoleRegistrationsCSV))
 	mux.HandleFunc("POST /admin/bookings/{id}/status", adm(a.adminSetBookingStatus))
 	mux.HandleFunc("POST /admin/bookings/{id}/paid", adm(a.adminSetPaid))
+	mux.HandleFunc("POST /admin/bookings/{id}/cancel", adm(a.adminCancelBooking))
+	mux.HandleFunc("POST /admin/bookings/{id}/refunded", adm(a.adminMarkRefunded))
 	mux.HandleFunc("GET /admin/bookings/{id}/payreq", adm(a.adminPayRequest))
 
 	mux.HandleFunc("GET /admin/analytics", adm(a.consoleAnalytics))
+	mux.HandleFunc("GET /admin/enquiries", adm(a.consoleEnquiries))
+	mux.HandleFunc("POST /admin/enquiries/{id}/replied", adm(a.consoleEnquiryReplied))
 
 	mux.HandleFunc("GET /admin/treks", adm(a.adminTreks))
 	mux.HandleFunc("GET /admin/treks/new", adm(a.adminTrekForm))
@@ -490,6 +494,7 @@ func csvSafe(s string) string {
 func (a *App) consoleDashboard(w http.ResponseWriter, r *http.Request) {
 	var d struct {
 		Requested, Pending, Drafts, LeadApps, UpcomingLive int
+		Enquiries                                          int
 		Collected, ToCollect, Trekkers, WeekRegs           int
 		SeatsTaken, SeatsTotal                             int
 	}
@@ -498,6 +503,7 @@ func (a *App) consoleDashboard(w http.ResponseWriter, r *http.Request) {
 	q(&d.Pending, `SELECT COUNT(*) FROM batches WHERE status = 'pending'`)
 	q(&d.Drafts, `SELECT COUNT(*) FROM batches WHERE status = 'draft'`)
 	q(&d.LeadApps, `SELECT COUNT(*) FROM leads WHERE status = 'pending'`)
+	q(&d.Enquiries, `SELECT COUNT(*) FROM enquiries WHERE replied_at = ''`)
 	q(&d.UpcomingLive, `SELECT COUNT(*) FROM batches WHERE status = 'live' AND start_date >= date('now')`)
 	q(&d.Collected, `SELECT COALESCE(SUM(paid_amount), 0) FROM bookings WHERE paid_at != ''`)
 	q(&d.ToCollect, `SELECT COALESCE(SUM(k.people * t.price), 0) FROM bookings k JOIN batches b ON b.id = k.batch_id JOIN treks t ON t.id = b.trek_id WHERE k.status IN (`+confirmedStatuses+`) AND k.paid_at = ''`)

@@ -152,6 +152,7 @@ type BookingData struct {
 type BookingBatch struct {
 	ID    int64  `json:"id"`
 	Label string `json:"label"`
+	Year  string `json:"year"`
 	Left  int    `json:"left"`
 	Lead  string `json:"lead"`
 }
@@ -165,7 +166,15 @@ func bookingData(t Trek, batches []Batch, u *User) BookingData {
 		d.Pickups = []string{}
 	}
 	for _, b := range batches {
-		d.Batches = append(d.Batches, BookingBatch{ID: b.ID, Label: formatDate(b.StartDate), Left: b.Left(), Lead: b.LeadName})
+		d.Batches = append(d.Batches, BookingBatch{ID: b.ID, Label: formatDate(b.StartDate), Year: yearOf(b.StartDate), Left: b.Left(), Lead: b.LeadName})
 	}
 	return d
+}
+
+// yearOf returns the year of a YYYY-MM-DD date.
+func yearOf(date string) string {
+	if len(date) >= 4 {
+		return date[:4]
+	}
+	return ""
 }
