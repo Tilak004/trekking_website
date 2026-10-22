@@ -92,7 +92,7 @@ func (a *App) routes() http.Handler {
 		return a.adminRoutes()
 	}
 	mux := http.NewServeMux()
-	mux.Handle("GET /static/", http.FileServerFS(staticFS))
+	mux.Handle("GET /static/", staticFiles())
 	mux.Handle("GET /photos/", a.servePhotos())
 
 	mux.HandleFunc("GET /{$}", a.home)

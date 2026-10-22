@@ -32,7 +32,7 @@ const confirmedStatuses = `'approved', 'completed'`
 
 func (a *App) adminRoutes() http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle("GET /static/", http.FileServerFS(staticFS))
+	mux.Handle("GET /static/", staticFiles())
 	mux.Handle("GET /photos/", a.servePhotos())
 
 	mux.HandleFunc("GET /login", a.adminLoginForm)

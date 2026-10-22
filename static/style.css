@@ -1710,8 +1710,8 @@ tr.done td { opacity: .6; }
 
 /* ===== trek cards that grow with the text =====
    The card size, badges and text are all in rem, so bigger text never overflows or overlaps. */
-[data-theme~="ghats"] #treks .grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 16.5rem), 1fr)); gap: 14px; }
-[data-theme~="ghats"] .trek-card { height: auto; min-height: 19rem; }
+[data-theme~="ghats"] #treks .grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr)); gap: 14px; }
+[data-theme~="ghats"] .trek-card { height: auto; min-height: 20rem; }
 /* the two corner badges share the top row without touching */
 [data-theme~="ghats"] .trek-card .card-img .tag { max-width: calc(50% - 14px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* the price pill sits below the badges */
@@ -1722,5 +1722,5 @@ tr.done td { opacity: .6; }
 [data-theme~="ghats"] .trek-card .card-lead { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; }
 @media (max-width: 520px) {
   [data-theme~="ghats"] #treks .grid { grid-template-columns: 1fr; gap: 12px; }
-  [data-theme~="ghats"] .trek-card { min-height: 17rem; }
+  [data-theme~="ghats"] .trek-card { min-height: 18rem; }
 }

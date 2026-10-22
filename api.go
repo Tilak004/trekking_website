@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"context"
 	"encoding/json"
 	"html"
@@ -215,4 +217,34 @@ func (a *App) renderJSON(w http.ResponseWriter, r *http.Request, page string, da
 		status = s
 	}
 	apiJSON(w, status, generic)
+}
+
+// staticFiles serves the embedded /static/ files (CSS, logos, the built React app).
+//   - files under /static/app/assets/ have a hash in their name, so browsers may keep them for a year;
+//   - everything else (style.css, console.css, logos) gets an ETag and "no-cache", which means the
+//     browser checks on every visit and downloads a file only if it changed. Without this a browser
+//     keeps showing an old style.css after an update.
+func staticFiles() http.Handler {
+	etags := map[string]string{}
+	fs.WalkDir(staticFS, "static", func(p string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			if b, err := fs.ReadFile(staticFS, p); err == nil {
+				sum := sha1.Sum(b)
+				etags["/"+p] = `"` + hex.EncodeToString(sum[:8]) + `"`
+			}
+		}
+		return nil
+	})
+	files := http.FileServerFS(staticFS)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/static/app/assets/") {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		} else {
+			w.Header().Set("Cache-Control", "no-cache")
+			if tag, ok := etags[r.URL.Path]; ok {
+				w.Header().Set("ETag", tag)
+			}
+		}
+		files.ServeHTTP(w, r)
+	})
 }
