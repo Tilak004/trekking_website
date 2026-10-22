@@ -42,7 +42,7 @@ export default function Enquiries() {
                       {q.Email ? <><br /><a href={`mailto:${q.Email}`}>{q.Email}</a></> : null}
                     </span>
                   </td>
-                  <td>{q.TrekSlug ? <a href={`${PublicURL}/treks/${q.TrekSlug}`} target="_blank" rel="noopener noreferrer">{q.TrekName}</a> : <span className="muted">–</span>}</td>
+                  <td>{q.TrekSlug ? <a href={`${PublicURL}/treks/${q.TrekSlug}`} target="_blank" rel="noopener noreferrer">{q.TrekName}</a> : <span className="muted">General question</span>}</td>
                   <td className="small enq-msg">{q.Message || '—'}</td>
                   <td className="small">{q.CreatedAt}</td>
                   <td><Replied q={q} /></td>

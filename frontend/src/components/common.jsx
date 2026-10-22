@@ -50,7 +50,7 @@ export function TrekCard({ t }) {
       <div className="card-img" style={t.Photo ? { backgroundImage: `url('${photoURL(t.Photo)}')` } : undefined}>
         {!t.Photo && <Mountains />}
         <span className="tag diff">{t.Difficulty}</span>
-        {t.NextBatch && <span className="tag open">Booking open</span>}
+        {t.TrailStatus === 'closed' ? <span className="tag open closed">Trail closed</span> : t.NextBatch && <span className="tag open">Booking open</span>}
         {t.NextBatch && <span className="card-price">₹{inr(t.Price)}</span>}
       </div>
       <div className="card-body">

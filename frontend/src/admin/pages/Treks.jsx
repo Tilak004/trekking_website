@@ -97,6 +97,7 @@ export function TrekForm() {
   const { PublicURL } = useSession();
   const { submit, busy, error } = useSubmit();
   const batchForm = useSubmit();
+  const trailForm = useSubmit();
   const d = page.data;
   useTitle(d && (d.Trek.ID ? `Edit ${d.Trek.Name}` : 'New trek'));
   if (page.notFound) return <p className="muted">Trek not found. <Link to="/admin/treks">Back to treks</Link></p>;
@@ -111,6 +112,24 @@ export function TrekForm() {
         {!isNew && <> · <a href={`${PublicURL}/treks/${t.Slug}`} target="_blank" rel="noopener noreferrer">View public page</a></>}
       </p>
       <h1>{isNew ? 'New trek' : `Edit ${t.Name}`}</h1>
+
+      {!isNew && (
+        <form key={`trail-${t.ID}-${t.TrailUpdated}`} onSubmit={trailForm.submit(`/admin/treks/${t.ID}/trail`)} className="form panel trail-form">
+          <strong>Trail status</strong> <span className="muted small">Shown on the trek page and cards.{t.TrailUpdated ? ` Last updated ${fmtDate(t.TrailUpdated)}.` : ''}</span>
+          {trailForm.error && <div className="flash err">{trailForm.error}</div>}
+          <div className="row">
+            <label>Status
+              <select name="trail_status" defaultValue={t.TrailStatus || ''}>
+                <option value="">Not shown</option>
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
+              </select>
+            </label>
+            <label>Note (optional) <input name="trail_note" defaultValue={t.TrailNote} maxLength={160} placeholder="e.g. Closed by forest department till 15 Nov" /></label>
+          </div>
+          <button className="btn small" disabled={trailForm.busy}>Update status</button>
+        </form>
+      )}
 
       <form key={t.ID || 'new'} onSubmit={submit(isNew ? '/admin/treks/new' : `/admin/treks/${id}`)} className="form panel">
         {(error || d.Err) && <div className="flash err">{error || d.Err}</div>}
@@ -143,7 +162,8 @@ export function TrekForm() {
           <label>Included (one per line) <textarea name="inclusions" rows="6" defaultValue={t.Inclusions} /></label>
           <label>Not included (one per line) <textarea name="exclusions" rows="6" defaultValue={t.Exclusions} /></label>
         </div>
-        <label>What to carry (one per line) <textarea name="things_to_carry" rows="6" defaultValue={t.ThingsToCarry} /></label>
+        <label>What to carry (one per line) <textarea name="things_to_carry" rows="8" defaultValue={t.ThingsToCarry} placeholder={'Clothing:\nFull-sleeve T-shirt\nRain jacket\nFootwear:\nTrekking shoes with good grip'} />
+          <span className="hint">Optional groups: a line ending in a colon, like <code>Clothing:</code>, starts a group.</span></label>
         <label>FAQs
           <textarea name="faqs" rows="8" defaultValue={t.FAQs} />
           <span className="hint">First line is the question, the next lines are the answer. Leave a blank line between questions.</span>
@@ -165,7 +185,8 @@ export function TrekForm() {
           <textarea name="elevation" rows="4" defaultValue={t.Elevation} placeholder={'0 820\n2.5 1100\n5 1520'} />
           <span className="hint">One point per line: distance in km, then altitude in m. Take these from a GPS track (Strava, Wikiloc). Leave empty to hide the chart.</span>
         </label>
-        <label>Pickup points (one per line) <textarea name="pickup_points" rows="3" defaultValue={t.PickupPoints} /></label>
+        <label>Pickup points (one per line) <textarea name="pickup_points" rows="4" defaultValue={t.PickupPoints} placeholder={'Majestic, Shanthala Silks | 11:00 PM\nIndiranagar Metro | 11:30 PM\nSilk Board Junction | 1:00 AM'} />
+          <span className="hint">Add the time after a <code>|</code>. Trekkers see the times on the trek page and pick one when booking.</span></label>
         <label className="check"><input type="checkbox" name="active" defaultChecked={t.Active} /> Visible to trekkers</label>
         <button className="btn" disabled={busy}>Save trek</button>
       </form>

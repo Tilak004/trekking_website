@@ -73,6 +73,7 @@ func (a *App) adminRoutes() http.Handler {
 	mux.HandleFunc("GET /admin/treks/{id}", adm(a.adminTrekForm))
 	mux.HandleFunc("POST /admin/treks/{id}", adm(a.adminSaveTrek))
 	mux.HandleFunc("POST /admin/treks/{id}/batches", adm(a.adminAddBatch))
+	mux.HandleFunc("POST /admin/treks/{id}/trail", adm(a.adminSetTrailStatus))
 	mux.HandleFunc("POST /admin/batches/{id}/lead", adm(a.adminSetBatchLead))
 	mux.HandleFunc("POST /admin/batches/{id}/delete", adm(a.adminDeleteBatch))
 	mux.HandleFunc("GET /admin/leads", adm(a.adminLeads))

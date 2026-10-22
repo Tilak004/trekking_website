@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
 import { useSession } from '../lib/session.jsx';
 import { useSubmit } from '../lib/useSubmit.js';
-import { initial, slug, telLink, whatsappTo } from '../lib/util.js';
+import { initial, slug, whatsappTo } from '../lib/util.js';
 
 // The WhatsApp button's message can be changed by a page (the trek page does).
 const WaCtx = createContext(() => {});
@@ -139,8 +139,9 @@ export default function Layout({ children }) {
           </div>
           <div>
             <h4>Contact</h4>
-            {site && <a href={`tel:${telLink(site.Phone)}`}>{site.Phone}</a>}
-            {site && site.Phone2 && <a href={`tel:${telLink(site.Phone2)}`}>{site.Phone2}</a>}
+            {site && <a href={whatsappTo(site.WhatsApp, 'Hi! I have a question about your treks.')} target="_blank" rel="noopener noreferrer">WhatsApp us</a>}
+            <Link to="/contact#enquire">Send a question</Link>
+            {site && <a href={`https://instagram.com/${site.Instagram}`} target="_blank" rel="noopener noreferrer">Instagram</a>}
             <span>{site && site.City}</span>
           </div>
         </div>

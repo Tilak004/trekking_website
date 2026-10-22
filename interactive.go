@@ -98,13 +98,14 @@ type FinderTrek struct {
 	Rating     float64   `json:"rating"`
 	Ratings    int       `json:"ratings"`
 	Lead       *LeadMini `json:"lead"`
+	Trail      string    `json:"trail"` // "closed" shows a badge on the card
 }
 
 func finderTrek(t Trek) FinderTrek {
 	f := FinderTrek{
 		Slug: t.Slug, Name: t.Name, Region: t.Region, Difficulty: t.Difficulty, Duration: t.Duration,
 		DistanceKm: t.DistanceKm, Altitude: t.MaxAltitude, Photo: t.Photo, Tags: splitTags(t.Tags),
-		Lat: t.Lat, Lng: t.Lng, Rating: t.AvgRating, Ratings: t.Ratings, Lead: t.Lead,
+		Lat: t.Lat, Lng: t.Lng, Rating: t.AvgRating, Ratings: t.Ratings, Lead: t.Lead, Trail: t.TrailStatus,
 	}
 	if t.NextBatch != "" {
 		f.Price, f.Next = t.Price, formatDate(t.NextBatch)
@@ -158,12 +159,12 @@ type BookingBatch struct {
 }
 
 func bookingData(t Trek, batches []Batch, u *User) BookingData {
-	d := BookingData{Slug: t.Slug, Price: t.Price, Pickups: splitLines(t.PickupPoints), Batches: []BookingBatch{}}
+	d := BookingData{Slug: t.Slug, Price: t.Price, Pickups: []string{}, Batches: []BookingBatch{}}
+	for _, p := range parsePickups(t.PickupPoints) {
+		d.Pickups = append(d.Pickups, p.Label())
+	}
 	if u != nil {
 		d.LoggedIn, d.Name, d.Phone = true, u.Name, u.Phone
-	}
-	if d.Pickups == nil {
-		d.Pickups = []string{}
 	}
 	for _, b := range batches {
 		d.Batches = append(d.Batches, BookingBatch{ID: b.ID, Label: formatDate(b.StartDate), Year: yearOf(b.StartDate), Left: b.Left(), Lead: b.LeadName})

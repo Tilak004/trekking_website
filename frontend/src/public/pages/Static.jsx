@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon.jsx';
 import { useSession } from '../../lib/session.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
-import { telLink } from '../../lib/util.js';
+import { useSubmit } from '../../lib/useSubmit.js';
+import { whatsappTo } from '../../lib/util.js';
 import PageShell from '../PageShell.jsx';
 
 // Pages that are mostly fixed text. They still ask the server for the site's
@@ -73,22 +74,42 @@ export function About() {
 
 export function Contact() {
   const site = useStatic('Contact');
+  const { User, Msg } = useSession();
+  const { submit, busy, error } = useSubmit();
+  const done = (Msg || '').startsWith("Thanks! We've got your enquiry");
   return (
     <PageShell>
       <header className="page-head">
-        <p className="eyebrow">Get in touch</p>
         <h1>Contact us</h1>
-        <p className="muted">Questions about a trek, a group booking or leading treks with us? Give us a call, or reach us on WhatsApp, Instagram or email using the icons at the bottom of the page.</p>
+        <p className="muted">Questions about a trek, a group booking or leading treks with us? WhatsApp is the quickest way to reach us. Or leave your number below and we'll call you back.</p>
       </header>
       {site && (
-        <>
-          <div className="contact-grid phones">
-            <a className="contact-card" href={`tel:${telLink(site.Phone)}`}><Icon name="phonebrand" /><strong>{site.Phone}</strong><em>Call or WhatsApp · 9 AM – 8 PM</em></a>
-            {site.Phone2 && <a className="contact-card" href={`tel:${telLink(site.Phone2)}`}><Icon name="phonebrand" /><strong>{site.Phone2}</strong><em>Call · 9 AM – 8 PM</em></a>}
-          </div>
-          <p className="muted small">Based in {site.City}. Treks depart from Bangalore most weekends. See the <Link to="/cancellation-policy">cancellation policy</Link> and <Link to="/#treks">upcoming treks</Link>.</p>
-        </>
+        <div className="contact-grid">
+          <a className="contact-card" href={whatsappTo(site.WhatsApp, 'Hi! I have a question about your treks.')} target="_blank" rel="noopener noreferrer"><Icon name="wabrand" /><strong>WhatsApp</strong><em>Chat with us · usually replies within a few hours</em></a>
+          <a className="contact-card" href={`https://instagram.com/${site.Instagram}`} target="_blank" rel="noopener noreferrer"><Icon name="igbrand" /><strong>Instagram</strong><em>@{site.Instagram} · photos from every trek</em></a>
+          <a className="contact-card" href={`mailto:${site.Email}`}><Icon name="gmailbrand" /><strong>Email</strong><em>For group bookings and anything detailed</em></a>
+        </div>
       )}
+
+      <section className="contact-form panel" id="enquire">
+        <h2>Ask us a question</h2>
+        {done ? (
+          <p><b>✓ Thanks, we've got your question.</b> We'll call or WhatsApp you soon.</p>
+        ) : (
+          <form onSubmit={submit('/contact')} className="form">
+            {error && <div className="flash err">{error}</div>}
+            <div className="row">
+              <label>Your name <input name="name" required maxLength={100} autoComplete="name" defaultValue={User ? User.Name : ''} /></label>
+              <label>Phone (WhatsApp) <input name="phone" type="tel" required inputMode="tel" placeholder="98765 43210" autoComplete="tel" defaultValue={User ? User.Phone : ''} /></label>
+            </div>
+            <label>Email (optional) <input name="email" type="email" maxLength={200} autoComplete="email" autoCapitalize="none" spellCheck="false" /></label>
+            <label>Your question <textarea name="message" rows="4" maxLength={2000} placeholder="Group booking, custom dates, which trek suits you…" /></label>
+            <input className="hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+            <button className="btn" disabled={busy}>Send question</button>
+          </form>
+        )}
+      </section>
+      {site && <p className="muted small">Based in {site.City}. Treks depart from Bangalore most weekends. See the <Link to="/cancellation-policy">cancellation policy</Link>.</p>}
     </PageShell>
   );
 }
@@ -118,15 +139,19 @@ export function Terms() {
         <p>You agree to follow your trek lead's instructions at all times. Alcohol, smoking and littering are not allowed on our treks. We may ask anyone who puts themselves or the group at risk to stop trekking.</p>
 
         <h2>5. Risk</h2>
-        <p>Trekking in the outdoors carries risks, including injury from slips, falls, weather and wildlife. We take every reasonable precaution, but by joining a trek you accept these risks. We recommend personal accident insurance.</p>
+        <p>Trekking in the outdoors carries risks, including injury from slips, falls, weather and wildlife. We take every reasonable precaution, but by joining a trek you accept these risks.</p>
 
-        <h2>6. Cancellations</h2>
+        <h2 id="insurance">6. Insurance</h2>
+        <p><strong>Our treks do not include insurance of any kind.</strong> The trek price does not cover travel, personal accident, medical or evacuation insurance, and we do not insure participants. If you are injured or fall ill on a trek, any medical, hospital, rescue or extra transport costs are yours to pay. Our trek lead will help you get to the nearest road or medical help.</p>
+        <p>If you'd like cover, you can buy personal accident or travel insurance on your own before the trek. Check that it covers trekking and hiking.</p>
+
+        <h2>7. Cancellations</h2>
         <p>Cancellations and refunds follow our <Link to="/cancellation-policy">cancellation &amp; refund policy</Link>.</p>
 
-        <h2>7. Photos</h2>
+        <h2>8. Photos</h2>
         <p>We may take photos and videos during treks and use them on our website and social media. If you'd rather not appear, just tell your trek lead.</p>
 
-        <h2>8. Contact</h2>
+        <h2>9. Contact</h2>
         <p>Questions about these terms? {site && <a href={`mailto:${site.Email}`}>Email us</a>}.</p>
       </article>
     </PageShell>
@@ -191,13 +216,23 @@ export function Cancellation() {
         <p>We may cancel or reschedule a trek because of heavy rain, forest department closures, unsafe conditions or too few participants. If that happens, you can choose a full refund or a free move to another date or trek.</p>
 
         <h2>During the trek</h2>
-        <p>Your trek lead may turn the group back, or ask a participant not to continue, if conditions or someone's health make it unsafe. No refund is due in that case, but we'll always help you get back safely.</p>
+        <p>Your trek lead may turn the group back, or ask a participant not to continue, if conditions or someone's health make it unsafe. Once a trek has started, no refund is due in that case, but we'll always help you get back safely.</p>
+
+        <h2>If you can't finish the trek</h2>
+        <p>There is no refund, partial refund or date transfer if you leave the trek or can't complete it for your own reasons, for example:</p>
+        <ul>
+          <li>you can't keep up with the group or feel the trek is too hard</li>
+          <li>illness, injury, dehydration or any other health problem</li>
+          <li>you decide to stop</li>
+          <li>you are asked to leave for breaking our rules, such as drinking alcohol, smoking or putting others at risk</li>
+        </ul>
+        <p>Any extra transport, medical or evacuation costs to leave early are yours to pay. Our trek price does not include insurance; see <Link to="/terms#insurance">Insurance</Link>.</p>
 
         <h2>How refunds are paid</h2>
         <p>Refunds go back to the original payment method within 7 working days of approval.</p>
 
         <h2>Questions</h2>
-        <p>Write to us by email or call {site && <>{site.Phone}{site.Phone2 ? ` / ${site.Phone2}` : ''}</>}.{site && <> <a href={`mailto:${site.Email}`}>Email us</a></>}</p>
+        <p>{site && <a href={whatsappTo(site.WhatsApp, 'Hi! I have a question about cancelling my booking.')} target="_blank" rel="noopener noreferrer">Message us on WhatsApp</a>}, {site && <a href={`mailto:${site.Email}`}>email us</a>} or <Link to="/contact#enquire">send a question</Link> and we'll get back to you.</p>
       </article>
     </PageShell>
   );

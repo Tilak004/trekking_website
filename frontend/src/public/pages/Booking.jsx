@@ -66,7 +66,7 @@ export default function Booking({ d }) {
                   className={b.id === f.batch ? 'bk-date on' : 'bk-date'}
                   onClick={() => setF({ ...f, batch: b.id, people: Math.min(f.people, b.left) })}>
                   <b>{b.label}</b>
-                  <small>{b.left <= 0 ? 'Full' : `${b.left} seats left`}{b.lead ? ` · with ${b.lead}` : ''}</small>
+                  <small>{b.left <= 0 ? 'Full' : `${b.left} seats left`}</small>
                 </button>
               ))}
             </div>

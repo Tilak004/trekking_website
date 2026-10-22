@@ -4,7 +4,7 @@ import { PageState } from '../../components/common.jsx';
 import { useSession } from '../../lib/session.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
 import { useSubmit } from '../../lib/useSubmit.js';
-import { firstWord, fmtDate, inr, stars, telLink, whatsappTo } from '../../lib/util.js';
+import { firstWord, fmtDate, inr, stars, whatsappTo } from '../../lib/util.js';
 import PageShell from '../PageShell.jsx';
 import NotFound from './NotFound.jsx';
 
@@ -97,7 +97,6 @@ export function My() {
 
 export function BookingSent() {
   const page = usePage();
-  const { Site } = useSession();
   useTitle('One last step');
   if (page.notFound) return <NotFound />;
   const d = page.data;
@@ -118,7 +117,6 @@ export function BookingSent() {
         </dl>
 
         <a className="btn-wa" href={k.WALink} target="_blank" rel="noopener noreferrer"><Icon name="waicon" /> Send on WhatsApp</a>
-        {Site && <p className="small muted">Prefer to call? Ring us on <a href={`tel:${telLink(Site.Phone)}`}>{Site.Phone}</a>.</p>}
         <p className="small"><Link to="/my">Go to my bookings →</Link></p>
       </section>
     </PageShell>

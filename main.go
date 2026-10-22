@@ -108,6 +108,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /lead-with-us", a.requireUser(a.leadApply))
 	mux.HandleFunc("GET /about", a.staticPage("about.html"))
 	mux.HandleFunc("GET /contact", a.staticPage("contact.html"))
+	mux.HandleFunc("POST /contact", a.contactEnquire)
 	mux.HandleFunc("GET /gallery", a.galleryPage)
 	mux.HandleFunc("GET /terms", a.staticPage("terms.html"))
 	mux.HandleFunc("GET /privacy", a.staticPage("privacy.html"))

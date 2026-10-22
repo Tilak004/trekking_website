@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 )
 
@@ -140,7 +139,7 @@ func (a *App) bookTrek(w http.ResponseWriter, r *http.Request) {
 	emPhone := trimTo(r.FormValue("emergency_phone"), 30)
 	age := formInt(r, "age")
 	if people < 1 || people > 10 || (age != 0 && (age < 5 || age > 100)) ||
-		(pickup != "" && !slices.Contains(splitLines(t.PickupPoints), pickup)) {
+		(pickup != "" && !validPickup(t.PickupPoints, pickup)) {
 		// The form enforces these with "required" fields, so this only happens on tampered input.
 		http.Error(w, "Please fill in all required booking details.", http.StatusBadRequest)
 		return
@@ -337,4 +336,16 @@ func (a *App) reviewBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	redirect(w, r, "/my?msg=reviewed")
+}
+
+// validPickup reports whether pickup is one of the trek's pickup points. A point
+// may carry a time ("Majestic | 11:00 PM"), and the booking form sends its label
+// ("Majestic · 11:00 PM"), so both the label and the bare place are accepted.
+func validPickup(pickupPoints, pickup string) bool {
+	for _, p := range parsePickups(pickupPoints) {
+		if pickup == p.Label() || pickup == p.Place {
+			return true
+		}
+	}
+	return false
 }

@@ -49,3 +49,30 @@ export function whatsappTo(phone, text) {
 export const telLink = (phone) => String(phone || '').replace(/\s+/g, '');
 
 export const today = () => new Date().toISOString().slice(0, 10);
+
+// "Majestic, Shanthala Silks | 11:00 PM" lines -> [{ Place, Time }]
+export function parsePickups(text) {
+  return lines(text)
+    .map((line) => {
+      const i = line.indexOf("|");
+      return i < 0 ? { Place: line.trim(), Time: "" } : { Place: line.slice(0, i).trim(), Time: line.slice(i + 1).trim() };
+    })
+    .filter((p) => p.Place);
+}
+
+// A line ending in ":" starts a titled group in the packing list.
+export function carryGroups(text) {
+  const out = [];
+  for (const line of lines(text)) {
+    if (line.endsWith(":")) {
+      out.push({ Title: line.slice(0, -1).trim(), Items: [] });
+      continue;
+    }
+    if (!out.length) out.push({ Title: "", Items: [] });
+    out[out.length - 1].Items.push(line);
+  }
+  return out;
+}
+
+// Does the text contain the word (ignoring case)?
+export const mentions = (text, word) => String(text || "").toLowerCase().includes(String(word).toLowerCase());

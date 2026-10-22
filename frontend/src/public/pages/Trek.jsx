@@ -1,14 +1,30 @@
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import Icon from '../../components/Icon.jsx';
 import { PageState, Reviews } from '../../components/common.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
 import { useSubmit } from '../../lib/useSubmit.js';
-import { blocks, fmtDate, inr, lines, paras, photoURL, rating } from '../../lib/util.js';
+import { blocks, carryGroups, fmtDate, inr, lines, mentions, paras, parsePickups, photoURL, rating, whatsappTo } from '../../lib/util.js';
 import { useSession } from '../../lib/session.jsx';
 import { useWhatsAppMessage } from '../Layout.jsx';
 import PageShell from '../PageShell.jsx';
 import NotFound from './NotFound.jsx';
 import Booking from './Booking.jsx';
 import Elevation from './Elevation.jsx';
+
+function TrailStatus({ t }) {
+  if (t.TrailStatus === 'open') {
+    return (
+      <p className="trail-status open"><i />Trail open{t.TrailNote ? ` · ${t.TrailNote}` : ''}{t.TrailUpdated ? <span> · checked {fmtDate(t.TrailUpdated)}</span> : null}</p>
+    );
+  }
+  if (t.TrailStatus === 'closed') {
+    return (
+      <p className="trail-status closed"><i />Trail closed{t.TrailNote ? ` · ${t.TrailNote}` : ''}{t.TrailUpdated ? <span> · updated {fmtDate(t.TrailUpdated)}</span> : null}</p>
+    );
+  }
+  return null;
+}
 
 function Hero({ t }) {
   return (
@@ -19,6 +35,7 @@ function Hero({ t }) {
           <span className="tag diff">{t.Difficulty}</span>
           <h1>{t.Name}</h1>
           <p className="banner-sub">{t.Region}</p>
+          <TrailStatus t={t} />
           <a className="btn banner-cta" href="#book">Book now</a>
         </div>
       </section>
@@ -35,22 +52,57 @@ function Hero({ t }) {
   );
 }
 
-function EnquiryForm({ t, user }) {
+const ENQUIRED = "Thanks! We've got your enquiry";
+
+// After an enquiry is sent, offer to send the same text on WhatsApp too. The
+// enquiry is remembered in sessionStorage by the form below.
+function EnquiryDone({ t, site }) {
+  const href = useMemo(() => {
+    let e = null;
+    try {
+      e = JSON.parse(sessionStorage.getItem('enquiry') || 'null');
+      sessionStorage.removeItem('enquiry');
+    } catch { /* private mode: fall back to the short message */ }
+    const text = e
+      ? ['Hi Beyond Expeditions! I just sent an enquiry about the ' + t.Name + ' trek.', '', 'Name: ' + e.name, 'Phone: ' + e.phone, ...(e.message ? ['Question: ' + e.message] : [])].join('\n')
+      : `Hi Beyond Expeditions! I just sent an enquiry about the ${t.Name} trek.`;
+    return site ? whatsappTo(site.BookingsWA, text) : '#';
+  }, [t.Name, site]);
+  return (
+    <div className="enq-done">
+      <p><b>✓ Enquiry sent.</b> We'll call or WhatsApp you soon.</p>
+      <p className="muted small">Want a faster reply? Send the same enquiry to us on WhatsApp.</p>
+      <a className="btn big block wa-btn" id="enquiry-wa" target="_blank" rel="noopener noreferrer" href={href}><Icon name="waicon" /> Also send on WhatsApp</a>
+      <p className="small"><Link to={`/treks/${t.Slug}#enquire`}>Send another enquiry</Link></p>
+    </div>
+  );
+}
+
+function EnquiryForm({ t, user, msg, site }) {
   const { submit, busy, error } = useSubmit();
   const guestEmail = user && /@guest\.beyondexpeditions\.local$/.test(user.Email);
+  const remember = (e) => {
+    const v = (n) => e.currentTarget.elements.namedItem(n).value.trim();
+    try { sessionStorage.setItem('enquiry', JSON.stringify({ name: v('name'), phone: v('phone'), message: v('message') })); } catch { /* ignore */ }
+  };
+  const send = submit(`/treks/${t.Slug}/enquire`);
   return (
     <div className="panel enquire-panel" id="enquire">
       <h3>Enquire now</h3>
-      <p className="muted small">Not ready to book, or have a question? Leave your details and we'll call or WhatsApp you about {t.Name}.</p>
-      <form onSubmit={submit(`/treks/${t.Slug}/enquire`)} className="form">
-        {error && <div className="flash err">{error}</div>}
-        <label>Your name <input name="name" required maxLength={100} autoComplete="name" defaultValue={user ? user.Name : ''} /></label>
-        <label>Phone (WhatsApp) <input name="phone" type="tel" required inputMode="tel" placeholder="98765 43210" autoComplete="tel" defaultValue={user ? user.Phone : ''} /></label>
-        <label>Email (optional) <input name="email" type="email" maxLength={200} autoComplete="email" autoCapitalize="none" spellCheck="false" defaultValue={user && !guestEmail ? user.Email : ''} /></label>
-        <label>Your question <textarea name="message" rows="3" maxLength={2000} placeholder="Fitness needed, what to wear, group bookings…" /></label>
-        <input className="hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-        <button className="btn block" disabled={busy}>Send enquiry</button>
-      </form>
+      {msg.startsWith(ENQUIRED) ? <EnquiryDone t={t} site={site} /> : (
+        <>
+          <p className="muted small">Not ready to book, or have a question? Leave your details and we'll call or WhatsApp you about {t.Name}.</p>
+          <form onSubmit={(e) => { remember(e); return send(e); }} className="form" id="enquiry-form">
+            {error && <div className="flash err">{error}</div>}
+            <label>Your name <input name="name" required maxLength={100} autoComplete="name" defaultValue={user ? user.Name : ''} /></label>
+            <label>Phone (WhatsApp) <input name="phone" type="tel" required inputMode="tel" placeholder="98765 43210" autoComplete="tel" defaultValue={user ? user.Phone : ''} /></label>
+            <label>Email (optional) <input name="email" type="email" maxLength={200} autoComplete="email" autoCapitalize="none" spellCheck="false" defaultValue={user && !guestEmail ? user.Email : ''} /></label>
+            <label>Your question <textarea name="message" rows="3" maxLength={2000} placeholder="Fitness needed, what to wear, group bookings…" /></label>
+            <input className="hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+            <button className="btn block" disabled={busy}>Send enquiry</button>
+          </form>
+        </>
+      )}
     </div>
   );
 }
@@ -58,7 +110,7 @@ function EnquiryForm({ t, user }) {
 export default function Trek() {
   const { slug } = useParams();
   const page = usePage();
-  const { User } = useSession();
+  const { User, Msg, Site } = useSession();
   const d = page.data;
   useTitle(d && `${d.Trek.Name} Trek`);
   useWhatsAppMessage(d ? `Hi! I'm interested in the ${d.Trek.Name} trek.` : '');
@@ -70,9 +122,11 @@ export default function Trek() {
   const faqs = blocks(t.FAQs);
   const incl = lines(t.Inclusions);
   const excl = lines(t.Exclusions);
-  const carry = lines(t.ThingsToCarry);
+  const carry = carryGroups(t.ThingsToCarry);
+  const pickups = parsePickups(t.PickupPoints);
   const batches = d.Batches || [];
   const existing = d.Existing;
+  const closed = t.TrailStatus === 'closed';
 
   return (
     <PageShell hero={<Hero t={t} />}>
@@ -81,10 +135,11 @@ export default function Trek() {
       <nav className="section-nav">
         <a href="#overview">Overview</a>
         {itinerary.length > 0 && <a href="#itinerary">Itinerary</a>}
-        {(incl.length > 0 || excl.length > 0) && <a href="#inclusions">Inclusions</a>}
+        {pickups.length > 0 && <a href="#pickup">Pickup</a>}
+        <a href="#inclusions">Inclusions</a>
         {carry.length > 0 && <a href="#carry">What to carry</a>}
         <a href="#book">Book</a>
-        {faqs.length > 0 && <a href="#faqs">FAQs</a>}
+        <a href="#faqs">FAQs</a>
         <a href="#reviews">Reviews</a>
       </nav>
 
@@ -105,30 +160,44 @@ export default function Trek() {
             </section>
           )}
 
-          {(incl.length > 0 || excl.length > 0) && (
-            <section id="inclusions" className="trek-section">
-              <h2>What's included</h2>
-              <div className="incl-grid">
-                {incl.length > 0 && (
-                  <div className="incl-box yes">
-                    <h3>Included</h3>
-                    <ul className="checklist">{incl.map((x, i) => <li key={i}>{x}</li>)}</ul>
-                  </div>
-                )}
-                {excl.length > 0 && (
-                  <div className="incl-box no">
-                    <h3>Not included</h3>
-                    <ul className="checklist">{excl.map((x, i) => <li key={i}>{x}</li>)}</ul>
-                  </div>
-                )}
-              </div>
+          {pickups.length > 0 && (
+            <section id="pickup" className="trek-section">
+              <h2>Pickup points</h2>
+              <ul className="pickup-list">
+                {pickups.map((p, i) => <li key={i}>{p.Time && <b>{p.Time}</b>}<span>{p.Place}</span></li>)}
+              </ul>
+              <p className="muted small">Please be at your pickup point 10 minutes early.</p>
             </section>
           )}
+
+          <section id="inclusions" className="trek-section">
+            <h2>What's included</h2>
+            <div className="incl-grid">
+              {incl.length > 0 && (
+                <div className="incl-box yes">
+                  <h3>Included</h3>
+                  <ul className="checklist">{incl.map((x, i) => <li key={i}>{x}</li>)}</ul>
+                </div>
+              )}
+              <div className="incl-box no">
+                <h3>Not included</h3>
+                <ul className="checklist">
+                  {excl.map((x, i) => <li key={i}>{x}</li>)}
+                  {!mentions(t.Exclusions, 'insurance') && <li>Insurance of any kind (travel, accident or medical)</li>}
+                </ul>
+              </div>
+            </div>
+          </section>
 
           {carry.length > 0 && (
             <section id="carry" className="trek-section">
               <h2>What to carry</h2>
-              <ul className="carry-list">{carry.map((x, i) => <li key={i}>{x}</li>)}</ul>
+              {carry.map((g, i) => (
+                <div key={i}>
+                  {g.Title && <h3 className="carry-title">{g.Title}</h3>}
+                  <ul className="carry-list">{g.Items.map((x, j) => <li key={j}>{x}</li>)}</ul>
+                </div>
+              ))}
             </section>
           )}
 
@@ -138,6 +207,12 @@ export default function Trek() {
             <div className="book-grid">
               <div className="panel book-panel">
                 <h3>Book now</h3>
+                {closed && (
+                  <div className="bp-none">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 7.5v5.5M12 16.5v.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
+                    {' '}The trail is closed right now{t.TrailNote ? ` (${t.TrailNote})` : ''}. We'll confirm your date only if it reopens.
+                  </div>
+                )}
                 {t.Price > 0 && <p className="bp-price">₹{inr(t.Price)} <span className="bp-badge">per person</span></p>}
                 {existing ? (
                   <>
@@ -163,18 +238,22 @@ export default function Trek() {
                   <li><Link to="/cancellation-policy">Clear cancellation &amp; refund policy</Link></li>
                 </ul>
               </div>
-              <EnquiryForm t={t} user={User} />
+              <EnquiryForm t={t} user={User} msg={Msg || ''} site={Site} />
             </div>
           </section>
 
-          {faqs.length > 0 && (
-            <section id="faqs" className="trek-section">
-              <h2>Frequently asked questions</h2>
-              <div className="faqs">
-                {faqs.map((b, i) => <details key={i}><summary>{b.Title}</summary><p>{b.Body}</p></details>)}
-              </div>
-            </section>
-          )}
+          <section id="faqs" className="trek-section">
+            <h2>Frequently asked questions</h2>
+            <div className="faqs">
+              {faqs.map((b, i) => <details key={i}><summary>{b.Title}</summary><p>{b.Body}</p></details>)}
+              {!mentions(t.FAQs, 'insurance') && (
+                <details>
+                  <summary>Is insurance included?</summary>
+                  <p>No. Our price does not include travel, accident or medical insurance, and any medical or evacuation costs are yours. Most weekend trek groups work this way. If you want cover, you can buy personal accident insurance on your own before the trek.</p>
+                </details>
+              )}
+            </div>
+          </section>
 
           <section id="reviews" className="trek-section">
             <h2>Reviews</h2>
@@ -185,4 +264,3 @@ export default function Trek() {
     </PageShell>
   );
 }
-

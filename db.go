@@ -170,6 +170,9 @@ type Trek struct {
 	Lng           float64
 	Tags          string
 	Elevation     string
+	TrailStatus   string // "", "open" or "closed"
+	TrailNote     string
+	TrailUpdated  string
 	Active        bool
 	NextBatch     string
 	AvgRating     float64
@@ -270,6 +273,7 @@ func openDB(path string) (*sql.DB, error) {
 	migratePayments(db)
 	migrateRefunds(db)
 	migrateEnquiries(db)
+	migrateTrailStatus(db)
 	if err := migrateInteractive(db); err != nil {
 		return nil, fmt.Errorf("migrate interactive: %w", err)
 	}
@@ -282,7 +286,7 @@ const trekSelect = `
 SELECT t.id, t.slug, t.name, t.region, t.duration, t.distance_km, t.max_altitude, t.difficulty,
        t.price, t.summary, t.description, t.pickup_points, t.photo, t.active,
        t.best_season, t.itinerary, t.inclusions, t.exclusions, t.things_to_carry, t.faqs,
-       t.lat, t.lng, t.tags, t.elevation,
+       t.lat, t.lng, t.tags, t.elevation, t.trail_status, t.trail_note, t.trail_updated,
        COALESCE((SELECT MIN(b.start_date) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now')), ''),
        (SELECT COALESCE(AVG(r.trek_rating), 0.0) FROM reviews r JOIN bookings k ON k.id = r.booking_id
           JOIN batches b ON b.id = k.batch_id WHERE b.trek_id = t.id),
@@ -295,7 +299,7 @@ func scanTrek(s scanner) (Trek, error) {
 	err := s.Scan(&t.ID, &t.Slug, &t.Name, &t.Region, &t.Duration, &t.DistanceKm, &t.MaxAltitude, &t.Difficulty,
 		&t.Price, &t.Summary, &t.Description, &t.PickupPoints, &t.Photo, &t.Active,
 		&t.BestSeason, &t.Itinerary, &t.Inclusions, &t.Exclusions, &t.ThingsToCarry, &t.FAQs,
-		&t.Lat, &t.Lng, &t.Tags, &t.Elevation, &t.NextBatch, &t.AvgRating, &t.Ratings)
+		&t.Lat, &t.Lng, &t.Tags, &t.Elevation, &t.TrailStatus, &t.TrailNote, &t.TrailUpdated, &t.NextBatch, &t.AvgRating, &t.Ratings)
 	return t, err
 }
 

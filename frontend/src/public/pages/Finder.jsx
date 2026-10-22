@@ -59,7 +59,7 @@ function FinderCard({ t, badge }) {
       <div className="card-img" style={t.photo ? { backgroundImage: `url('${photoURL(t.photo)}')` } : undefined}>
         {!t.photo && <Mountains />}
         <span className="tag diff">{t.difficulty}</span>
-        {open && <span className="tag open">Booking open</span>}
+        {t.trail === 'closed' ? <span className="tag open closed">Trail closed</span> : open && <span className="tag open">Booking open</span>}
         {open && t.price > 0 && <span className="card-price">₹{inr(t.price)}</span>}
         {badge && <span className="tag match">{badge}</span>}
       </div>
