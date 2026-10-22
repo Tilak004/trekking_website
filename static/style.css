@@ -1707,3 +1707,20 @@ tr.done td { opacity: .6; }
   --ok: #557a63; --ok-bg: #edf3ef; --info: #496a56; --info-bg: #eff4f0;
 }
 [data-theme~="mist"] .btn:hover, [data-theme~="sage"] .btn:hover { background: var(--sun-dark); border-color: var(--sun-dark); }
+
+/* ===== trek cards that grow with the text =====
+   The card size, badges and text are all in rem, so bigger text never overflows or overlaps. */
+[data-theme~="ghats"] #treks .grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 16.5rem), 1fr)); gap: 14px; }
+[data-theme~="ghats"] .trek-card { height: auto; min-height: 19rem; }
+/* the two corner badges share the top row without touching */
+[data-theme~="ghats"] .trek-card .card-img .tag { max-width: calc(50% - 14px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* the price pill sits below the badges */
+[data-theme~="ghats"] .trek-card .card-price { top: 3.3rem; }
+[data-theme~="ghats"] .tag.match { top: 3.3rem; }
+/* long region names wrap to at most two lines instead of pushing into the badges */
+[data-theme~="ghats"] .trek-card .eyebrow { letter-spacing: .06em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+[data-theme~="ghats"] .trek-card .card-lead { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; }
+@media (max-width: 520px) {
+  [data-theme~="ghats"] #treks .grid { grid-template-columns: 1fr; gap: 12px; }
+  [data-theme~="ghats"] .trek-card { min-height: 17rem; }
+}
