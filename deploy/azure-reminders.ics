@@ -1,0 +1,73 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Beyond Expeditions//Azure reminders//EN
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:beyond-azure-0-20261120@beyondexpeditions.in
+DTSTAMP:20261022T162014Z
+DTSTART;VALUE=DATE:20261120
+SUMMARY:Azure: credit ends tomorrow, upgrade to Pay-As-You-Go
+DESCRIPTION:The $200 trial credit ends 30 days after signup. Azure will ask you to upgrade to Pay-As-You-Go. The free VM hours stay free for 12 months after upgrading, but check the $5 budget alerts exist first (see deploy/DEPLOY-AZURE.md).
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Azure: credit ends tomorrow, upgrade to Pay-As-You-Go
+TRIGGER:-PT0M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Tomorrow: Azure: credit ends tomorrow, upgrade to Pay-As-You-Go
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:beyond-azure-1-20270822@beyondexpeditions.in
+DTSTAMP:20261022T162014Z
+DTSTART;VALUE=DATE:20270822
+SUMMARY:Beyond Expeditions: 10 months on Azure, plan the move
+DESCRIPTION:Time to plan moving the site off the Azure free tier before it starts billing (about 1,200-2,000 rupees a month). Open Claude Code in the project folder and say: it is month 10, let us move the site to a VPS. Steps: pick a VPS, take a backup, restore, point DNS.
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Beyond Expeditions: 10 months on Azure, plan the move
+TRIGGER:-PT0M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Tomorrow: Beyond Expeditions: 10 months on Azure, plan the move
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:beyond-azure-2-20270922@beyondexpeditions.in
+DTSTAMP:20261022T162014Z
+DTSTART;VALUE=DATE:20270922
+SUMMARY:Beyond Expeditions: move the site THIS WEEK
+DESCRIPTION:Month 11. The Azure free year ends around 22 Oct 2027. Finish moving the website and database to the new server and switch the DNS records for beyondexpeditions.in.
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Beyond Expeditions: move the site THIS WEEK
+TRIGGER:-PT0M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Tomorrow: Beyond Expeditions: move the site THIS WEEK
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:beyond-azure-3-20271015@beyondexpeditions.in
+DTSTAMP:20261022T162014Z
+DTSTART;VALUE=DATE:20271015
+SUMMARY:Beyond Expeditions: Azure free year ends in a week
+DESCRIPTION:If the site is still on Azure after the free year ends it is billed at normal prices. Confirm the move is done, or decide to pay. Then delete the old VM and disk so nothing keeps billing.
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Beyond Expeditions: Azure free year ends in a week
+TRIGGER:-PT0M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Tomorrow: Beyond Expeditions: Azure free year ends in a week
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+END:VCALENDAR

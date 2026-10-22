@@ -78,3 +78,22 @@ Portal > **Cost Management + Billing > Cost Management > Budgets > Add**. Set th
 | Estimated cost isn't $0 | Wrong disk (must be the 64 GiB Premium SSD) or a size that isn't in the free list. |
 | Browser can't connect | Inbound rules for 80/443 (step 4) and that DNS points at the Azure IP. |
 | Account says it is disabled after 30 days | Upgrade to Pay-As-You-Go when prompted (item 2 above). |
+
+## Reminders and cost alerts (set these up once)
+
+**Calendar:** double-click `deploy/azure-reminders.ics` to add four reminders to Outlook, Google Calendar or Apple Calendar:
+- 20 Nov 2026: the $200 credit ends, Azure asks you to upgrade to Pay-As-You-Go
+- 22 Aug 2027: **10 months in, plan the move** to a cheap VPS
+- 22 Sep 2027: move the site this week
+- 15 Oct 2027: the free year ends in a week
+
+They assume the account was opened on 22 Oct 2026. If the Azure portal (Subscriptions) shows a different date, shift them to match.
+
+**An email for every $5 of cost:** Portal > **Cost Management + Billing > Cost Management > Budgets > Add**.
+- Scope: your subscription. Name: `beyond-every-5-dollars`
+- Reset period: **Annually** (so it adds up across the whole year). Amount: **$25**.
+- Alert conditions (type *Actual*, percentage of budget) and your email as the recipient:
+  **20%** ($5), **40%** ($10), **60%** ($15), **80%** ($20), **100%** ($25).
+- Optional second budget: Monthly, **$5**, alert at 100%, to catch any single month that costs more than $5.
+
+Budget alerts only **notify** you; they do not stop spending, and Azure's cost data can lag by many hours. If you ever get one, open Cost Management > Cost analysis to see what is costing money (usually the public IP, or a disk or VM left over from a test).
