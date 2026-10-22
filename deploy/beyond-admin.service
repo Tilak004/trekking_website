@@ -10,6 +10,9 @@ WorkingDirectory=/opt/beyond
 EnvironmentFile=/etc/beyond/beyond.env
 # 127.0.0.1 only: it is never reachable from the internet. Use an SSH tunnel:
 #   ssh -L 8081:127.0.0.1:8081 <user>@<server>     then open http://localhost:8081
+# On the very first start both programs would create the empty database at the same moment, so
+# the admin console waits a few seconds for the website to finish.
+ExecStartPre=/bin/sleep 5
 ExecStart=/opt/beyond/beyond -mode admin -addr 127.0.0.1:8081 -db /var/lib/beyond/beyond.db -photos /opt/beyond/photos
 Restart=always
 RestartSec=3

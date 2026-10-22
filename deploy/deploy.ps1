@@ -1,4 +1,4 @@
-﻿# Deploys the website to your server from this Windows computer.
+# Deploys the website to your server from this Windows computer.
 #
 #   First time:   .\deploy\deploy.ps1 -Server ubuntu@1.2.3.4 -Key $HOME\.ssh\oracle.key -Domain beyondexpeditions.in -Setup
 #   Every update: .\deploy\deploy.ps1 -Server ubuntu@1.2.3.4 -Key $HOME\.ssh\oracle.key
@@ -18,7 +18,8 @@ param(
   [switch]$Photos,
   [switch]$SkipFrontend
 )
-$ErrorActionPreference = "Stop"
+# Warnings that ssh/npm print to stderr must not stop the script; each step is checked by its exit code.
+$ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
