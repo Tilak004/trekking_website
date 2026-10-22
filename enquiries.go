@@ -71,14 +71,23 @@ func (a *App) enquire(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
-	back := "/treks/" + t.Slug
+	a.saveEnquiry(w, r, t.ID, t.Name, "/treks/"+t.Slug)
+}
+
+// contactEnquire is the general question form on the Contact page (no trek).
+func (a *App) contactEnquire(w http.ResponseWriter, r *http.Request) {
+	a.saveEnquiry(w, r, nil, "", "/contact")
+}
+
+// saveEnquiry stores an enquiry (trekID may be nil) and sends the email alert.
+func (a *App) saveEnquiry(w http.ResponseWriter, r *http.Request, trekID any, trekName, back string) {
 	// "website" is a hidden field people never see; bots fill it in.
 	if r.FormValue("website") != "" {
-		redirect(w, r, "%s?msg=enquired", back)
+		redirect(w, r, "%s?msg=enquired#enquire", back)
 		return
 	}
 	e := Enquiry{
-		TrekName: t.Name,
+		TrekName: or(trekName, "General question"),
 		Name:     trimTo(r.FormValue("name"), 100),
 		Phone:    tenDigits(r.FormValue("phone")),
 		Email:    trimTo(r.FormValue("email"), 200),
@@ -90,17 +99,17 @@ func (a *App) enquire(w http.ResponseWriter, r *http.Request) {
 	}
 	// The same person pressing send twice only counts once.
 	var dup int
-	a.db.QueryRow(`SELECT COUNT(*) FROM enquiries WHERE phone = ? AND trek_id = ? AND message = ? AND created_at >= datetime('now', '-10 minutes')`,
-		e.Phone, t.ID, e.Message).Scan(&dup)
+	a.db.QueryRow(`SELECT COUNT(*) FROM enquiries WHERE phone = ? AND trek_id IS ? AND message = ? AND created_at >= datetime('now', '-10 minutes')`,
+		e.Phone, trekID, e.Message).Scan(&dup)
 	if dup == 0 {
 		if _, err := a.db.Exec(`INSERT INTO enquiries (trek_id, name, phone, email, message) VALUES (?, ?, ?, ?, ?)`,
-			t.ID, e.Name, e.Phone, e.Email, e.Message); err != nil {
+			trekID, e.Name, e.Phone, e.Email, e.Message); err != nil {
 			a.serverError(w, err)
 			return
 		}
 		go emailEnquiry(e)
 	}
-	redirect(w, r, "%s?msg=enquired", back)
+	redirect(w, r, "%s?msg=enquired#enquire", back)
 }
 
 // emailEnquiry sends the team an alert. Without SMTP settings it only logs.

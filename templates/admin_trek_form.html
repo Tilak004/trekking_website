@@ -4,6 +4,23 @@
 <p class="crumb"><a href="/admin/treks">← All treks</a>{{if .Trek.ID}} · <a href="/treks/{{.Trek.Slug}}">View public page</a>{{end}}</p>
 <h1>{{if .Trek.ID}}Edit {{.Trek.Name}}{{else}}New trek{{end}}</h1>
 
+{{if .Trek.ID}}{{with .Trek}}
+<form method="post" action="/admin/treks/{{.ID}}/trail" class="form panel trail-form">
+  <strong>Trail status</strong> <span class="muted small">Shown on the trek page and cards.{{with .TrailUpdated}} Last updated {{fmtDate .}}.{{end}}</span>
+  <div class="row">
+    <label>Status
+      <select name="trail_status">
+        <option value="" {{if eq .TrailStatus ""}}selected{{end}}>Not shown</option>
+        <option value="open" {{if eq .TrailStatus "open"}}selected{{end}}>Open</option>
+        <option value="closed" {{if eq .TrailStatus "closed"}}selected{{end}}>Closed</option>
+      </select>
+    </label>
+    <label>Note (optional) <input name="trail_note" value="{{.TrailNote}}" maxlength="160" placeholder="e.g. Closed by forest department till 15 Nov"></label>
+  </div>
+  <button class="btn small">Update status</button>
+</form>
+{{end}}{{end}}
+
 {{with .Trek}}
 <form method="post" action="/admin/treks/{{if .ID}}{{.ID}}{{else}}new{{end}}" class="form panel">
   <div class="row">
@@ -36,7 +53,8 @@
     <label>Included (one per line) <textarea name="inclusions" rows="6">{{.Inclusions}}</textarea></label>
     <label>Not included (one per line) <textarea name="exclusions" rows="6">{{.Exclusions}}</textarea></label>
   </div>
-  <label>What to carry (one per line) <textarea name="things_to_carry" rows="6">{{.ThingsToCarry}}</textarea></label>
+  <label>What to carry (one per line) <textarea name="things_to_carry" rows="8" placeholder="Clothing:&#10;Full-sleeve T-shirt&#10;Rain jacket&#10;Footwear:&#10;Trekking shoes with good grip">{{.ThingsToCarry}}</textarea>
+    <span class="hint">Optional groups: a line ending in a colon, like <code>Clothing:</code>, starts a group.</span></label>
   <label>FAQs
     <textarea name="faqs" rows="8">{{.FAQs}}</textarea>
     <span class="hint">First line is the question, the next lines are the answer. Leave a blank line between questions.</span>
@@ -59,7 +77,8 @@
     <textarea name="elevation" rows="4" placeholder="0 820&#10;2.5 1100&#10;5 1520">{{.Elevation}}</textarea>
     <span class="hint">One point per line: distance in km, then altitude in m. Take these from a GPS track (Strava, Wikiloc). Leave empty to hide the chart.</span>
   </label>
-  <label>Pickup points (one per line) <textarea name="pickup_points" rows="3">{{.PickupPoints}}</textarea></label>
+  <label>Pickup points (one per line) <textarea name="pickup_points" rows="4" placeholder="Majestic, Shanthala Silks | 11:00 PM&#10;Indiranagar Metro | 11:30 PM&#10;Silk Board Junction | 1:00 AM">{{.PickupPoints}}</textarea>
+    <span class="hint">Add the time after a <code>|</code>. Trekkers see the times on the trek page and pick one when booking.</span></label>
   <label class="check"><input type="checkbox" name="active" {{if .Active}}checked{{end}}> Visible to trekkers</label>
   <button class="btn">Save trek</button>
 </form>

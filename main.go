@@ -117,6 +117,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /lead-with-us", a.requireUser(a.leadApply))
 	mux.HandleFunc("GET /about", a.staticPage("about.html"))
 	mux.HandleFunc("GET /contact", a.staticPage("contact.html"))
+	mux.HandleFunc("POST /contact", a.contactEnquire)
 	mux.HandleFunc("GET /gallery", a.galleryPage)
 	mux.HandleFunc("GET /terms", a.staticPage("terms.html"))
 	mux.HandleFunc("GET /privacy", a.staticPage("privacy.html"))
@@ -295,6 +296,8 @@ var templateFuncs = template.FuncMap{
 	"bookingsWA":  bookingsWALink,
 	"hasPrefix":   strings.HasPrefix,
 	"hasSuffix":   strings.HasSuffix,
+	// mentions reports whether text contains a word, ignoring case.
+	"mentions": func(text, word string) bool { return strings.Contains(strings.ToLower(text), strings.ToLower(word)) },
 	"firstWord": func(s string) string {
 		f := strings.Fields(s)
 		if len(f) == 0 {

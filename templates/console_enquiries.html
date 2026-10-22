@@ -10,7 +10,7 @@
     <td><strong>{{.Name}}</strong><br>
       <span class="small"><a href="tel:+91{{.Phone}}">+91 {{.Phone}}</a> · <a href="https://wa.me/91{{.Phone}}?text={{printf "Hi %s, this is %s about your enquiry on the %s trek." .Name $.Brand .TrekName | urlquery}}" target="_blank" rel="noopener">WhatsApp</a>
       {{with .Email}}<br><a href="mailto:{{.}}">{{.}}</a>{{end}}</span></td>
-    <td>{{if .TrekSlug}}<a href="{{$.PublicURL}}/treks/{{.TrekSlug}}" target="_blank" rel="noopener">{{.TrekName}}</a>{{else}}<span class="muted">–</span>{{end}}</td>
+    <td>{{if .TrekSlug}}<a href="{{$.PublicURL}}/treks/{{.TrekSlug}}" target="_blank" rel="noopener">{{.TrekName}}</a>{{else}}<span class="muted">General question</span>{{end}}</td>
     <td class="small enq-msg">{{or .Message "—"}}</td>
     <td class="small">{{.CreatedAt}}</td>
     <td>

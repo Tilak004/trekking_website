@@ -8,6 +8,8 @@
     <span class="tag diff">{{.Difficulty}}</span>
     <h1>{{.Name}}</h1>
     <p class="banner-sub">{{.Region}}</p>
+    {{if eq .TrailStatus "open"}}<p class="trail-status open"><i></i>Trail open{{with .TrailNote}} · {{.}}{{end}}{{with .TrailUpdated}} <span>· checked {{fmtDate .}}</span>{{end}}</p>
+    {{else if eq .TrailStatus "closed"}}<p class="trail-status closed"><i></i>Trail closed{{with .TrailNote}} · {{.}}{{end}}{{with .TrailUpdated}} <span>· updated {{fmtDate .}}</span>{{end}}</p>{{end}}
     <a class="btn banner-cta" href="#book">Book now</a>
   </div>
 </section>
@@ -30,10 +32,11 @@
 <nav class="section-nav">
   <a href="#overview">Overview</a>
   {{if .Itinerary}}<a href="#itinerary">Itinerary</a>{{end}}
+  {{if .PickupPoints}}<a href="#pickup">Pickup</a>{{end}}
   {{if or .Inclusions .Exclusions}}<a href="#inclusions">Inclusions</a>{{end}}
   {{if .ThingsToCarry}}<a href="#carry">What to carry</a>{{end}}
   <a href="#book">Book</a>
-  {{if .FAQs}}<a href="#faqs">FAQs</a>{{end}}
+  <a href="#faqs">FAQs</a>
   <a href="#reviews">Reviews</a>
 </nav>
 
@@ -55,7 +58,16 @@
     </section>
     {{end}}
 
-    {{if or .Inclusions .Exclusions}}
+    {{with pickups .PickupPoints}}
+    <section id="pickup" class="trek-section">
+      <h2>Pickup points</h2>
+      <ul class="pickup-list">
+        {{range .}}<li>{{with .Time}}<b>{{.}}</b>{{end}}<span>{{.Place}}</span></li>{{end}}
+      </ul>
+      <p class="muted small">Please be at your pickup point 10 minutes early.</p>
+    </section>
+    {{end}}
+
     <section id="inclusions" class="trek-section">
       <h2>What's included</h2>
       <div class="incl-grid">
@@ -65,20 +77,20 @@
           <ul class="checklist">{{range .}}<li>{{.}}</li>{{end}}</ul>
         </div>
         {{end}}
-        {{with lines .Exclusions}}
         <div class="incl-box no">
           <h3>Not included</h3>
-          <ul class="checklist">{{range .}}<li>{{.}}</li>{{end}}</ul>
+          <ul class="checklist">{{range lines .Exclusions}}<li>{{.}}</li>{{end}}{{if not (mentions .Exclusions "insurance")}}<li>Insurance of any kind (travel, accident or medical)</li>{{end}}</ul>
         </div>
-        {{end}}
       </div>
     </section>
-    {{end}}
 
-    {{with lines .ThingsToCarry}}
+    {{with carryGroups .ThingsToCarry}}
     <section id="carry" class="trek-section">
       <h2>What to carry</h2>
-      <ul class="carry-list">{{range .}}<li>{{.}}</li>{{end}}</ul>
+      {{range .}}
+      {{with .Title}}<h3 class="carry-title">{{.}}</h3>{{end}}
+      <ul class="carry-list">{{range .Items}}<li>{{.}}</li>{{end}}</ul>
+      {{end}}
     </section>
     {{end}}
 
@@ -88,6 +100,7 @@
       <div class="book-grid">
         <div class="panel book-panel">
           <h3>Book now</h3>
+          {{if eq .TrailStatus "closed"}}<div class="bp-none"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5v5.5M12 16.5v.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg> The trail is closed right now{{with .TrailNote}} ({{.}}){{end}}. We'll confirm your date only if it reopens.</div>{{end}}
           {{if .Price}}<p class="bp-price">₹{{inr .Price}} <span class="bp-badge">per person</span></p>{{end}}
           {{if $.Existing}}
             <p>You already have a <span class="status {{$.Existing.Status}}">{{$.Existing.Status}}</span> booking for {{fmtDate $.Existing.StartDate}}.</p>
@@ -136,9 +149,28 @@
         </div>
         <div class="panel enquire-panel" id="enquire">
           <h3>Enquire now</h3>
+          {{if hasPrefix $.Msg "Thanks! We've got your enquiry"}}
+          <div class="enq-done">
+            <p><b>✓ Enquiry sent.</b> We'll call or WhatsApp you soon.</p>
+            <p class="muted small">Want a faster reply? Send the same enquiry to us on WhatsApp.</p>
+            <a class="btn big block wa-btn" id="enquiry-wa" target="_blank" rel="noopener" data-to="{{$.Site.BookingsWA}}" data-trek="{{.Name}}"
+               href="{{bookingsWA (printf "Hi Beyond Expeditions! I just sent an enquiry about the %s trek." .Name)}}">{{template "waicon"}} Also send on WhatsApp</a>
+            <p class="small"><a href="/treks/{{.Slug}}#enquire">Send another enquiry</a></p>
+          </div>
+          <script>
+          (() => {
+            const a = document.getElementById('enquiry-wa');
+            let e = null;
+            try { e = JSON.parse(sessionStorage.getItem('enquiry') || 'null'); sessionStorage.removeItem('enquiry'); } catch (_) {}
+            if (!a || !e) return;
+            const lines = ['Hi Beyond Expeditions! I just sent an enquiry about the ' + a.dataset.trek + ' trek.', '', 'Name: ' + e.name, 'Phone: ' + e.phone];
+            if (e.message) lines.push('Question: ' + e.message);
+            a.href = 'https://wa.me/' + a.dataset.to + '?text=' + encodeURIComponent(lines.join(String.fromCharCode(10)));
+          })();
+          </script>
+          {{else}}
           <p class="muted small">Not ready to book, or have a question? Leave your details and we'll call or WhatsApp you about {{.Name}}.</p>
-          <form method="post" action="/treks/{{.Slug}}/enquire" class="form">
-            
+          <form method="post" action="/treks/{{.Slug}}/enquire" class="form" id="enquiry-form">
             <label>Your name <input name="name" required maxlength="100" autocomplete="name" value="{{with $.User}}{{.Name}}{{end}}"></label>
             <label>Phone (WhatsApp) <input name="phone" type="tel" required inputmode="tel" placeholder="98765 43210" autocomplete="tel" value="{{with $.User}}{{.Phone}}{{end}}"></label>
             <label>Email (optional) <input name="email" type="email" maxlength="200" autocomplete="email" autocapitalize="none" spellcheck="false"{{with $.User}}{{if not (hasSuffix .Email "@guest.beyondexpeditions.local")}} value="{{.Email}}"{{end}}{{end}}></label>
@@ -146,18 +178,25 @@
             <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
             <button class="btn block">Send enquiry</button>
           </form>
+          <script>
+          // Remember the enquiry so the "Also send on WhatsApp" button can include it.
+          document.getElementById('enquiry-form').addEventListener('submit', (ev) => {
+            const v = (n) => ev.currentTarget.elements.namedItem(n).value.trim();
+            try { sessionStorage.setItem('enquiry', JSON.stringify({ name: v('name'), phone: v('phone'), message: v('message') })); } catch (_) {}
+          });
+          </script>
+          {{end}}
         </div>
       </div>
     </section>
 
-    {{with blocks .FAQs}}
     <section id="faqs" class="trek-section">
       <h2>Frequently asked questions</h2>
       <div class="faqs">
-        {{range .}}<details><summary>{{.Title}}</summary><p>{{.Body}}</p></details>{{end}}
+        {{range blocks .FAQs}}<details><summary>{{.Title}}</summary><p>{{.Body}}</p></details>{{end}}
+        {{if not (mentions .FAQs "insurance")}}<details><summary>Is insurance included?</summary><p>No. Our price does not include travel, accident or medical insurance, and any medical or evacuation costs are yours. Most weekend trek groups work this way. If you want cover, you can buy personal accident insurance on your own before the trek.</p></details>{{end}}
       </div>
     </section>
-    {{end}}
 
     <section id="reviews" class="trek-section">
       <h2>Reviews</h2>

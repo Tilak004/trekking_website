@@ -38,7 +38,7 @@ var site = Site{
 }
 
 // defaultTheme is the theme every visitor sees. Others can be previewed with ?theme=<name>.
-const defaultTheme = "editorial"
+const defaultTheme = "sage"
 
 type Theme struct {
 	Name, Label, Fonts string // Fonts is a Google Fonts css2 query
@@ -50,7 +50,9 @@ func (t Theme) Attr() string { return strings.TrimSpace(t.Base + " " + t.Name) }
 
 var themes = []Theme{
 	{"editorial", "Editorial", "family=Source+Sans+3:wght@400;500;600;700", "ghats sky"},
-	{"sky", "Sky", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", "ghats"},
+	{"mist", "Mist", "family=Source+Sans+3:wght@400;500;600;700", "ghats sky editorial"},
+	{"sage", "Sage", "family=Source+Sans+3:wght@400;500;600;700", "ghats sky editorial"},
+	{"sky", "Sky", "family=Source+Sans+3:wght@400;500;600;700", "ghats"},
 	{"night", "Shola Night", "family=Marcellus&family=Outfit:wght@600;700;800&family=Inter:wght@300;400;500;600", "ghats"},
 	{"ghats", "Western Ghats", "family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700", ""},
 	{"explore", "Explore", "family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=Kaushan+Script", ""},
@@ -75,24 +77,14 @@ func findTheme(name string) (Theme, bool) {
 	return Theme{}, false
 }
 
-// pickTheme returns the theme for this request. ?theme=<name> starts a preview
-// (remembered in a cookie); ?theme=off ends it.
+// pickTheme returns the theme for this request: always the default.
 func pickTheme(w http.ResponseWriter, r *http.Request) (Theme, bool) {
-	def, _ := findTheme(defaultTheme)
-	q := r.URL.Query().Get("theme")
-	if q == "off" {
+	// The site is locked to the default theme (Sage). Theme previews with
+	// ?theme= are switched off; clear any preview cookie left from before.
+	if _, err := r.Cookie("theme"); err == nil {
 		http.SetCookie(w, &http.Cookie{Name: "theme", Path: "/", MaxAge: -1})
-		return def, false
 	}
-	if t, ok := findTheme(q); ok {
-		http.SetCookie(w, &http.Cookie{Name: "theme", Value: t.Name, Path: "/", MaxAge: 7 * 24 * 3600, SameSite: http.SameSiteLaxMode})
-		return t, true
-	}
-	if c, err := r.Cookie("theme"); err == nil {
-		if t, ok := findTheme(c.Value); ok {
-			return t, true
-		}
-	}
+	def, _ := findTheme(defaultTheme)
 	return def, false
 }
 

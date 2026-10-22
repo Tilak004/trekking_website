@@ -96,8 +96,9 @@
     </div>
     <div>
       <h4>Contact</h4>
-      <a href="tel:{{.Site.TelLink}}">{{.Site.Phone}}</a>
-      {{with .Site.Phone2}}<a href="tel:{{$.Site.TelLink2}}">{{.}}</a>{{end}}
+      <a href="{{whatsapp "Hi! I have a question about your treks."}}" target="_blank" rel="noopener">WhatsApp us</a>
+      <a href="/contact#enquire">Send a question</a>
+      <a href="https://instagram.com/{{.Site.Instagram}}" target="_blank" rel="noopener">Instagram</a>
       <span>{{.Site.City}}</span>
     </div>
   </div>

@@ -17,7 +17,7 @@ export function TrekCard({ t, badge }) {
           </svg>
         )}
         <span class="tag diff">{t.difficulty}</span>
-        {open && <span class="tag open">Booking open</span>}
+        {t.trail === 'closed' ? <span class="tag open closed">Trail closed</span> : open && <span class="tag open">Booking open</span>}
         {open && t.price > 0 && <span class="card-price">₹{inr(t.price)}</span>}
         {badge && <span class="tag match">{badge}</span>}
       </div>
