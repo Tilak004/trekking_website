@@ -2,6 +2,8 @@
 
 This puts the website on a free Oracle Cloud server, with your own domain and automatic HTTPS.
 
+> **Using Microsoft Azure instead of Oracle?** Follow [DEPLOY-AZURE.md](DEPLOY-AZURE.md) for creating the server, then come back here for DNS, deploying and everything after. Any Ubuntu server works with this kit.
+
 ```
 visitor  ->  https://beyondexpeditions.in  ->  Caddy (HTTPS)  ->  website (127.0.0.1:8080)
 you      ->  SSH tunnel                    ->  admin console (127.0.0.1:8081)   never public
