@@ -13,6 +13,33 @@ backups) are the same; the differences are listed at the end.
 2. **The $200 credit lasts only 30 days, and then you must upgrade to "Pay-As-You-Go".** The account asks you to do this. It is not a trap: the free VM hours stay free for the 12 months after upgrading. But it means Azure can now bill your card for anything you create beyond the free allowance, so create a **budget alert** (step 5).
 3. **The free VM sizes are only free with the right disk.** Microsoft's current wording: 750 hours a month of **B1s**, **B2ats v2** (AMD) or **B2pts v2** (Arm), and the VM is free only with a **64 GiB (P6) managed disk**. B1s is often "not available" for free accounts, so this guide uses **B2ats v2**.
 
+## Quick way: create everything from Azure Cloud Shell (replaces steps 2 to 4)
+
+1. In the Azure portal click the **Cloud Shell** icon (`>_`, top bar) and choose **Bash**. If it asks about storage, pick **No storage account required** and select your subscription.
+2. Paste this whole block. It tries three Indian regions in turn until one accepts the free VM size:
+   ```bash
+   PUBKEY='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ3rZEqiKVewywSu7VDfgzjkbfq28CWKUJ+SmfreE1N2 beyond-expeditions-oracle'
+   for LOC in centralindia southindia westindia; do
+     RG="beyond-$LOC"; echo "=== Trying $LOC"
+     az group create -n "$RG" -l "$LOC" -o none
+     if az vm create -g "$RG" -n beyond-vm           --image Canonical:ubuntu-24_04-lts:server:latest --size Standard_B2ats_v2           --admin-username azureuser --authentication-type ssh --ssh-key-values "$PUBKEY"           --public-ip-sku Standard --public-ip-address-allocation static           --os-disk-size-gb 64 --storage-sku Premium_LRS --nsg-rule SSH -o table; then
+       echo "SUCCESS in $LOC"; break
+     fi
+     az group delete -n "$RG" --yes --no-wait
+   done
+   ```
+3. Open the web ports (use the resource group name it printed, for example `beyond-centralindia`):
+   ```bash
+   az vm open-port -g beyond-centralindia -n beyond-vm --port 80  --priority 1010 -o none
+   az vm open-port -g beyond-centralindia -n beyond-vm --port 443 --priority 1020 -o none
+   az vm list-ip-addresses -g beyond-centralindia -n beyond-vm -o table     # shows the public IP
+   ```
+4. Then continue with the DNS and deploy steps below. To remove everything later (and stop all billing): `az group delete -n beyond-centralindia --yes`.
+
+If every region fails with a size or quota error, run `az vm list-skus --location centralindia --size Standard_B2 -o table` to see which sizes your free account may use, then use the Arm size `Standard_B2pts_v2` with the image `Canonical:ubuntu-24_04-lts:server-arm64:latest`, and add `-Arch arm64` when you deploy.
+
+---
+
 ## 1. Make the SSH key
 
 You already have one on this PC: `C:\Users\<you>\.ssh\oracle.key` (the name doesn't matter). Its public half is in `oracle.key.pub`; you paste that into Azure in step 3.
