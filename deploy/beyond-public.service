@@ -1,0 +1,24 @@
+[Unit]
+Description=Beyond Expeditions website (public)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=beyond
+Group=beyond
+WorkingDirectory=/opt/beyond
+EnvironmentFile=/etc/beyond/beyond.env
+# Listens on this machine only; Caddy is the only way in from the internet.
+ExecStart=/opt/beyond/beyond -addr 127.0.0.1:8080 -db /var/lib/beyond/beyond.db -photos /opt/beyond/photos
+Restart=always
+RestartSec=3
+
+# Harden: the site may only write to its data folders.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/beyond /opt/beyond/photos
+
+[Install]
+WantedBy=multi-user.target

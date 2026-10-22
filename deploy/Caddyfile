@@ -1,0 +1,37 @@
+# Caddy: gets and renews the HTTPS certificate automatically, and passes visitors
+# to the Go website, which listens only on this machine (127.0.0.1:8080).
+# The admin console (port 8081) is deliberately NOT exposed here: reach it through
+# an SSH tunnel (see deploy/DEPLOY.md).
+#
+# "DOMAIN" is replaced with your real domain by deploy/server-setup.sh.
+
+www.DOMAIN {
+	redir https://DOMAIN{uri} permanent
+}
+
+DOMAIN {
+	encode zstd gzip
+
+	# Built frontend files have a hash in their name, so they can be cached for a year.
+	@assets path /static/app/assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	# Photos change rarely; let browsers keep them for a day.
+	@photos path /photos/*
+	header @photos Cache-Control "public, max-age=86400"
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "SAMEORIGIN"
+		-Server
+	}
+
+	# Booking and enquiry forms accept photos up to 5 MB; keep a sane overall limit.
+	request_body {
+		max_size 12MB
+	}
+
+	reverse_proxy 127.0.0.1:8080
+}

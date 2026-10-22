@@ -1,0 +1,24 @@
+[Unit]
+Description=Beyond Expeditions admin console (private)
+After=network-online.target beyond-public.service
+Wants=network-online.target
+
+[Service]
+User=beyond
+Group=beyond
+WorkingDirectory=/opt/beyond
+EnvironmentFile=/etc/beyond/beyond.env
+# 127.0.0.1 only: it is never reachable from the internet. Use an SSH tunnel:
+#   ssh -L 8081:127.0.0.1:8081 <user>@<server>     then open http://localhost:8081
+ExecStart=/opt/beyond/beyond -mode admin -addr 127.0.0.1:8081 -db /var/lib/beyond/beyond.db -photos /opt/beyond/photos
+Restart=always
+RestartSec=3
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/beyond /opt/beyond/photos
+
+[Install]
+WantedBy=multi-user.target

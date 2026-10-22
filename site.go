@@ -46,12 +46,18 @@ func whatsAppLink(text string) string {
 }
 
 // baseURL is used for absolute links in link previews (og:image needs one).
+// isHTTPS reports whether the visitor reached us over HTTPS, either directly or
+// through a reverse proxy (Caddy, nginx) that terminates TLS and says so.
+func isHTTPS(r *http.Request) bool {
+	return r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
+}
+
 func baseURL(r *http.Request) string {
 	if u := envOr("BASE_URL", ""); u != "" {
 		return strings.TrimRight(u, "/")
 	}
 	scheme := "http"
-	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+	if isHTTPS(r) {
 		scheme = "https"
 	}
 	return scheme + "://" + r.Host

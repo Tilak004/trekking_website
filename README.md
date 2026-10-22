@@ -184,10 +184,10 @@ On first run the app adds five Karnataka treks and three placeholder leads ("Fou
 
 ## Deploying
 
-Copy the binary (and the `photos/` folder) to a server and run **both** programs, the public site and `-mode admin`, from the same folder so they share the database. Put the public site behind a reverse proxy that handles HTTPS (e.g. Caddy), and keep the admin port (8081) private: firewall it, or reach it over a VPN or SSH tunnel. Set `BASE_URL` to the public address. Back up the `.db` file regularly (see Backups).
-
-To build for a Linux server from Windows (run `npm run build` in `frontend/` first if you changed it):
+A complete, step-by-step guide for putting the site on a free Oracle Cloud server with your own domain and automatic HTTPS is in [`deploy/DEPLOY.md`](deploy/DEPLOY.md). Once the server exists, deploying and updating is one command:
 
 ```
-$env:GOOS="linux"; $env:GOARCH="amd64"; go build -o beyond .
+.\deploy\deploy.ps1 -Server ubuntu@<server-ip> -Key $HOME\.ssh\oracle.key
 ```
+
+The general rules for any server: run **both** programs (the public site and `-mode admin`) from the same folder so they share the database, put the public site behind a reverse proxy that handles HTTPS (the guide uses Caddy), keep the admin port private (SSH tunnel or VPN), set `BASE_URL`, and copy the nightly backups off the server.

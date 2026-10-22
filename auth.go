@@ -108,7 +108,7 @@ func (a *App) startSession(w http.ResponseWriter, r *http.Request, userID int64)
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name: sessionCookie, Value: token, Path: "/", Expires: expires,
-		HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: r.TLS != nil,
+		HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: isHTTPS(r),
 	})
 	return nil
 }
