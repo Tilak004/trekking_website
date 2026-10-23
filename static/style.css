@@ -1223,8 +1223,8 @@ img.avatar.photo { border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18
   --text: #102a43; --text-soft: #334e68; --muted: #5d7590; --line: #dbe6f1; --no-bg: #fdeeee;
   --err: #c2453d; --err-bg: #fbe9e7;
   --ok: #1f6db3; --ok-bg: #e3f0fb; --warn: #9a6400; --warn-bg: #fff4dc; --info: #1d4f7f; --info-bg: #e7eef6;
-  --font-head: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --font-display: var(--font-head); --font-script: var(--font-head);
-  --font-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-head: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --font-display: var(--font-head); --font-script: var(--font-head);
+  --font-body: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --head-case: none; --head-weight: 700; --head-track: -.005em;
   --accent: #1f6db3;
   --shadow: 0 10px 30px rgba(16,42,67,.10);
@@ -1275,9 +1275,9 @@ img.avatar.photo { border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18
   --ok: #0f4d2c; --ok-bg: #e9f2ec; --warn: #7a5a00; --warn-bg: #fbf4e2; --info: #2f5a43; --info-bg: #e9f2ec;
   --radius: 18px; --shadow: 0 14px 40px rgba(10,38,22,.10);
   /* one professional typeface everywhere (public site and admin console) */
-  --font-head: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-head: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-head); --font-script: var(--font-head);
-  --font-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --head-case: none; --head-weight: 700; --head-track: -.005em;
 }
 [data-theme~="editorial"] body { background: #fff; }
@@ -1743,3 +1743,19 @@ tr.done td { opacity: .6; }
 .site-header .brand-name i { font: italic 500 .82rem var(--font-body); color: var(--accent, var(--forest-500)); white-space: nowrap; }
 .site-header.over-hero .brand-name b, .site-header.over-hero .brand-name i { color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.45); }
 @media (max-width: 640px) { .site-header .brand-name b { font-size: .98rem; } .site-header .brand-name i { font-size: .76rem; } }
+
+/* Poppins wordmark: light "Beyond" + semi-bold "Expeditions" */
+.site-header .brand-name b { font-family: "Poppins", sans-serif; font-weight: 600; font-size: 1.12rem; letter-spacing: -.01em; }
+.site-header .brand-name b .bn-light { font-weight: 300; }
+.site-header .brand-name i { font-family: "Poppins", sans-serif; font-style: normal; font-weight: 400; font-size: .78rem; letter-spacing: .02em; }
+/* Poppins runs large: one step smaller than Source Sans at the same size */
+html { font-size: clamp(.875rem, .82rem + .24vw, 1.2rem); }
+
+/* dark footer: deep forest green that closes the page */
+[data-theme~="sage"] .site-footer { background: #1f2d25; color: rgba(255,255,255,.78); border-top: 0; }
+[data-theme~="sage"] .site-footer .footer-grid h4 { color: #fff; }
+[data-theme~="sage"] .site-footer .footer-grid a, [data-theme~="sage"] .site-footer .footer-grid > div > span, [data-theme~="sage"] .site-footer .footer-about p { color: rgba(255,255,255,.72); }
+[data-theme~="sage"] .site-footer .footer-grid a:hover { color: #fff; }
+[data-theme~="sage"] .site-footer .footer-tagline { color: #fff; }
+[data-theme~="sage"] .site-footer .footer-bottom { color: rgba(255,255,255,.55); border-top-color: rgba(255,255,255,.12); }
+[data-theme~="sage"] .site-footer .socials a { background: #fff; border-color: transparent; }

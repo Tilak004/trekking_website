@@ -69,7 +69,7 @@ export default function Layout({ children }) {
           <Link className="brand" to="/" aria-label={`${s.Brand} home`}>
             <img className="logo badge" src="/photos/logo/badge.png" alt="" onError={logoFallback} />
             <span className="brand-name">
-              <b>{s.Brand || 'Beyond Expeditions'}</b>
+              <b><span className="bn-light">Beyond</span>Expeditions</b>
               {site && site.Tagline && <i>{site.Tagline}</i>}
             </span>
           </Link>
