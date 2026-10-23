@@ -31,8 +31,7 @@ export function About() {
       <section className="about-story">
         <div>
           <h2>How it started</h2>
-          <p>Prahladh has finished a full Ironman. Lepakshi races 24-hour adventure races and spends most free days out in the hills. Tilak has walked just about every major trail in the Western Ghats and has trekked in the Himalayas too.</p>
-          <p>Somewhere along the way we noticed that the trek lead makes or breaks the day: the right pace, a calm voice on a slippery descent, knowing exactly where to stop for the view. So we started Beyond Expeditions to give every trekker that kind of day.</p>
+          <p>We're three friends who've spent years on trails, races and summits. Somewhere along the way we noticed that the trek lead makes or breaks the day: the right pace, a calm voice on a slippery descent, knowing exactly where to stop for the view. So we started Beyond Expeditions to give every trekker that kind of day.</p>
         </div>
         <div className="about-values">
           <div><strong>Safety, always</strong><span>Every batch has an experienced lead and a first-aid kit. If the weather turns, we turn back. No summit is worth it.</span></div>
@@ -55,7 +54,7 @@ export function About() {
           </figure>
           <figure className="founder">
             <img src="/photos/founders/tilak.jpg" alt="Tilak jumping in the snow on a Himalayan trek" loading="lazy" />
-            <figcaption><b>Tilak</b><span>The all-rounder. Treks the Ghats and the Himalayas, runs half marathons and never says no to badminton.</span></figcaption>
+            <figcaption><b>Tilak</b><span>Knows the Western Ghats trail by trail, and has trekked the Himalayas too. Happiest planning the next one.</span></figcaption>
           </figure>
         </div>
       </section>
