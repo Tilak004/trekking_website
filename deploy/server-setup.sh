@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time setup of a fresh Ubuntu 22.04 or 24.04 server (Oracle Cloud or any other).
+# One-time setup of a fresh Ubuntu 22.04 or 24.04 server (Azure, Oracle Cloud or any other).
 # It installs Caddy (HTTPS), creates the "beyond" service user and folders, opens the
 # firewall for web traffic, and installs the two systemd services. It does NOT start
 # the website: deploy.ps1 uploads the program next and starts it.
@@ -39,7 +39,7 @@ if ! command -v caddy >/dev/null 2>&1; then
   apt-get install -y caddy
 fi
 
-echo "==> Firewall: allow web traffic (Oracle's Ubuntu images block everything except SSH by default)"
+echo "==> Firewall: allow web traffic (some providers' Ubuntu images block everything except SSH by default)"
 for port in 80 443; do
   if ! iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null; then
     pos="$(iptables -L INPUT --line-numbers -n | awk '/REJECT/ {print $1; exit}')"
@@ -56,12 +56,42 @@ if [ ! -f /etc/beyond/beyond.env ]; then
   echo "    created /etc/beyond/beyond.env"
 else
   echo "    kept your existing /etc/beyond/beyond.env"
+  # settings files made before the admin address existed need the new line
+  grep -q '^ADMIN_URL=' /etc/beyond/beyond.env || { echo "ADMIN_URL=https://admin.$DOMAIN" >> /etc/beyond/beyond.env; echo "    added ADMIN_URL"; }
 fi
 
-echo "==> Caddy config"
-sed "s/DOMAIN/$DOMAIN/g" "$HERE/Caddyfile" > /etc/caddy/Caddyfile
-systemctl enable caddy
-systemctl restart caddy
+echo "==> Admin console: browser-prompt password"
+if [ ! -f /etc/caddy/admin-auth.caddy ]; then
+  ADMIN_PROMPT_PASSWORD="$(openssl rand -hex 12)"
+  HASH="$(caddy hash-password --plaintext "$ADMIN_PROMPT_PASSWORD")"
+  mkdir -p /etc/caddy
+  printf 'basic_auth {
+	beyond %s
+}
+' "$HASH" > /etc/caddy/admin-auth.caddy
+  chmod 640 /etc/caddy/admin-auth.caddy
+  chown root:caddy /etc/caddy/admin-auth.caddy
+  printf 'username: beyond
+password: %s
+' "$ADMIN_PROMPT_PASSWORD" > /root/admin-prompt-password.txt
+  chmod 600 /root/admin-prompt-password.txt
+  echo "    created. Username: beyond   Password: $ADMIN_PROMPT_PASSWORD   (also saved in /root/admin-prompt-password.txt)"
+else
+  echo "    kept your existing /etc/caddy/admin-auth.caddy"
+fi
+
+echo "==> Caddy config (checked before it is applied, so a mistake can never take the site down)"
+sed "s/DOMAIN/$DOMAIN/g" "$HERE/Caddyfile" > /etc/caddy/Caddyfile.new
+if caddy validate --config /etc/caddy/Caddyfile.new --adapter caddyfile; then
+  [ -f /etc/caddy/Caddyfile ] && cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.previous
+  mv /etc/caddy/Caddyfile.new /etc/caddy/Caddyfile
+  systemctl enable caddy
+  systemctl reload-or-restart caddy
+else
+  echo "!! The new Caddy config is invalid, so the old one was kept. Nothing was changed." >&2
+  rm -f /etc/caddy/Caddyfile.new
+  exit 1
+fi
 
 echo "==> Services"
 install -m 644 "$HERE/beyond-public.service" /etc/systemd/system/beyond-public.service
