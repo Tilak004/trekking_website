@@ -123,3 +123,5 @@ body.console { background: var(--surface-2); margin: 0; font-size: 1rem; }
 .use-default { align-self: flex-start; margin-top: 4px; padding: 0; text-decoration: underline; }
 .head-actions { display: inline-flex; gap: 8px; flex-wrap: wrap; }
 .start-from { margin-bottom: 14px; } .start-from select { max-width: 360px; }
+.danger-zone { margin-top: 18px; border-color: #ecd3c7; background: #fdf6f3; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.danger-zone p { margin: 0; }

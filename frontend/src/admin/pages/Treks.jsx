@@ -275,6 +275,20 @@ export function TrekForm() {
             </div>
             <button className="btn" disabled={batchForm.busy}>Add as draft</button>
           </form>
+
+          <section className="panel danger-zone">
+            <strong>Delete this trek</strong>
+            {(d.Batches || []).some((b) => b.Bookings > 0) ? (
+              <p className="muted small">This trek has bookings, so it can't be deleted (that would lose booking and payment records). To take it off the site, untick "Visible to trekkers" and save.</p>
+            ) : (
+              <>
+                <p className="muted small">Removes the trek and all its dates for good. Enquiries about it are kept. This can't be undone.</p>
+                <form onSubmit={submit(`/admin/treks/${t.ID}/delete`, { confirm: `Delete ${t.Name} and all its dates? This can't be undone.` })} className="inline">
+                  <button className="btn small act-rejected">Delete trek</button>
+                </form>
+              </>
+            )}
+          </section>
         </>
       )}
     </>

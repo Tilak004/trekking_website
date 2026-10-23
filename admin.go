@@ -234,6 +234,42 @@ func (a *App) adminDeleteBatch(w http.ResponseWriter, r *http.Request) {
 	redirect(w, r, "/admin/treks/%d?msg=batch_deleted", b.TrekID)
 }
 
+// adminDeleteTrek deletes a trek and its dates. Treks with any bookings can't be
+// deleted (that would lose booking and payment records); hide them instead.
+func (a *App) adminDeleteTrek(w http.ResponseWriter, r *http.Request) {
+	id := pathID(r)
+	var bookings int
+	if err := a.db.QueryRow(`SELECT COUNT(*) FROM bookings k JOIN batches b ON b.id = k.batch_id WHERE b.trek_id = ?`, id).Scan(&bookings); err != nil {
+		a.serverError(w, err)
+		return
+	}
+	if bookings > 0 {
+		redirect(w, r, "/admin/treks/%d?err=trek_has_bookings", id)
+		return
+	}
+	tx, err := a.db.Begin()
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	defer tx.Rollback()
+	for _, q := range []string{
+		`UPDATE enquiries SET trek_id = NULL WHERE trek_id = ?`,
+		`DELETE FROM batches WHERE trek_id = ?`,
+		`DELETE FROM treks WHERE id = ?`,
+	} {
+		if _, err := tx.Exec(q, id); err != nil {
+			a.serverError(w, err)
+			return
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		a.serverError(w, err)
+		return
+	}
+	redirect(w, r, "/admin/treks?msg=trek_deleted")
+}
+
 func nullID(id int) any {
 	if id <= 0 {
 		return nil
