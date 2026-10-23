@@ -24,8 +24,8 @@ type Site struct {
 
 var site = Site{
 	Name:        "Beyond Expeditions",
-	Tagline:     "Weekend treks in the Western Ghats, led by athletes.",
-	Description: "Small-group weekend treks across Karnataka's Western Ghats, led by an Ironman finisher, a 24-hour adventure racer and a trekker who has done every major trail in Karnataka.",
+	Tagline:     "Journeys beyond the familiar.",
+	Description: "Thoughtfully crafted treks and expeditions for those who seek more than a view. Expert guides, small groups and every detail cared for, from the first step to the summit.",
 	Phone:       "+91 77604 24521",
 	Phone2:      "+91 94817 40319",
 	WhatsApp:    "917760424521",
