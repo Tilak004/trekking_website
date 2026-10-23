@@ -19,7 +19,7 @@ export function About() {
   useStatic('About us');
   const { Brand } = useSession();
   const hero = (
-    <section className="banner short" style={{ backgroundImage: "url('/photos/gallery/WhatsApp Image 2026-10-15 at 5.31.06 PM.jpeg')" }}>
+    <section className="banner short" style={{ backgroundImage: "url('/photos/gallery/WhatsApp Image 2026-10-17 at 7.30.54 PM.jpeg')" }}>
       <div className="wrap banner-inner">
         <h1>Hi, we're {Brand}!</h1>
         <p className="banner-sub">Three friends who'd rather be on a mountain than anywhere else, and who'd love to take you along.</p>
