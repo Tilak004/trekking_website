@@ -1730,3 +1730,9 @@ tr.done td { opacity: .6; }
 .socials a svg { display: block; flex: none; margin: 0; }
 /* brand tagline in the footer */
 .footer-tagline { margin: 8px 0 2px; font-size: 1.15rem; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+
+/* trek banner: show more of the photo, with a lighter shade only behind the text */
+.banner[style] { min-height: 340px; background-position: center 88%; }
+.banner[style]::before { background: linear-gradient(90deg, rgba(5,15,10,.5) 0%, rgba(5,15,10,.18) 45%, rgba(5,15,10,0) 75%), linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(5,15,10,.35) 100%); }
+.banner[style] h1, .banner[style] .banner-sub, .banner[style] .crumb a { text-shadow: 0 1px 10px rgba(0,0,0,.45); }
+@media (max-width: 640px) { .banner[style] { min-height: 280px; } .banner[style]::before { background: linear-gradient(180deg, rgba(5,15,10,.15), rgba(5,15,10,.55)); } }
