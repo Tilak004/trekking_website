@@ -31,7 +31,7 @@ export function About() {
       <section className="about-story">
         <div>
           <h2>How it started</h2>
-          <p>One of us has finished a full Ironman. Another races 24-hour adventure races and spends most weekends in the Ghats. The third has walked just about every major trail in Karnataka, and crossed Hampta Pass in the Himalayas.</p>
+          <p>Prahladh has finished a full Ironman. Lepakshi races 24-hour adventure races and spends most free days out in the hills. Tilak has walked just about every major trail in the Western Ghats, and crossed Hampta Pass on a first trip to the Himalayas.</p>
           <p>Somewhere along the way we noticed that the trek lead makes or breaks the day: the right pace, a calm voice on a slippery descent, knowing exactly where to stop for the view. So we started Beyond Expeditions to give every trekker that kind of day.</p>
         </div>
         <div className="about-values">
@@ -39,6 +39,24 @@ export function About() {
           <div><strong>Small groups</strong><span>We keep batches small, so nobody gets left behind (or stuck in a queue for photos!).</span></div>
           <div><strong>No surprises</strong><span>Everything included is listed on the trek page. What you see is what you pay.</span></div>
           <div><strong>Leave no trace</strong><span>We carry back everything we carry in, and usually a little more.</span></div>
+        </div>
+      </section>
+
+      <section className="founders">
+        <h2>Meet the founders</h2>
+        <div className="founder-grid">
+          <figure className="founder">
+            <img src="/photos/founders/prahladh.jpg" alt="Prahladh in the Himalayas" loading="lazy" />
+            <figcaption><b>Prahladh</b><span>Ironman finisher. Swims, cycles and runs further than most people drive on a weekend.</span></figcaption>
+          </figure>
+          <figure className="founder">
+            <img src="/photos/founders/lepakshi.jpg" alt="Lepakshi with a finisher's medal at the BMF Ultra" loading="lazy" />
+            <figcaption><b>Lepakshi</b><span>Races 24-hour adventure races. Happiest when the trail goes on longer than planned.</span></figcaption>
+          </figure>
+          <figure className="founder">
+            <img src="/photos/founders/tilak.jpg" alt="Tilak jumping in the snow at Hampta Pass" loading="lazy" />
+            <figcaption><b>Tilak</b><span>Has walked just about every trail in the Western Ghats. Hampta Pass was the first Himalayan one, and not the last!</span></figcaption>
+          </figure>
         </div>
       </section>
 
