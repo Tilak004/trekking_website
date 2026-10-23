@@ -55,7 +55,7 @@ export function About() {
           </figure>
           <figure className="founder">
             <img src="/photos/founders/tilak.jpg" alt="Tilak jumping in the snow on a Himalayan trek" loading="lazy" />
-            <figcaption><b>Tilak</b><span>The all-rounder. Treks the Western Ghats and the Himalayas, runs half marathons and never says no to badminton. Here, Tilak plans the treks and looks after social media, marketing and tech. Loves meeting new people on the trail!</span></figcaption>
+            <figcaption><b>Tilak</b><span>The all-rounder. Treks the Ghats and the Himalayas, runs half marathons and never says no to badminton.</span></figcaption>
           </figure>
         </div>
       </section>
