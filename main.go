@@ -38,6 +38,7 @@ func main() {
 	dbPath := flag.String("db", envOr("DB_PATH", "beyond.db"), "path to the SQLite database file")
 	photosDir := flag.String("photos", envOr("PHOTOS_DIR", "photos"), "folder with site photos")
 	resetAdmin := flag.Bool("reset-admin-password", false, "set a new random admin password, print it and exit")
+	newAdmin := flag.Bool("add-admin", false, "create another admin account from ADMIN_EMAIL, ADMIN_NAME and ADMIN_PASSWORD, then exit")
 	backupNow := flag.Bool("backup-now", false, "write a backup of the database and uploaded photos, then exit")
 	showVersion := flag.Bool("version", false, "print the version this program was built from and exit")
 	flag.Parse()
@@ -62,6 +63,12 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	if *newAdmin {
+		if err := addAdmin(db); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 	if *resetAdmin {
 		if err := resetAdminPassword(db); err != nil {
 			log.Fatal(err)

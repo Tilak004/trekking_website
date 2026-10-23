@@ -21,7 +21,8 @@ import (
 var sessionCookie = "session"
 
 const (
-	sessionTTL = 30 * 24 * time.Hour
+	sessionTTL      = 30 * 24 * time.Hour
+	adminSessionTTL = 12 * time.Hour
 )
 
 type ctxKey struct{}
@@ -101,7 +102,11 @@ func (a *App) requireAdmin(h http.HandlerFunc) http.HandlerFunc {
 
 func (a *App) startSession(w http.ResponseWriter, r *http.Request, userID int64) error {
 	token := randomToken(32)
-	expires := time.Now().Add(sessionTTL)
+	ttl := sessionTTL
+	if a.adminMode {
+		ttl = adminSessionTTL // admins are signed out after a working day
+	}
+	expires := time.Now().Add(ttl)
 	if _, err := a.db.Exec(`INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)`,
 		token, userID, expires.Unix()); err != nil {
 		return err
@@ -177,11 +182,18 @@ func (a *App) login(w http.ResponseWriter, r *http.Request) {
 	next := r.FormValue("next")
 	var id int64
 	var hash string
+	ip := clientIP(r)
+	if wait, blocked := limiter.blocked(ip, email); blocked {
+		a.render(w, r, "login.html", map[string]any{"Email": email, "Next": next, "Err": tooMany(wait), "Status": http.StatusTooManyRequests})
+		return
+	}
 	err := a.db.QueryRow(`SELECT id, password_hash FROM users WHERE email = ?`, email).Scan(&id, &hash)
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(hash), []byte(r.FormValue("password"))) != nil {
+		limiter.fail(ip, email)
 		a.render(w, r, "login.html", map[string]any{"Email": email, "Next": next, "Err": "Wrong email or password."})
 		return
 	}
+	limiter.success(ip, email)
 	if err := a.startSession(w, r, id); err != nil {
 		a.serverError(w, err)
 		return
@@ -274,4 +286,47 @@ func (a *App) guestUser(w http.ResponseWriter, r *http.Request, name, phone stri
 		return nil, err
 	}
 	return &User{ID: id, Name: name, Phone: "+91 " + digits[:5] + " " + digits[5:]}, nil
+}
+
+// addAdmin creates an admin account (or makes an existing account an admin and sets its
+// password), so more than one person can use the admin console without sharing a login.
+// Run it on the server:
+//
+//	sudo -u beyond env ADMIN_EMAIL=a@b.com ADMIN_NAME="A B" ADMIN_PASSWORD='long-password' \
+//	  /opt/beyond/beyond -db /var/lib/beyond/beyond.db -add-admin
+func addAdmin(db *sql.DB) error {
+	email := strings.ToLower(strings.TrimSpace(os.Getenv("ADMIN_EMAIL")))
+	name := trimTo(os.Getenv("ADMIN_NAME"), 100)
+	pw := os.Getenv("ADMIN_PASSWORD")
+	if !strings.Contains(email, "@") {
+		return fmt.Errorf("set ADMIN_EMAIL to the new admin's email address")
+	}
+	if len(pw) < 12 || len(pw) > 72 {
+		return fmt.Errorf("ADMIN_PASSWORD must be 12 to 72 characters long")
+	}
+	if name == "" {
+		name = strings.Split(email, "@")[0]
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	var id int64
+	switch err := db.QueryRow(`SELECT id FROM users WHERE email = ?`, email).Scan(&id); {
+	case err == nil:
+		_, err = db.Exec(`UPDATE users SET is_admin = 1, password_hash = ?, name = ? WHERE id = ?`, string(hash), name, id)
+		if err != nil {
+			return err
+		}
+		db.Exec(`DELETE FROM sessions WHERE user_id = ?`, id)
+		fmt.Printf("Existing account %s is now an admin (password set).\n", email)
+	case errors.Is(err, sql.ErrNoRows):
+		if _, err := db.Exec(`INSERT INTO users (name, email, phone, password_hash, is_admin) VALUES (?, ?, '', ?, 1)`, name, email, string(hash)); err != nil {
+			return err
+		}
+		fmt.Printf("Admin account created for %s.\n", email)
+	default:
+		return err
+	}
+	return nil
 }

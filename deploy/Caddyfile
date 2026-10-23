@@ -1,7 +1,8 @@
 # Caddy: gets and renews the HTTPS certificate automatically, and passes visitors
 # to the Go website, which listens only on this machine (127.0.0.1:8080).
-# The admin console (port 8081) is deliberately NOT exposed here: reach it through
-# an SSH tunnel (see deploy/DEPLOY.md).
+# The admin console is served from its own address, admin.DOMAIN, protected by two
+# separate passwords: the browser prompt below, then the admin login inside the app.
+# (The console itself still only listens on this machine; Caddy is the only way in.)
 #
 # "DOMAIN" is replaced with your real domain by deploy/server-setup.sh.
 
@@ -34,4 +35,29 @@ DOMAIN {
 	}
 
 	reverse_proxy 127.0.0.1:8080
+}
+
+# ---- Admin console: https://admin.DOMAIN ----
+admin.DOMAIN {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		X-Frame-Options "DENY"
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+
+	# First password. The browser asks for it before any page is shown, so strangers and
+	# bots never even reach the admin login form. The username and password hash live in
+	# /etc/caddy/admin-auth.caddy (created by server-setup.sh, kept out of git).
+	import /etc/caddy/admin-auth.caddy
+
+	request_body {
+		max_size 12MB
+	}
+
+	reverse_proxy 127.0.0.1:8081
 }

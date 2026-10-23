@@ -184,10 +184,10 @@ On first run the app adds five Karnataka treks and three placeholder leads ("Fou
 
 ## Deploying
 
-A complete, step-by-step guide for putting the site on a free Oracle Cloud server with your own domain and automatic HTTPS is in [`deploy/DEPLOY.md`](deploy/DEPLOY.md). Once the server exists, deploying and updating is one command:
+The live site runs on a Microsoft Azure server. The full guide is [`deploy/DEPLOY-AZURE.md`](deploy/DEPLOY-AZURE.md) (creating the server) together with [`deploy/DEPLOY.md`](deploy/DEPLOY.md) (DNS, HTTPS, deploying, backups). Any Ubuntu server works. Once the server exists, deploying and updating is one command from `main`:
 
 ```
-.\deploy\deploy.ps1 -Server ubuntu@<server-ip> -Key $HOME\.ssh\oracle.key
+.\deploy\deploy.ps1 -Server azureuser@<server-ip> -Key $HOME\.ssh\oracle.key
 ```
 
-The general rules for any server: run **both** programs (the public site and `-mode admin`) from the same folder so they share the database, put the public site behind a reverse proxy that handles HTTPS (the guide uses Caddy), keep the admin port private (SSH tunnel or VPN), set `BASE_URL`, and copy the nightly backups off the server.
+It prints which commit it deploys; `ssh ... "/opt/beyond/beyond -version"` shows what is live. The website is public at https://beyondexpeditions.in. The **admin console** is at https://admin.beyondexpeditions.in behind a browser password and the admin login (see DEPLOY.md, section 7b). More admins: run the program with `-add-admin` on the server.

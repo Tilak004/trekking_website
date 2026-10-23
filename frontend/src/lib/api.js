@@ -3,7 +3,7 @@
 
 export class ApiError extends Error {
   constructor(status, data, text) {
-    super((data && data.error) || text || `Request failed (${status})`);
+    super((data && (data.error || data.Err)) || text || `Request failed (${status})`);
     this.status = status;
     this.data = data;
   }

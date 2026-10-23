@@ -8,7 +8,8 @@ User=beyond
 Group=beyond
 WorkingDirectory=/opt/beyond
 EnvironmentFile=/etc/beyond/beyond.env
-# 127.0.0.1 only: it is never reachable from the internet. Use an SSH tunnel:
+# 127.0.0.1 only: the internet reaches it through Caddy at https://admin.<your domain>
+# (behind a browser password and the admin login). As a fallback it also works over an SSH tunnel:
 #   ssh -L 8081:127.0.0.1:8081 <user>@<server>     then open http://localhost:8081
 # On the very first start both programs would create the empty database at the same moment, so
 # the admin console waits a few seconds for the website to finish.

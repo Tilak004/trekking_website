@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -103,12 +104,21 @@ func (a *App) adminLogin(w http.ResponseWriter, r *http.Request) {
 	var id int64
 	var hash string
 	var isAdmin bool
+	ip := clientIP(r)
+	if wait, blocked := limiter.blocked(ip, email); blocked {
+		a.render(w, r, "console_login.html", map[string]any{"Email": email, "Next": next, "Err": tooMany(wait), "Status": http.StatusTooManyRequests})
+		return
+	}
 	err := a.db.QueryRow(`SELECT id, password_hash, is_admin FROM users WHERE email = ?`, email).Scan(&id, &hash, &isAdmin)
 	// One message for every failure, so the form never says which part was wrong.
 	if err != nil || !isAdmin || bcrypt.CompareHashAndPassword([]byte(hash), []byte(r.FormValue("password"))) != nil {
+		limiter.fail(ip, email)
+		log.Printf("admin login failed for %q from %s", email, ip)
 		a.render(w, r, "console_login.html", map[string]any{"Email": email, "Next": next, "Err": "Wrong email or password, or this account is not an admin."})
 		return
 	}
+	limiter.success(ip, email)
+	log.Printf("admin login ok for %q from %s", email, ip)
 	if err := a.startSession(w, r, id); err != nil {
 		a.serverError(w, err)
 		return
