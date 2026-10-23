@@ -1820,3 +1820,9 @@ html[data-theme~="sage"] .site-footer .socials a:hover, html[data-theme~="sage"]
 html[data-theme~="sage"] .site-footer .socials a:hover svg { transform: scale(1.08); }
 @media (prefers-reduced-motion: reduce) { html[data-theme~="sage"] .site-footer .socials a:hover { transform: none; } }
 .footer-grid .socials { margin: 2px 0 10px; }
+
+/* header and footer: dark on the left, easing lighter towards the right */
+html[data-theme~="sage"] { --frame-grad: linear-gradient(90deg, #0f1612 0%, #1c2822 40%, #34473c 100%); }
+html[data-theme~="sage"] .site-header, html[data-theme~="sage"] .site-header.over-hero,
+html[data-theme~="sage"] .site-footer, html[data-theme~="sage"] .hero-features { background: var(--frame-grad) !important; }
+html[data-theme~="sage"] .hero-features .features { background: transparent !important; }
