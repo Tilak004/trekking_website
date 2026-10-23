@@ -1759,3 +1759,49 @@ html { font-size: clamp(.875rem, .82rem + .24vw, 1.2rem); }
 [data-theme~="sage"] .site-footer .footer-tagline { color: #fff; }
 [data-theme~="sage"] .site-footer .footer-bottom { color: rgba(255,255,255,.55); border-top-color: rgba(255,255,255,.12); }
 [data-theme~="sage"] .site-footer .socials a { background: #fff; border-color: transparent; }
+
+/* ================= Option B: dark frame, light content =================
+   Charcoal-forest header, hero strip and footer; warm off-white reading area.
+   Buttons: dark green on light areas, gold on dark areas and photos. */
+html[data-theme~="sage"] {
+  --frame: #141c18; --frame-line: #24302a; --gold: #c9a45c; --gold-dark: #b08c45;
+  --cream: #f6f4ef; --surface: #ffffff; --surface-2: #f1eee7; --text: #1b211d; --text-soft: #414a44; --muted: #6c756f;
+  --line: #e4dfd4; --accent: #1f2d25; --sun: #1f2d25; --sun-dark: #141e19; --sun-100: #ece6d6; --on-sun: #fff;
+  --forest-500: #1f2d25; --forest-700: #1f2d25; --forest-100: #ece6d6; --ok: #1f2d25; --ok-bg: #ece6d6; --no-bg: #f7ece8;
+}
+html[data-theme~="sage"] body { background: var(--cream); }
+
+/* header */
+html[data-theme~="sage"] .site-header, html[data-theme~="sage"] .site-header.over-hero { background: var(--frame); border-bottom: 0; backdrop-filter: none; }
+html[data-theme~="sage"] .site-header .menu a, html[data-theme~="sage"] .site-header .brand-name b { color: #f1efe8; text-shadow: none; }
+html[data-theme~="sage"] .site-header .brand-name i { color: var(--gold); text-shadow: none; }
+html[data-theme~="sage"] .site-header .menu a::after { background: var(--gold); }
+html[data-theme~="sage"] .site-header .menu-btn span, html[data-theme~="sage"] .site-header .menu-btn span::before, html[data-theme~="sage"] .site-header .menu-btn span::after { background: #f1efe8; }
+
+/* buttons: dark green on light, gold on dark */
+html[data-theme~="sage"] .btn { background: var(--accent); border-color: var(--accent); color: #fff; }
+html[data-theme~="sage"] .btn:hover { background: #0f1713; border-color: #0f1713; }
+html[data-theme~="sage"] .site-header .btn, html[data-theme~="sage"] .hero .btn:not(.ghost-light), html[data-theme~="sage"] .banner .btn { background: var(--gold); border-color: var(--gold); color: var(--frame); }
+html[data-theme~="sage"] .site-header .btn:hover, html[data-theme~="sage"] .hero .btn:not(.ghost-light):hover, html[data-theme~="sage"] .banner .btn:hover { background: var(--gold-dark); border-color: var(--gold-dark); }
+html[data-theme~="sage"] .hero .btn.ghost-light { background: rgba(0,0,0,.25); border-color: #fff; color: #fff; }
+html[data-theme~="sage"] .btn.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+
+/* hero feature strip: part of the dark frame, sentence case */
+html[data-theme~="sage"] .hero-features, html[data-theme~="sage"] .hero-features .features { background: var(--frame); border-color: var(--frame-line); }
+html[data-theme~="sage"] .feature, html[data-theme~="sage"] .feature svg { color: #f1efe8; border-color: var(--frame-line); }
+html[data-theme~="sage"] .feature span { color: #f1efe8; text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* chips, dates, labels */
+html[data-theme~="sage"] .chip.on, html[data-theme~="sage"] .bk-date.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+html[data-theme~="sage"] .bk-date.on b, html[data-theme~="sage"] .bk-date.on small { color: #fff; }
+html[data-theme~="sage"] .finder-q > span, html[data-theme~="sage"] .bk-label { text-transform: none; letter-spacing: 0; }
+html[data-theme~="sage"] .section-head .eyebrow { background: var(--sun-100); color: #6b5424; }
+html[data-theme~="sage"] .incl-box { background: var(--surface-2); }
+html[data-theme~="sage"] .incl-box.no { background: var(--no-bg); }
+html[data-theme~="sage"] .trek-card .eyebrow, html[data-theme~="sage"] .trek-card .card-region { background: none; color: rgba(255,255,255,.85); }
+
+/* footer */
+html[data-theme~="sage"] .site-footer { background: var(--frame); }
+html[data-theme~="sage"] .site-header .menu a.on, html[data-theme~="sage"] .site-header.over-hero .menu a.on { color: #fff !important; }
+html[data-theme~="sage"] .site-header .btn, html[data-theme~="sage"] .site-header.over-hero .btn,
+html[data-theme~="sage"] .banner .btn, html[data-theme~="sage"] .hero .btn:not(.ghost-light) { background: var(--gold) !important; border-color: var(--gold) !important; color: var(--frame) !important; }
