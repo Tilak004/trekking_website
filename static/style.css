@@ -1736,3 +1736,10 @@ tr.done td { opacity: .6; }
 .banner[style]::before { background: linear-gradient(90deg, rgba(5,15,10,.5) 0%, rgba(5,15,10,.18) 45%, rgba(5,15,10,0) 75%), linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(5,15,10,.35) 100%); }
 .banner[style] h1, .banner[style] .banner-sub, .banner[style] .crumb a { text-shadow: 0 1px 10px rgba(0,0,0,.45); }
 @media (max-width: 640px) { .banner[style] { min-height: 280px; } .banner[style]::before { background: linear-gradient(180deg, rgba(5,15,10,.15), rgba(5,15,10,.55)); } }
+
+/* brand name and tagline beside the header logo */
+.site-header .brand-name { display: flex; flex-direction: column; line-height: 1.1; text-transform: none; letter-spacing: 0; }
+.site-header .brand-name b { font: 700 1.08rem var(--font-head); color: var(--text); letter-spacing: -.005em; white-space: nowrap; }
+.site-header .brand-name i { font: italic 500 .82rem var(--font-body); color: var(--accent, var(--forest-500)); white-space: nowrap; }
+.site-header.over-hero .brand-name b, .site-header.over-hero .brand-name i { color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.45); }
+@media (max-width: 640px) { .site-header .brand-name b { font-size: .98rem; } .site-header .brand-name i { font-size: .76rem; } }

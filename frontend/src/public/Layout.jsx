@@ -67,7 +67,11 @@ export default function Layout({ children }) {
       <header className={'site-header' + (pathname === '/' ? ' over-hero' : '')}>
         <div className="wrap nav">
           <Link className="brand" to="/" aria-label={`${s.Brand} home`}>
-            <img className="logo badge" src="/photos/logo/badge.png" alt={s.Brand} onError={logoFallback} />
+            <img className="logo badge" src="/photos/logo/badge.png" alt="" onError={logoFallback} />
+            <span className="brand-name">
+              <b>{s.Brand || 'Beyond Expeditions'}</b>
+              {site && site.Tagline && <i>{site.Tagline}</i>}
+            </span>
           </Link>
           <input type="checkbox" id="menu-toggle" className="menu-toggle" aria-label="Menu" checked={menu} onChange={(e) => setMenu(e.target.checked)} />
           <nav className="menu">
