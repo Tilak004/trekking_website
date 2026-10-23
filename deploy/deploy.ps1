@@ -41,9 +41,18 @@ if (-not $SkipFrontend) {
   Run "Build the frontend" { Push-Location "$root\frontend"; try { npm install --no-audit --no-fund; npm run build } finally { Pop-Location } }
 }
 
+# Stamp the build with the commit it comes from, so "which version is live?" has an answer:
+#   ssh ... "/opt/beyond/beyond -version"
+$sha = (git rev-parse --short HEAD).Trim()
+$branch = (git branch --show-current).Trim()
+$dirty = if (git status --porcelain) { "+uncommitted" } else { "" }
+$version = "$sha$dirty"
+Write-Host "==> Deploying commit $version (branch $branch)" -ForegroundColor Green
+if ($dirty) { Write-Host "    Warning: you have uncommitted changes; they are included in this build." -ForegroundColor Yellow }
+
 Run "Build the Linux program ($Arch)" {
   $env:GOOS = "linux"; $env:GOARCH = $Arch; $env:CGO_ENABLED = "0"
-  try { go build -trimpath -ldflags "-s -w" -o "$root\beyond-linux" . } finally { Remove-Item Env:GOOS, Env:GOARCH, Env:CGO_ENABLED -ErrorAction SilentlyContinue }
+  try { go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$root\beyond-linux" . } finally { Remove-Item Env:GOOS, Env:GOARCH, Env:CGO_ENABLED -ErrorAction SilentlyContinue }
 }
 
 if ($Photos) {
@@ -60,5 +69,6 @@ Run "Install and restart" {
 Remove-Item "$root\beyond-linux" -ErrorAction SilentlyContinue
 
 Write-Host ""
+Write-Host "Deployed version: $version" -ForegroundColor Green
 Write-Host "Done. If this was the first deploy, read the generated admin password with:" -ForegroundColor Yellow
 Write-Host "  ssh -i $Key $Server `"sudo journalctl -u beyond-public --no-pager | grep -i password`""

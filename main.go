@@ -21,6 +21,10 @@ import (
 //go:embed static
 var staticFS embed.FS
 
+// version is the commit this program was built from. deploy.ps1 sets it
+// (-ldflags "-X main.version=..."); a plain "go build" leaves it as "dev".
+var version = "dev"
+
 type App struct {
 	demo      bool // running on a demo database: shows a banner
 	db        *sql.DB
@@ -35,7 +39,12 @@ func main() {
 	photosDir := flag.String("photos", envOr("PHOTOS_DIR", "photos"), "folder with site photos")
 	resetAdmin := flag.Bool("reset-admin-password", false, "set a new random admin password, print it and exit")
 	backupNow := flag.Bool("backup-now", false, "write a backup of the database and uploaded photos, then exit")
+	showVersion := flag.Bool("version", false, "print the version this program was built from and exit")
 	flag.Parse()
+	if *showVersion {
+		fmt.Println(version)
+		return
+	}
 	if *mode != "public" && *mode != "admin" {
 		log.Fatalf("unknown -mode %q (use public or admin)", *mode)
 	}
@@ -76,9 +85,9 @@ func main() {
 	app := &App{db: db, photosDir: *photosDir, demo: strings.Contains(base, "demo"), adminMode: adminMode}
 	srv := &http.Server{Addr: *addr, Handler: app.routes(), ReadHeaderTimeout: 10 * time.Second}
 	if adminMode {
-		log.Printf("%s admin console running on %s", site.Name, *addr)
+		log.Printf("%s admin console running on %s (version %s)", site.Name, *addr, version)
 	} else {
-		log.Printf("%s running on %s", site.Name, *addr)
+		log.Printf("%s running on %s (version %s)", site.Name, *addr, version)
 		// Only the public process runs the nightly backup, so it happens once.
 		if !strings.Contains(base, "demo") {
 			startBackups(db, *photosDir, loadBackupConfig())
