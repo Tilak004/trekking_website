@@ -21,9 +21,8 @@ export function About() {
   const hero = (
     <section className="banner short" style={{ backgroundImage: "url('/photos/gallery/WhatsApp Image 2026-10-15 at 5.31.06 PM.jpeg')" }}>
       <div className="wrap banner-inner">
-        <p className="eyebrow light">About us</p>
-        <h1>Three athletes. One trail.</h1>
-        <p className="banner-sub">We started {Brand} to share the Western Ghats the way we love them: properly prepared, at the right pace and in good company.</p>
+        <h1>Hi, we're {Brand}!</h1>
+        <p className="banner-sub">Three friends who'd rather be on a mountain than anywhere else, and who'd love to take you along.</p>
       </div>
     </section>
   );
@@ -31,16 +30,15 @@ export function About() {
     <PageShell hero={hero}>
       <section className="about-story">
         <div>
-          <p className="eyebrow">Our story</p>
-          <h2>Built by people who race mountains</h2>
-          <p>One of us has finished a full Ironman. One races 24-hour adventure races and runs the Ghats most weekends. One has completed every major trek in Karnataka and crossed Hampta Pass in the Himalayas.</p>
-          <p>Between us we've seen how much a good trek lead changes the day: the right pace, a calm voice on a slippery descent, and knowing exactly where the best view is. That's what we want every trekker to get, every weekend.</p>
+          <h2>How it started</h2>
+          <p>One of us has finished a full Ironman. Another races 24-hour adventure races and spends most weekends in the Ghats. The third has walked just about every major trail in Karnataka, and crossed Hampta Pass in the Himalayas.</p>
+          <p>Somewhere along the way we noticed that the trek lead makes or breaks the day: the right pace, a calm voice on a slippery descent, knowing exactly where to stop for the view. So we started Beyond Expeditions to give every trekker that kind of day.</p>
         </div>
         <div className="about-values">
-          <div><strong>Safety first</strong><span>Every batch has an experienced lead and a first-aid kit. If the weather turns, we turn back.</span></div>
-          <div><strong>Right-sized groups</strong><span>Limited seats per batch so nobody gets left behind.</span></div>
-          <div><strong>Honest pricing</strong><span>What's included is listed on every trek. No surprises at the base village.</span></div>
-          <div><strong>Leave no trace</strong><span>We carry back everything we carry in, and a little more.</span></div>
+          <div><strong>Safety, always</strong><span>Every batch has an experienced lead and a first-aid kit. If the weather turns, we turn back. No summit is worth it.</span></div>
+          <div><strong>Small groups</strong><span>We keep batches small, so nobody gets left behind (or stuck in a queue for photos!).</span></div>
+          <div><strong>No surprises</strong><span>Everything included is listed on the trek page. What you see is what you pay.</span></div>
+          <div><strong>Leave no trace</strong><span>We carry back everything we carry in, and usually a little more.</span></div>
         </div>
       </section>
 
@@ -52,20 +50,19 @@ export function About() {
 
       <section className="section">
         <div className="section-head">
-          <p className="eyebrow">How it works</p>
-          <h2>From request to summit</h2>
+          <h2>How booking works</h2>
         </div>
         <ol className="steps">
           <li><strong>Pick a trek</strong><span>Choose a trail and a date that suits you.</span></li>
           <li><strong>Send a request</strong><span>It's free. Tell us your pickup point and any medical notes.</span></li>
           <li><strong>We confirm</strong><span>We call or WhatsApp you to confirm your seat and share payment details.</span></li>
-          <li><strong>Trek</strong><span>Show up, meet your group and lead, and enjoy the Ghats.</span></li>
+          <li><strong>Trek!</strong><span>Show up, meet your group and lead, and enjoy the hills.</span></li>
         </ol>
       </section>
 
       <section className="cta-band">
         <h2>Are you a trek lead?</h2>
-        <p>We're building a home for great trek leads, with a profile that grows with every group you take up the mountain.</p>
+        <p>Love the trails and looking after people? Come lead with us. Your profile grows with every group you take up the mountain.</p>
         <Link className="btn big" to="/lead-with-us">Lead with us</Link>
       </section>
     </PageShell>
@@ -81,20 +78,20 @@ export function Contact() {
     <PageShell>
       <header className="page-head">
         <h1>Contact us</h1>
-        <p className="muted">Questions about a trek, a group booking or leading treks with us? WhatsApp is the quickest way to reach us. Or leave your number below and we'll call you back.</p>
+        <p className="muted">Got a question about a trek, planning a group trip, or want to lead with us? WhatsApp is the fastest way to reach us. Or leave your number below and we'll call you back.</p>
       </header>
       {site && (
         <div className="contact-grid">
-          <a className="contact-card" href={whatsappTo(site.WhatsApp, 'Hi! I have a question about your treks.')} target="_blank" rel="noopener noreferrer"><Icon name="wabrand" /><strong>WhatsApp</strong><em>Chat with us · usually replies within a few hours</em></a>
+          <a className="contact-card" href={whatsappTo(site.WhatsApp, 'Hi! I have a question about your treks.')} target="_blank" rel="noopener noreferrer"><Icon name="wabrand" /><strong>WhatsApp</strong><em>Usually replies within a few hours</em></a>
           <a className="contact-card" href={`https://instagram.com/${site.Instagram}`} target="_blank" rel="noopener noreferrer"><Icon name="igbrand" /><strong>Instagram</strong><em>@{site.Instagram} · photos from every trek</em></a>
-          <a className="contact-card" href={`mailto:${site.Email}`}><Icon name="gmailbrand" /><strong>Email</strong><em>For group bookings and anything detailed</em></a>
+          <a className="contact-card" href={`mailto:${site.Email}`}><Icon name="gmailbrand" /><strong>Email</strong><em>Best for group bookings and longer questions</em></a>
         </div>
       )}
 
       <section className="contact-form panel" id="enquire">
         <h2>Ask us a question</h2>
         {done ? (
-          <p><b>✓ Thanks, we've got your question.</b> We'll call or WhatsApp you soon.</p>
+          <p><b>✓ Got it, thanks!</b> We'll call or WhatsApp you soon.</p>
         ) : (
           <form onSubmit={submit('/contact')} className="form">
             {error && <div className="flash err">{error}</div>}
@@ -122,7 +119,6 @@ export function Terms() {
   return (
     <PageShell>
       <article className="legal">
-        <p className="eyebrow">Policies</p>
         <h1>Terms of service</h1>
         <p className="muted">Last updated: {year()}</p>
 
@@ -163,7 +159,6 @@ export function Privacy() {
   return (
     <PageShell>
       <article className="legal">
-        <p className="eyebrow">Policies</p>
         <h1>Privacy policy</h1>
         <p className="muted">Last updated: {year()}</p>
 
@@ -195,7 +190,6 @@ export function Cancellation() {
   return (
     <PageShell>
       <article className="legal">
-        <p className="eyebrow">Policies</p>
         <h1>Cancellation &amp; refund policy</h1>
         <p className="muted">Last updated: {year()}</p>
 

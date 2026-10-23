@@ -27,9 +27,8 @@ export default function Gallery() {
   return (
     <PageShell>
       <header className="page-head">
-        <p className="eyebrow">Real photos, real trails</p>
         <h1>Gallery</h1>
-        <p className="muted">Moments from our treks across the Western Ghats and beyond. Tap a photo to view it full size.</p>
+        <p className="muted">Snapshots from our treks. Tap any photo to see it full size.</p>
       </header>
       <div className="gallery">
         {photos.length

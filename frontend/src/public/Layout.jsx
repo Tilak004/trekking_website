@@ -154,8 +154,8 @@ export default function Layout({ children }) {
         </div>
       </footer>
       {site && (
-        <a className="wa-dot" href={whatsappTo(site.WhatsApp, waText)} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp" aria-label="Chat on WhatsApp">
-          <Icon name="waicon" />
+        <a className="wa-dot" href={whatsappTo(site.WhatsApp, waText)} target="_blank" rel="noopener noreferrer" title="Enquire on WhatsApp" aria-label="Enquire now on WhatsApp">
+          <Icon name="waicon" /><span>Enquire now!</span>
         </a>
       )}
     </WaCtx.Provider>

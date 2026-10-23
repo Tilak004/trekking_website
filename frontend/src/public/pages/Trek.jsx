@@ -70,8 +70,8 @@ function EnquiryDone({ t, site }) {
   }, [t.Name, site]);
   return (
     <div className="enq-done">
-      <p><b>✓ Enquiry sent.</b> We'll call or WhatsApp you soon.</p>
-      <p className="muted small">Want a faster reply? Send the same enquiry to us on WhatsApp.</p>
+      <p><b>✓ Got it!</b> We'll call or WhatsApp you soon.</p>
+      <p className="muted small">Want a quicker reply? Send it to us on WhatsApp too.</p>
       <a className="btn big block wa-btn" id="enquiry-wa" target="_blank" rel="noopener noreferrer" href={href}><Icon name="waicon" /> Also send on WhatsApp</a>
       <p className="small"><Link to={`/treks/${t.Slug}#enquire`}>Send another enquiry</Link></p>
     </div>
@@ -249,7 +249,7 @@ export default function Trek() {
               {!mentions(t.FAQs, 'insurance') && (
                 <details>
                   <summary>Is insurance included?</summary>
-                  <p>No. Our price does not include travel, accident or medical insurance, and any medical or evacuation costs are yours. Most weekend trek groups work this way. If you want cover, you can buy personal accident insurance on your own before the trek.</p>
+                  <p>No. Our price does not include travel, accident or medical insurance, and any medical or evacuation costs are yours. If you want cover, you can buy personal accident insurance on your own before the trek.</p>
                 </details>
               )}
             </div>

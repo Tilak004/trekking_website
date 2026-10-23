@@ -17,7 +17,7 @@ export function Leads() {
       <header className="page-head head-row">
         <div>
           <h1>Trek leads</h1>
-          <p className="muted">The people who take you up the mountain. Every profile builds up from real treks led and real reviews from trekkers.</p>
+          <p className="muted">The people who'll walk beside you. Every profile grows with real treks and honest reviews from trekkers.</p>
         </div>
         <Link className="btn" to="/lead-with-us">Become a trek lead</Link>
       </header>
@@ -34,19 +34,18 @@ export function Leads() {
 
       <section className="section why">
         <div className="section-head">
-          <p className="eyebrow">Why trek with us</p>
-          <h2>Built by people who race mountains</h2>
+          <h2>Why trek with us</h2>
         </div>
         <div className="why-grid">
-          <div className="why-item"><div className="why-icon">01</div><h3>Athlete-led groups</h3><p>Your lead is an endurance athlete who knows pacing, safety and how to get every member to the top.</p></div>
-          <div className="why-item"><div className="why-icon">02</div><h3>Small, personal batches</h3><p>Limited seats per batch, so the trail feels like yours and nobody gets left behind.</p></div>
-          <div className="why-item"><div className="why-icon">03</div><h3>Honest, simple booking</h3><p>Send a request for free. We confirm your seat personally before any payment.</p></div>
+          <div className="why-item"><h3>People who know the trail</h3><p>Our leads have walked these hills many times over. They set a pace everyone can enjoy and make sure nobody gets left behind.</p></div>
+          <div className="why-item"><h3>Small groups, real conversations</h3><p>We cap every batch, so it feels like a trip with friends, not a crowd on a hill.</p></div>
+          <div className="why-item"><h3>Ask first, pay later</h3><p>Request a seat for free. We'll call you, answer every question, and only then share payment details.</p></div>
         </div>
       </section>
 
       <section className="cta-band">
-        <h2>Your next summit is a weekend away.</h2>
-        <p>Create a free account and request a seat in under two minutes.</p>
+        <h2>Ready when you are!</h2>
+        <p>No account needed. Pick a date, send a request and we'll take it from there.</p>
         {User ? <Link className="btn big" to="/#treks">Find a trek</Link> : <Link className="btn big" to="/signup">Sign up free</Link>}
       </section>
     </PageShell>

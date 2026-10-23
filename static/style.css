@@ -1805,3 +1805,17 @@ html[data-theme~="sage"] .site-footer { background: var(--frame); }
 html[data-theme~="sage"] .site-header .menu a.on, html[data-theme~="sage"] .site-header.over-hero .menu a.on { color: #fff !important; }
 html[data-theme~="sage"] .site-header .btn, html[data-theme~="sage"] .site-header.over-hero .btn,
 html[data-theme~="sage"] .banner .btn, html[data-theme~="sage"] .hero .btn:not(.ghost-light) { background: var(--gold) !important; border-color: var(--gold) !important; color: var(--frame) !important; }
+
+/* floating WhatsApp: pill with "Enquire now!" */
+.wa-dot { width: auto !important; height: auto !important; border-radius: 999px !important; padding: 9px 16px 9px 12px; display: inline-flex !important; align-items: center; gap: 8px; text-decoration: none; }
+.wa-dot svg { width: 20px; height: 20px; flex: none; }
+.wa-dot span { font: 600 .9rem var(--font-body); color: #fff; white-space: nowrap; }
+.wa-dot:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+@media (max-width: 640px) { .wa-dot { padding: 8px 14px 8px 10px; } .wa-dot span { font-size: .85rem; } }
+
+/* footer social icons: soft glass circles that light up on hover */
+html[data-theme~="sage"] .site-footer .socials a { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); transition: background .2s, transform .2s, box-shadow .2s, border-color .2s; }
+html[data-theme~="sage"] .site-footer .socials a svg { transition: transform .2s; }
+html[data-theme~="sage"] .site-footer .socials a:hover, html[data-theme~="sage"] .site-footer .socials a:focus-visible { background: #fff; border-color: #fff; transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,.35); }
+html[data-theme~="sage"] .site-footer .socials a:hover svg { transform: scale(1.08); }
+@media (prefers-reduced-motion: reduce) { html[data-theme~="sage"] .site-footer .socials a:hover { transform: none; } }
