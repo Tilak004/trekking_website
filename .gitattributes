@@ -1,2 +1,6 @@
 *.sh text eol=lf
 deploy/* text eol=lf
+
+# The built React app is generated (Vite writes LF). Leave it untouched so a rebuild on Windows
+# does not show every file as modified, and builds are not stamped "+uncommitted".
+static/app/** -text
