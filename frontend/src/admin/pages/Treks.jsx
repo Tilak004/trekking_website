@@ -39,7 +39,7 @@ export function Treks() {
       )}
       <div className="head-row">
         <h1>Treks</h1>
-        <Link className="btn" to="/admin/treks/new">+ New trek</Link>
+        <span className="head-actions"><Link className="btn ghost" to="/admin/trek-defaults">Trek defaults</Link> <Link className="btn" to="/admin/treks/new">+ New trek</Link></span>
       </div>
       <div className="table-wrap">
         <table className="table">
@@ -88,6 +88,45 @@ function BatchRow({ b, leads, today }) {
         )}
       </td>
     </tr>
+  );
+}
+
+// UseDefault copies the common text from Trek defaults into one field of the
+// trek form. It asks before replacing text that is already there.
+function UseDefault({ field, defaults }) {
+  const text = defaults && defaults[field];
+  if (!text) return null;
+  const fill = (e) => {
+    const box = e.currentTarget.closest('label').querySelector('textarea');
+    if (box.value.trim() && box.value.trim() !== text.trim() && !window.confirm('Replace what is in this box with the trek defaults?')) return;
+    box.value = text;
+  };
+  return <button type="button" className="linklike small use-default" onClick={fill}>Use trek defaults</button>;
+}
+
+export function TrekDefaults() {
+  const page = usePage();
+  const { submit, busy, error } = useSubmit();
+  useTitle('Trek defaults');
+  const d = page.data;
+  if (!d) return <PageState page={page} />;
+  const v = d.Defaults || {};
+  return (
+    <>
+      <p className="crumb"><Link to="/admin/treks">← All treks</Link></p>
+      <h1>Trek defaults</h1>
+      <p className="muted">Text that's the same for most treks. New treks start with it filled in, and on any trek you can press
+        "Use trek defaults" to pull it in. Each trek keeps its own copy, so you can still change it per trek.</p>
+      {error && <div className="flash err">{error}</div>}
+      <form onSubmit={submit('/admin/trek-defaults')} className="form panel">
+        <label>Not included (one per line) <textarea name="exclusions" rows="6" defaultValue={v.exclusions} /></label>
+        <label>What to carry (one per line) <textarea name="things_to_carry" rows="10" defaultValue={v.things_to_carry} />
+          <span className="hint">Optional groups: a line ending in a colon, like <code>Clothing:</code>, starts a group.</span></label>
+        <label>FAQs <textarea name="faqs" rows="12" defaultValue={v.faqs} />
+          <span className="hint">First line is the question, the next lines are the answer. Leave a blank line between questions.</span></label>
+        <button className="btn" disabled={busy}>Save defaults</button>
+      </form>
+    </>
   );
 }
 
@@ -160,13 +199,14 @@ export function TrekForm() {
         </label>
         <div className="row">
           <label>Included (one per line) <textarea name="inclusions" rows="6" defaultValue={t.Inclusions} /></label>
-          <label>Not included (one per line) <textarea name="exclusions" rows="6" defaultValue={t.Exclusions} /></label>
+          <label>Not included (one per line) <textarea name="exclusions" rows="6" defaultValue={t.Exclusions} /><UseDefault field="exclusions" defaults={d.Defaults} /></label>
         </div>
         <label>What to carry (one per line) <textarea name="things_to_carry" rows="8" defaultValue={t.ThingsToCarry} placeholder={'Clothing:\nFull-sleeve T-shirt\nRain jacket\nFootwear:\nTrekking shoes with good grip'} />
-          <span className="hint">Optional groups: a line ending in a colon, like <code>Clothing:</code>, starts a group.</span></label>
+          <span className="hint">Optional groups: a line ending in a colon, like <code>Clothing:</code>, starts a group.</span><UseDefault field="things_to_carry" defaults={d.Defaults} /></label>
         <label>FAQs
           <textarea name="faqs" rows="8" defaultValue={t.FAQs} />
           <span className="hint">First line is the question, the next lines are the answer. Leave a blank line between questions.</span>
+          <UseDefault field="faqs" defaults={d.Defaults} />
         </label>
         <label>Cover photo
           <select name="photo" defaultValue={t.Photo}>

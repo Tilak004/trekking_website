@@ -275,6 +275,7 @@ func openDB(path string) (*sql.DB, error) {
 	migrateEnquiries(db)
 	migrateTrailStatus(db)
 	migratePickups(db)
+	migrateSettings(db)
 	if err := migrateInteractive(db); err != nil {
 		return nil, fmt.Errorf("migrate interactive: %w", err)
 	}
