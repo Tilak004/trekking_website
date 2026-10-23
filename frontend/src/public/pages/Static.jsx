@@ -106,7 +106,7 @@ export function Contact() {
           </form>
         )}
       </section>
-      {site && <p className="muted small">Based in {site.City}. Treks depart from Bangalore most weekends. See the <Link to="/cancellation-policy">cancellation policy</Link>.</p>}
+      {site && <p className="muted small">Based in {site.City}. Every trek starts from our Bangalore pickup points. Before you book, have a look at the <Link to="/cancellation-policy">cancellation policy</Link>.</p>}
     </PageShell>
   );
 }

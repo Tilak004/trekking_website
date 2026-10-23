@@ -118,13 +118,6 @@ export default function Layout({ children }) {
               <img className="logo badge" src="/photos/logo/badge.png" alt={s.Brand} onError={logoFallback} />
             </Link>
             <p>{site && site.Description}</p>
-            {site && (
-              <div className="socials">
-                <a href={`https://instagram.com/${site.Instagram}`} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Icon name="igbrand" /></a>
-                <a href={whatsappTo(site.WhatsApp, '')} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><Icon name="wabrand" /></a>
-                <a href={`mailto:${site.Email}`} aria-label="Email"><Icon name="gmailbrand" /></a>
-              </div>
-            )}
           </div>
           <div>
             <h4>Explore</h4>
@@ -143,9 +136,14 @@ export default function Layout({ children }) {
           </div>
           <div>
             <h4>Contact</h4>
-            {site && <a href={whatsappTo(site.WhatsApp, 'Hi! I have a question about your treks.')} target="_blank" rel="noopener noreferrer">WhatsApp us</a>}
+            {site && (
+              <div className="socials">
+                <a href={`https://instagram.com/${site.Instagram}`} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Icon name="igbrand" /></a>
+                <a href={whatsappTo(site.WhatsApp, 'Hi! I have a question about your treks.')} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><Icon name="wabrand" /></a>
+                <a href={`mailto:${site.Email}`} aria-label="Email"><Icon name="gmailbrand" /></a>
+              </div>
+            )}
             <Link to="/contact#enquire">Send a question</Link>
-            {site && <a href={`https://instagram.com/${site.Instagram}`} target="_blank" rel="noopener noreferrer">Instagram</a>}
             <span>{site && site.City}</span>
           </div>
         </div>

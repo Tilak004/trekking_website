@@ -1819,3 +1819,4 @@ html[data-theme~="sage"] .site-footer .socials a svg { transition: transform .2s
 html[data-theme~="sage"] .site-footer .socials a:hover, html[data-theme~="sage"] .site-footer .socials a:focus-visible { background: #fff; border-color: #fff; transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,.35); }
 html[data-theme~="sage"] .site-footer .socials a:hover svg { transform: scale(1.08); }
 @media (prefers-reduced-motion: reduce) { html[data-theme~="sage"] .site-footer .socials a:hover { transform: none; } }
+.footer-grid .socials { margin: 2px 0 10px; }
