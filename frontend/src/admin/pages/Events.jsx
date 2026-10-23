@@ -169,9 +169,17 @@ export function EventPage() {
             </div>
             <RegTable bookings={d.Bookings} back={d.Back} />
           </section>
-          {(!d.Bookings || d.Bookings.length === 0) && (
-            <PostButton path={`/admin/events/${e.ID}/delete`} className="linklike danger" confirm="Delete this event?">Delete this event</PostButton>
-          )}
+          <section className="panel danger-zone">
+            <strong>Delete this event</strong>
+            {d.Bookings && d.Bookings.length > 0 ? (
+              <p className="muted small">This event has registrations, so it can't be deleted (that would lose booking and payment records). To take it off the site instead, cancel or reject its active registrations and press <b>Unpublish</b> above.</p>
+            ) : (
+              <>
+                <p className="muted small">Removes this date for good. This can't be undone.</p>
+                <PostButton path={`/admin/events/${e.ID}/delete`} className="btn small act-rejected" confirm={`Delete the ${e.TrekName} event on ${fmtDate(e.StartDate)}? This can't be undone.`}>Delete event</PostButton>
+              </>
+            )}
+          </section>
         </>
       )}
     </>

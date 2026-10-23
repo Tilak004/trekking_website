@@ -125,3 +125,5 @@ body.console { background: var(--surface-2); margin: 0; font-size: 1rem; }
 .start-from { margin-bottom: 14px; } .start-from select { max-width: 360px; }
 .danger-zone { margin-top: 18px; border-color: #ecd3c7; background: #fdf6f3; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .danger-zone p { margin: 0; }
+.danger-zone .btn, .danger-zone .btn:hover { background: #b3402e !important; border-color: #b3402e !important; color: #fff !important; }
+.danger-zone .btn:hover { background: #963524 !important; border-color: #963524 !important; }
