@@ -31,8 +31,7 @@ export function About() {
       <section className="about-story">
         <div>
           <h2>How it started</h2>
-          <p>One of us has finished a full Ironman. Another races 24-hour adventure races and spends most weekends in the Ghats. The third has walked just about every major trail in Karnataka, and crossed Hampta Pass in the Himalayas.</p>
-          <p>Somewhere along the way we noticed that the trek lead makes or breaks the day: the right pace, a calm voice on a slippery descent, knowing exactly where to stop for the view. So we started Beyond Expeditions to give every trekker that kind of day.</p>
+          <p>We're three friends who've spent years on trails, races and summits. Somewhere along the way we noticed that the trek lead makes or breaks the day: the right pace, a calm voice on a slippery descent, knowing exactly where to stop for the view. So we started Beyond Expeditions to give every trekker that kind of day.</p>
         </div>
         <div className="about-values">
           <div><strong>Safety, always</strong><span>Every batch has an experienced lead and a first-aid kit. If the weather turns, we turn back. No summit is worth it.</span></div>

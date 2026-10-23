@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PageState } from '../../components/common.jsx';
 import { useSession } from '../../lib/session.jsx';
@@ -39,7 +40,7 @@ export function Treks() {
       )}
       <div className="head-row">
         <h1>Treks</h1>
-        <Link className="btn" to="/admin/treks/new">+ New trek</Link>
+        <span className="head-actions"><Link className="btn ghost" to="/admin/trek-defaults">Trek defaults</Link> <Link className="btn" to="/admin/treks/new">+ New trek</Link></span>
       </div>
       <div className="table-wrap">
         <table className="table">
@@ -91,6 +92,45 @@ function BatchRow({ b, leads, today }) {
   );
 }
 
+// UseDefault copies the common text from Trek defaults into one field of the
+// trek form. It asks before replacing text that is already there.
+function UseDefault({ field, defaults }) {
+  const text = defaults && defaults[field];
+  if (!text) return null;
+  const fill = (e) => {
+    const box = e.currentTarget.closest('label').querySelector('textarea');
+    if (box.value.trim() && box.value.trim() !== text.trim() && !window.confirm('Replace what is in this box with the trek defaults?')) return;
+    box.value = text;
+  };
+  return <button type="button" className="linklike small use-default" onClick={fill}>Use trek defaults</button>;
+}
+
+export function TrekDefaults() {
+  const page = usePage();
+  const { submit, busy, error } = useSubmit();
+  useTitle('Trek defaults');
+  const d = page.data;
+  if (!d) return <PageState page={page} />;
+  const v = d.Defaults || {};
+  return (
+    <>
+      <p className="crumb"><Link to="/admin/treks">← All treks</Link></p>
+      <h1>Trek defaults</h1>
+      <p className="muted">Text that's the same for most treks. New treks start with it filled in, and on any trek you can press
+        "Use trek defaults" to pull it in. Each trek keeps its own copy, so you can still change it per trek.</p>
+      {error && <div className="flash err">{error}</div>}
+      <form onSubmit={submit('/admin/trek-defaults')} className="form panel">
+        <label>Not included (one per line) <textarea name="exclusions" rows="6" defaultValue={v.exclusions} /></label>
+        <label>What to carry (one per line) <textarea name="things_to_carry" rows="10" defaultValue={v.things_to_carry} />
+          <span className="hint">Optional groups: a line ending in a colon, like <code>Clothing:</code>, starts a group.</span></label>
+        <label>FAQs <textarea name="faqs" rows="12" defaultValue={v.faqs} />
+          <span className="hint">First line is the question, the next lines are the answer. Leave a blank line between questions.</span></label>
+        <button className="btn" disabled={busy}>Save defaults</button>
+      </form>
+    </>
+  );
+}
+
 export function TrekForm() {
   const { id } = useParams();
   const page = usePage();
@@ -98,12 +138,15 @@ export function TrekForm() {
   const { submit, busy, error } = useSubmit();
   const batchForm = useSubmit();
   const trailForm = useSubmit();
+  const [tpl, setTpl] = useState('');
   const d = page.data;
   useTitle(d && (d.Trek.ID ? `Edit ${d.Trek.Name}` : 'New trek'));
   if (page.notFound) return <p className="muted">Trek not found. <Link to="/admin/treks">Back to treks</Link></p>;
   if (!d) return <PageState page={page} />;
-  const t = d.Trek;
-  const isNew = !t.ID;
+  const isNew = !d.Trek.ID;
+  // A new trek can start from a known trek: its fixed facts fill the form.
+  const known = isNew && tpl ? (d.Library || []).find((k) => k.Slug === tpl) : null;
+  const t = known ? { ...d.Trek, ...known } : d.Trek;
 
   return (
     <>
@@ -131,7 +174,18 @@ export function TrekForm() {
         </form>
       )}
 
-      <form key={t.ID || 'new'} onSubmit={submit(isNew ? '/admin/treks/new' : `/admin/treks/${id}`)} className="form panel">
+      {isNew && (d.Library || []).length > 0 && (
+        <div className="panel start-from">
+          <label>Start from a known trek
+            <select value={tpl} onChange={(e) => setTpl(e.target.value)}>
+              <option value="">Blank trek</option>
+              {d.Library.map((k) => <option key={k.Slug} value={k.Slug}>{k.Name}</option>)}
+            </select>
+            <span className="hint">Fills in the trek's fixed details (region, distance, summary, description, itinerary, inclusions and more). Then add the price, cover photo and pickup times, and check everything before saving.</span>
+          </label>
+        </div>
+      )}
+      <form key={t.ID || `new-${tpl}`} onSubmit={submit(isNew ? '/admin/treks/new' : `/admin/treks/${id}`)} className="form panel">
         {(error || d.Err) && <div className="flash err">{error || d.Err}</div>}
         <div className="row">
           <label>Name <input name="name" defaultValue={t.Name} required maxLength={120} /></label>
@@ -160,13 +214,14 @@ export function TrekForm() {
         </label>
         <div className="row">
           <label>Included (one per line) <textarea name="inclusions" rows="6" defaultValue={t.Inclusions} /></label>
-          <label>Not included (one per line) <textarea name="exclusions" rows="6" defaultValue={t.Exclusions} /></label>
+          <label>Not included (one per line) <textarea name="exclusions" rows="6" defaultValue={t.Exclusions} /><UseDefault field="exclusions" defaults={d.Defaults} /></label>
         </div>
         <label>What to carry (one per line) <textarea name="things_to_carry" rows="8" defaultValue={t.ThingsToCarry} placeholder={'Clothing:\nFull-sleeve T-shirt\nRain jacket\nFootwear:\nTrekking shoes with good grip'} />
-          <span className="hint">Optional groups: a line ending in a colon, like <code>Clothing:</code>, starts a group.</span></label>
+          <span className="hint">Optional groups: a line ending in a colon, like <code>Clothing:</code>, starts a group.</span><UseDefault field="things_to_carry" defaults={d.Defaults} /></label>
         <label>FAQs
           <textarea name="faqs" rows="8" defaultValue={t.FAQs} />
           <span className="hint">First line is the question, the next lines are the answer. Leave a blank line between questions.</span>
+          <UseDefault field="faqs" defaults={d.Defaults} />
         </label>
         <label>Cover photo
           <select name="photo" defaultValue={t.Photo}>

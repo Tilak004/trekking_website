@@ -1,14 +1,21 @@
 import { Link } from 'react-router-dom';
 import { Avatar, PageState, Reviews } from '../../components/common.jsx';
-import { useSession } from '../../lib/session.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
 import { fmtDate, lines, paras, rating } from '../../lib/util.js';
 import PageShell from '../PageShell.jsx';
 import NotFound from './NotFound.jsx';
 
+const FOUNDER_LEADS = [
+  { name: 'Prahladh', photo: 'prahladh.jpg', alt: 'Prahladh in the Himalayas', role: 'Ironman finisher',
+    text: 'Ironman finisher. Swims, cycles and runs further than most people drive on a weekend.' },
+  { name: 'Lepakshi', photo: 'lepakshi.jpg', alt: "Lepakshi with a finisher's medal at the BMF Ultra", role: '24-hour adventure racer',
+    text: 'Races 24-hour adventure races. Happiest when the trail goes on longer than planned.' },
+  { name: 'Tilak', photo: 'tilak.jpg', alt: 'Tilak jumping in the snow on a Himalayan trek', role: 'Western Ghats regular',
+    text: 'Knows the Western Ghats trail by trail, and has trekked the Himalayas too. Happiest planning the next one.' },
+];
+
 export function Leads() {
   const page = usePage();
-  const { User } = useSession();
   const d = page.data;
   useTitle('Trek Leads');
   if (!d) return <PageShell><PageState page={page} /></PageShell>;
@@ -17,19 +24,18 @@ export function Leads() {
       <header className="page-head head-row">
         <div>
           <h1>Trek leads</h1>
-          <p className="muted">The people who'll walk beside you. Every profile grows with real treks and honest reviews from trekkers.</p>
+          <p className="muted">Right now, every trek is led by one of us three founders. Here's who'll be walking beside you.</p>
         </div>
         <Link className="btn" to="/lead-with-us">Become a trek lead</Link>
       </header>
-      <div className="grid leads-grid">
-        {d.Leads && d.Leads.length ? d.Leads.map((l) => (
-          <Link className="card" to={`/leads/${l.Slug}`} key={l.Slug}>
-            <Avatar person={l} />
-            <h3>{l.Name}{l.Verified && <> <span className="verified sm">✓</span></>}</h3>
-            <p className="muted">{l.Headline}</p>
-            <span className="card-link">View profile →</span>
-          </Link>
-        )) : <p className="muted">No trek leads listed yet.</p>}
+      {/* Until we hire trek leads, the three founders lead every trek. */}
+      <div className="founder-grid">
+        {FOUNDER_LEADS.map((f) => (
+          <figure className="founder" key={f.name}>
+            <img src={`/photos/founders/${f.photo}`} alt={f.alt} loading="lazy" />
+            <figcaption><b>{f.name}</b><span>{f.text}</span></figcaption>
+          </figure>
+        ))}
       </div>
 
       <section className="section why">
@@ -46,7 +52,7 @@ export function Leads() {
       <section className="cta-band">
         <h2>Ready when you are!</h2>
         <p>No account needed. Pick a date, send a request and we'll take it from there.</p>
-        {User ? <Link className="btn big" to="/#treks">Find a trek</Link> : <Link className="btn big" to="/signup">Sign up free</Link>}
+        <Link className="btn big" to="/#treks">See upcoming treks</Link>
       </section>
     </PageShell>
   );

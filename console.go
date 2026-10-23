@@ -70,6 +70,8 @@ func (a *App) adminRoutes() http.Handler {
 
 	mux.HandleFunc("GET /admin/treks", adm(a.adminTreks))
 	mux.HandleFunc("GET /admin/treks/new", adm(a.adminTrekForm))
+	mux.HandleFunc("GET /admin/trek-defaults", adm(a.adminTrekDefaults))
+	mux.HandleFunc("POST /admin/trek-defaults", adm(a.adminSaveTrekDefaults))
 	mux.HandleFunc("POST /admin/treks/new", adm(a.adminSaveTrek))
 	mux.HandleFunc("GET /admin/treks/{id}", adm(a.adminTrekForm))
 	mux.HandleFunc("POST /admin/treks/{id}", adm(a.adminSaveTrek))
