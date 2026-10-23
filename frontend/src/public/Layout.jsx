@@ -113,6 +113,7 @@ export default function Layout({ children }) {
             <Link className="brand" to="/">
               <img className="logo badge" src="/photos/logo/badge.png" alt={s.Brand} onError={logoFallback} />
             </Link>
+            {site && site.Tagline && <p className="footer-tagline">{site.Tagline}</p>}
             <p>{site && site.Description}</p>
             {site && (
               <div className="socials">

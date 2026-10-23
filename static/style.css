@@ -1724,3 +1724,9 @@ tr.done td { opacity: .6; }
   [data-theme~="ghats"] #treks .grid { grid-template-columns: 1fr; gap: 12px; }
   [data-theme~="ghats"] .trek-card { min-height: 18rem; }
 }
+
+/* footer social icons: centred in their circles in every browser (Safari included) */
+.socials a { display: inline-flex !important; align-items: center; justify-content: center; flex: none; box-sizing: border-box; line-height: 0; padding: 0; aspect-ratio: 1; }
+.socials a svg { display: block; flex: none; margin: 0; }
+/* brand tagline in the footer */
+.footer-tagline { margin: 8px 0 2px; font-size: 1.15rem; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
