@@ -12,7 +12,7 @@ function Hero() {
     <section className="banner short" style={{ backgroundImage: "url('/photos/gallery/WhatsApp Image 2026-10-15 at 5.30.49 PM.jpeg')" }}>
       <div className="wrap banner-inner">
         <p className="eyebrow light">For trek leads</p>
-        <h1>Lead treks. Earn on weekends.</h1>
+        <h1>Love the trails? Lead with us.</h1>
         <p className="banner-sub">Love the trails and know how to look after a group? Build your trek-lead profile, get matched with trekkers and get paid for every trek you lead.</p>
       </div>
     </section>

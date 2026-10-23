@@ -50,7 +50,7 @@ function Booking({ k }) {
           <h3><Link to={`/treks/${k.TrekSlug}`}>{k.TrekName}</Link></h3>
           <p className="muted small">
             {fmtDate(k.StartDate)} · {k.People} {k.People === 1 ? 'person' : 'people'}
-            {k.Pickup ? ` · Pickup: ${k.Pickup}` : ''}{k.LeadName ? ` · Lead: ${k.LeadName}` : ''}
+            {k.Pickup ? ` · Pickup: ${k.Pickup}` : ''}
           </p>
         </div>
         <div className="booking-side">

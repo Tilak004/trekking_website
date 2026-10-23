@@ -67,7 +67,11 @@ export default function Layout({ children }) {
       <header className={'site-header' + (pathname === '/' ? ' over-hero' : '')}>
         <div className="wrap nav">
           <Link className="brand" to="/" aria-label={`${s.Brand} home`}>
-            <img className="logo badge" src="/photos/logo/badge.png" alt={s.Brand} onError={logoFallback} />
+            <img className="logo badge" src="/photos/logo/badge.png" alt="" onError={logoFallback} />
+            <span className="brand-name">
+              <b><span className="bn-light">Beyond</span> Expeditions</b>
+              {site && site.Tagline && <i>{site.Tagline}</i>}
+            </span>
           </Link>
           <input type="checkbox" id="menu-toggle" className="menu-toggle" aria-label="Menu" checked={menu} onChange={(e) => setMenu(e.target.checked)} />
           <nav className="menu">
@@ -114,13 +118,6 @@ export default function Layout({ children }) {
               <img className="logo badge" src="/photos/logo/badge.png" alt={s.Brand} onError={logoFallback} />
             </Link>
             <p>{site && site.Description}</p>
-            {site && (
-              <div className="socials">
-                <a href={`https://instagram.com/${site.Instagram}`} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Icon name="igbrand" /></a>
-                <a href={whatsappTo(site.WhatsApp, '')} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><Icon name="wabrand" /></a>
-                <a href={`mailto:${site.Email}`} aria-label="Email"><Icon name="gmailbrand" /></a>
-              </div>
-            )}
           </div>
           <div>
             <h4>Explore</h4>
@@ -139,9 +136,14 @@ export default function Layout({ children }) {
           </div>
           <div>
             <h4>Contact</h4>
-            {site && <a href={whatsappTo(site.WhatsApp, 'Hi! I have a question about your treks.')} target="_blank" rel="noopener noreferrer">WhatsApp us</a>}
+            {site && (
+              <div className="socials">
+                <a href={`https://instagram.com/${site.Instagram}`} target="_blank" rel="noopener noreferrer" aria-label="Instagram"><Icon name="igbrand" /></a>
+                <a href={whatsappTo(site.WhatsApp, 'Hi! I have a question about your treks.')} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><Icon name="wabrand" /></a>
+                <a href={`mailto:${site.Email}`} aria-label="Email"><Icon name="gmailbrand" /></a>
+              </div>
+            )}
             <Link to="/contact#enquire">Send a question</Link>
-            {site && <a href={`https://instagram.com/${site.Instagram}`} target="_blank" rel="noopener noreferrer">Instagram</a>}
             <span>{site && site.City}</span>
           </div>
         </div>
@@ -150,8 +152,8 @@ export default function Layout({ children }) {
         </div>
       </footer>
       {site && (
-        <a className="wa-dot" href={whatsappTo(site.WhatsApp, waText)} target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp" aria-label="Chat on WhatsApp">
-          <Icon name="waicon" />
+        <a className="wa-dot" href={whatsappTo(site.WhatsApp, waText)} target="_blank" rel="noopener noreferrer" title="Enquire on WhatsApp" aria-label="Enquire now on WhatsApp">
+          <Icon name="waicon" /><span>Enquire now!</span>
         </a>
       )}
     </WaCtx.Provider>

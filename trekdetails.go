@@ -133,7 +133,7 @@ func sampleDetails(slug, difficulty string) Trek {
 	faqs := []string{
 		"Is this trek suitable for beginners?\n" + beginner,
 		"Do I need to pay to request a seat?\nNo. Booking requests are free. We confirm your seat over WhatsApp or a call and share payment details then.",
-		"Can I join directly at the base village?\nYes. Choose \"Reach base village directly\" as your pickup point and we'll share the meeting point and time.",
+		newBoardFAQ,
 		"What if it rains heavily or the trail is closed?\nYour safety comes first. If the forest department closes the trail or conditions are unsafe, we'll move you to another date or trek. See our cancellation policy for refunds.",
 	}
 

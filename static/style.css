@@ -1223,8 +1223,8 @@ img.avatar.photo { border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18
   --text: #102a43; --text-soft: #334e68; --muted: #5d7590; --line: #dbe6f1; --no-bg: #fdeeee;
   --err: #c2453d; --err-bg: #fbe9e7;
   --ok: #1f6db3; --ok-bg: #e3f0fb; --warn: #9a6400; --warn-bg: #fff4dc; --info: #1d4f7f; --info-bg: #e7eef6;
-  --font-head: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --font-display: var(--font-head); --font-script: var(--font-head);
-  --font-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-head: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --font-display: var(--font-head); --font-script: var(--font-head);
+  --font-body: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --head-case: none; --head-weight: 700; --head-track: -.005em;
   --accent: #1f6db3;
   --shadow: 0 10px 30px rgba(16,42,67,.10);
@@ -1275,9 +1275,9 @@ img.avatar.photo { border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18
   --ok: #0f4d2c; --ok-bg: #e9f2ec; --warn: #7a5a00; --warn-bg: #fbf4e2; --info: #2f5a43; --info-bg: #e9f2ec;
   --radius: 18px; --shadow: 0 14px 40px rgba(10,38,22,.10);
   /* one professional typeface everywhere (public site and admin console) */
-  --font-head: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-head: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-head); --font-script: var(--font-head);
-  --font-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --head-case: none; --head-weight: 700; --head-track: -.005em;
 }
 [data-theme~="editorial"] body { background: #fff; }
@@ -1724,3 +1724,105 @@ tr.done td { opacity: .6; }
   [data-theme~="ghats"] #treks .grid { grid-template-columns: 1fr; gap: 12px; }
   [data-theme~="ghats"] .trek-card { min-height: 18rem; }
 }
+
+/* footer social icons: centred in their circles in every browser (Safari included) */
+.socials a { display: inline-flex !important; align-items: center; justify-content: center; flex: none; box-sizing: border-box; line-height: 0; padding: 0; aspect-ratio: 1; }
+.socials a svg { display: block; flex: none; margin: 0; }
+/* brand tagline in the footer */
+.footer-tagline { margin: 8px 0 2px; font-size: 1.15rem; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+
+/* trek banner: show more of the photo, with a lighter shade only behind the text */
+.banner[style] { min-height: 340px; background-position: center 88%; }
+.banner[style]::before { background: linear-gradient(90deg, rgba(5,15,10,.5) 0%, rgba(5,15,10,.18) 45%, rgba(5,15,10,0) 75%), linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(5,15,10,.35) 100%); }
+.banner[style] h1, .banner[style] .banner-sub, .banner[style] .crumb a { text-shadow: 0 1px 10px rgba(0,0,0,.45); }
+@media (max-width: 640px) { .banner[style] { min-height: 280px; } .banner[style]::before { background: linear-gradient(180deg, rgba(5,15,10,.15), rgba(5,15,10,.55)); } }
+
+/* brand name and tagline beside the header logo */
+.site-header .brand-name { display: flex; flex-direction: column; line-height: 1.1; text-transform: none; letter-spacing: 0; }
+.site-header .brand-name b { font: 700 1.08rem var(--font-head); color: var(--text); letter-spacing: -.005em; white-space: nowrap; }
+.site-header .brand-name i { font: italic 500 .82rem var(--font-body); color: var(--accent, var(--forest-500)); white-space: nowrap; }
+.site-header.over-hero .brand-name b, .site-header.over-hero .brand-name i { color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.45); }
+@media (max-width: 640px) { .site-header .brand-name b { font-size: .98rem; } .site-header .brand-name i { font-size: .76rem; } }
+
+/* Poppins wordmark: light "Beyond" + semi-bold "Expeditions" */
+.site-header .brand-name b { font-family: "Poppins", sans-serif; font-weight: 600; font-size: 1.12rem; letter-spacing: -.01em; }
+.site-header .brand-name b .bn-light { font-weight: 300; }
+.site-header .brand-name i { font-family: "Poppins", sans-serif; font-style: normal; font-weight: 400; font-size: .78rem; letter-spacing: .02em; }
+/* Poppins runs large: one step smaller than Source Sans at the same size */
+html { font-size: clamp(.875rem, .82rem + .24vw, 1.2rem); }
+
+/* dark footer: deep forest green that closes the page */
+[data-theme~="sage"] .site-footer { background: #1f2d25; color: rgba(255,255,255,.78); border-top: 0; }
+[data-theme~="sage"] .site-footer .footer-grid h4 { color: #fff; }
+[data-theme~="sage"] .site-footer .footer-grid a, [data-theme~="sage"] .site-footer .footer-grid > div > span, [data-theme~="sage"] .site-footer .footer-about p { color: rgba(255,255,255,.72); }
+[data-theme~="sage"] .site-footer .footer-grid a:hover { color: #fff; }
+[data-theme~="sage"] .site-footer .footer-tagline { color: #fff; }
+[data-theme~="sage"] .site-footer .footer-bottom { color: rgba(255,255,255,.55); border-top-color: rgba(255,255,255,.12); }
+[data-theme~="sage"] .site-footer .socials a { background: #fff; border-color: transparent; }
+
+/* ================= Option B: dark frame, light content =================
+   Charcoal-forest header, hero strip and footer; warm off-white reading area.
+   Buttons: dark green on light areas, gold on dark areas and photos. */
+html[data-theme~="sage"] {
+  --frame: #141c18; --frame-line: #24302a; --gold: #c9a45c; --gold-dark: #b08c45;
+  --cream: #f6f4ef; --surface: #ffffff; --surface-2: #f1eee7; --text: #1b211d; --text-soft: #414a44; --muted: #6c756f;
+  --line: #e4dfd4; --accent: #1f2d25; --sun: #1f2d25; --sun-dark: #141e19; --sun-100: #ece6d6; --on-sun: #fff;
+  --forest-500: #1f2d25; --forest-700: #1f2d25; --forest-100: #ece6d6; --ok: #1f2d25; --ok-bg: #ece6d6; --no-bg: #f7ece8;
+}
+html[data-theme~="sage"] body { background: var(--cream); }
+
+/* header */
+html[data-theme~="sage"] .site-header, html[data-theme~="sage"] .site-header.over-hero { background: var(--frame); border-bottom: 0; backdrop-filter: none; }
+html[data-theme~="sage"] .site-header .menu a, html[data-theme~="sage"] .site-header .brand-name b { color: #f1efe8; text-shadow: none; }
+html[data-theme~="sage"] .site-header .brand-name i { color: var(--gold); text-shadow: none; }
+html[data-theme~="sage"] .site-header .menu a::after { background: var(--gold); }
+html[data-theme~="sage"] .site-header .menu-btn span, html[data-theme~="sage"] .site-header .menu-btn span::before, html[data-theme~="sage"] .site-header .menu-btn span::after { background: #f1efe8; }
+
+/* buttons: dark green on light, gold on dark */
+html[data-theme~="sage"] .btn { background: var(--accent); border-color: var(--accent); color: #fff; }
+html[data-theme~="sage"] .btn:hover { background: #0f1713; border-color: #0f1713; }
+html[data-theme~="sage"] .site-header .btn, html[data-theme~="sage"] .hero .btn:not(.ghost-light), html[data-theme~="sage"] .banner .btn { background: var(--gold); border-color: var(--gold); color: var(--frame); }
+html[data-theme~="sage"] .site-header .btn:hover, html[data-theme~="sage"] .hero .btn:not(.ghost-light):hover, html[data-theme~="sage"] .banner .btn:hover { background: var(--gold-dark); border-color: var(--gold-dark); }
+html[data-theme~="sage"] .hero .btn.ghost-light { background: rgba(0,0,0,.25); border-color: #fff; color: #fff; }
+html[data-theme~="sage"] .btn.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+
+/* hero feature strip: part of the dark frame, sentence case */
+html[data-theme~="sage"] .hero-features, html[data-theme~="sage"] .hero-features .features { background: var(--frame); border-color: var(--frame-line); }
+html[data-theme~="sage"] .feature, html[data-theme~="sage"] .feature svg { color: #f1efe8; border-color: var(--frame-line); }
+html[data-theme~="sage"] .feature span { color: #f1efe8; text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* chips, dates, labels */
+html[data-theme~="sage"] .chip.on, html[data-theme~="sage"] .bk-date.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+html[data-theme~="sage"] .bk-date.on b, html[data-theme~="sage"] .bk-date.on small { color: #fff; }
+html[data-theme~="sage"] .finder-q > span, html[data-theme~="sage"] .bk-label { text-transform: none; letter-spacing: 0; }
+html[data-theme~="sage"] .section-head .eyebrow { background: var(--sun-100); color: #6b5424; }
+html[data-theme~="sage"] .incl-box { background: var(--surface-2); }
+html[data-theme~="sage"] .incl-box.no { background: var(--no-bg); }
+html[data-theme~="sage"] .trek-card .eyebrow, html[data-theme~="sage"] .trek-card .card-region { background: none; color: rgba(255,255,255,.85); }
+
+/* footer */
+html[data-theme~="sage"] .site-footer { background: var(--frame); }
+html[data-theme~="sage"] .site-header .menu a.on, html[data-theme~="sage"] .site-header.over-hero .menu a.on { color: #fff !important; }
+html[data-theme~="sage"] .site-header .btn, html[data-theme~="sage"] .site-header.over-hero .btn,
+html[data-theme~="sage"] .banner .btn, html[data-theme~="sage"] .hero .btn:not(.ghost-light) { background: var(--gold) !important; border-color: var(--gold) !important; color: var(--frame) !important; }
+
+/* floating WhatsApp: pill with "Enquire now!" */
+.wa-dot { width: auto !important; height: auto !important; border-radius: 999px !important; padding: 9px 16px 9px 12px; display: inline-flex !important; align-items: center; gap: 8px; text-decoration: none; }
+.wa-dot svg { width: 20px; height: 20px; flex: none; }
+.wa-dot span { font: 600 .9rem var(--font-body); color: #fff; white-space: nowrap; }
+.wa-dot:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+@media (max-width: 640px) { .wa-dot { padding: 8px 14px 8px 10px; } .wa-dot span { font-size: .85rem; } }
+
+/* footer social icons: soft glass circles that light up on hover */
+html[data-theme~="sage"] .site-footer .socials a { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); transition: background .2s, transform .2s, box-shadow .2s, border-color .2s; }
+html[data-theme~="sage"] .site-footer .socials a svg { transition: transform .2s; }
+html[data-theme~="sage"] .site-footer .socials a:hover, html[data-theme~="sage"] .site-footer .socials a:focus-visible { background: #fff; border-color: #fff; transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,.35); }
+html[data-theme~="sage"] .site-footer .socials a:hover svg { transform: scale(1.08); }
+@media (prefers-reduced-motion: reduce) { html[data-theme~="sage"] .site-footer .socials a:hover { transform: none; } }
+.footer-grid .socials { margin: 2px 0 10px; }
+
+/* header and footer: dark on the left, easing lighter towards the right */
+html[data-theme~="sage"] { --frame-grad: linear-gradient(90deg, #0f1612 0%, #1c2822 40%, #34473c 100%); }
+html[data-theme~="sage"] .site-header, html[data-theme~="sage"] .site-header.over-hero,
+html[data-theme~="sage"] .site-footer, html[data-theme~="sage"] .hero-features { background: var(--frame-grad) !important; }
+html[data-theme~="sage"] .hero-features .features { background: transparent !important; }

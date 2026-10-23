@@ -22,10 +22,10 @@ function HeroFeatures() {
   return (
     <div className="hero-features">
       <div className="wrap features">
-        <div className="feature"><Icon name="mountain" /><span>Athlete<br />trek leads</span></div>
-        <div className="feature"><Icon name="users" /><span>Small,<br />friendly groups</span></div>
-        <div className="feature"><Icon name="calendar" /><span>Weekend departures<br />from Bangalore</span></div>
-        <div className="feature"><Icon name="wallet" /><span>Free to<br />request a seat</span></div>
+        <div className="feature"><Icon name="mountain" /><span>Leads who know every turn</span></div>
+        <div className="feature"><Icon name="users" /><span>Small groups, never crowds</span></div>
+        <div className="feature"><Icon name="calendar" /><span>Pickups in Bangalore</span></div>
+        <div className="feature"><Icon name="wallet" /><span>Free to request a seat</span></div>
       </div>
     </div>
   );
@@ -72,8 +72,8 @@ function Hero({ d, brand }) {
       <div className="wrap hero-inner">
         <p className="hero-script">Explore</p>
         <h1 className="hero-title">The Western Ghats</h1>
-        <p className="hero-tagline">Weekend treks led by athletes</p>
-        <p className="hero-intro">Small-group treks from Bangalore to Karnataka's most beautiful trails, with athlete trek leads, honest pricing and every detail sorted.</p>
+        <p className="hero-tagline">Find your wild.</p>
+        <p className="hero-intro">Small groups, honest prices and a trek lead who knows every turn of the trail. All you bring is your shoes.</p>
         <div className="hero-ctas">
           <a className="btn big" href="#treks"><Icon name="compass" /> Explore treks</a>
           <Link className="btn big ghost-light" to="/leads"><Icon name="users" /> Meet the leads</Link>
@@ -87,7 +87,7 @@ function Hero({ d, brand }) {
 export default function Home() {
   const page = usePage();
   const d = page.data;
-  useTitle('Weekend treks in the Western Ghats');
+  useTitle('Find your wild');
   const state = <PageState page={page} />;
   if (!d) return <PageShell>{state}</PageShell>;
 
@@ -95,8 +95,7 @@ export default function Home() {
     <PageShell hero={<Hero d={d} brand={d.Brand} />}>
       <section id="treks" className="section">
         <div className="section-head">
-          <p className="eyebrow">Find your trail</p>
-          <h2>Choose your trail</h2>
+          <h2>Where to next?</h2>
         </div>
         <Finder treks={d.FinderData || []} />
       </section>
@@ -111,9 +110,8 @@ export default function Home() {
 
       <section className="section">
         <div className="section-head">
-          <p className="eyebrow">Where we trek</p>
-          <h2>Trails on the map</h2>
-          <p className="muted">From the shola grasslands of the Western Ghats to the rocky hills around Bangalore, this is the country we explore.</p>
+          <h2>Where we wander</h2>
+          <p className="muted">Shola grasslands, misty ridges and granite hills. Our kind of country, and soon yours!</p>
         </div>
         <MapView />
       </section>
@@ -121,8 +119,7 @@ export default function Home() {
       {d.PhotoReviews && d.PhotoReviews.length > 0 && (
         <section className="section">
           <div className="section-head">
-            <p className="eyebrow">From trekkers</p>
-            <h2>Real treks, real reviews</h2>
+            <h2>Straight from the trail</h2>
           </div>
           <div className="photo-reviews">
             {d.PhotoReviews.map((r, i) => (
