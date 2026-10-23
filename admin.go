@@ -72,7 +72,7 @@ func (a *App) adminTreks(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) adminTrekForm(w http.ResponseWriter, r *http.Request) {
 	t := Trek{Active: true, Difficulty: "Moderate",
-		PickupPoints: "Bangalore - Majestic\nBangalore - Silk Board\nReach base village directly"}
+		PickupPoints: defaultPickups}
 	var batches []Batch
 	if id := pathID(r); id != 0 {
 		var err error

@@ -20,6 +20,21 @@ const (
 	TrailClosed = "closed"
 )
 
+// Pickups are two Bangalore stops; there is no "reach the base directly" option.
+// Treks still on the old default list, and the matching default FAQ, are updated
+// on startup.
+const (
+	oldDefaultPickups = "Bangalore - Majestic\nBangalore - Silk Board\nReach base village directly"
+	defaultPickups    = "Near BMS College, Basavanagudi\nBanashankari bus stand"
+	oldBaseFAQ        = "Can I join directly at the base village?\nYes. Choose \"Reach base village directly\" as your pickup point and we'll share the meeting point and time."
+	newBoardFAQ       = "Where do we board?\nAt one of two pickup points in Bangalore: near BMS College, Basavanagudi, or Banashankari bus stand. Pick one when you book and we'll share the exact time on WhatsApp."
+)
+
+func migratePickups(db *sql.DB) {
+	db.Exec(`UPDATE treks SET pickup_points = ? WHERE pickup_points = ?`, defaultPickups, oldDefaultPickups)
+	db.Exec(`UPDATE treks SET faqs = replace(faqs, ?, ?) WHERE instr(faqs, ?) > 0`, oldBaseFAQ, newBoardFAQ, oldBaseFAQ)
+}
+
 func migrateTrailStatus(db *sql.DB) {
 	db.Exec(`ALTER TABLE treks ADD COLUMN trail_status TEXT NOT NULL DEFAULT ''`)
 	db.Exec(`ALTER TABLE treks ADD COLUMN trail_note TEXT NOT NULL DEFAULT ''`)

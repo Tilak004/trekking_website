@@ -274,6 +274,7 @@ func openDB(path string) (*sql.DB, error) {
 	migrateRefunds(db)
 	migrateEnquiries(db)
 	migrateTrailStatus(db)
+	migratePickups(db)
 	if err := migrateInteractive(db); err != nil {
 		return nil, fmt.Errorf("migrate interactive: %w", err)
 	}
@@ -528,7 +529,7 @@ func seed(db *sql.DB) error {
 		leadIDs = append(leadIDs, id)
 	}
 
-	pickups := "Bangalore - Majestic\nBangalore - Silk Board\nReach base village directly"
+	pickups := defaultPickups
 	for i, t := range sampleTreks {
 		res, err := db.Exec(`INSERT INTO treks (slug, name, region, duration, distance_km, max_altitude, difficulty, price, summary, description, pickup_points)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, slugify(t.Name), t.Name, t.Region, t.Duration, t.DistanceKm, t.MaxAltitude,
