@@ -122,3 +122,4 @@ body.console { background: var(--surface-2); margin: 0; font-size: 1rem; }
 @media (min-width: 1900px) { .c-main { width: 100%; max-width: 100rem; margin-inline: auto; } }
 .use-default { align-self: flex-start; margin-top: 4px; padding: 0; text-decoration: underline; }
 .head-actions { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+.start-from { margin-bottom: 14px; } .start-from select { max-width: 360px; }

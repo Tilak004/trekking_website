@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PageState } from '../../components/common.jsx';
 import { useSession } from '../../lib/session.jsx';
@@ -137,12 +138,15 @@ export function TrekForm() {
   const { submit, busy, error } = useSubmit();
   const batchForm = useSubmit();
   const trailForm = useSubmit();
+  const [tpl, setTpl] = useState('');
   const d = page.data;
   useTitle(d && (d.Trek.ID ? `Edit ${d.Trek.Name}` : 'New trek'));
   if (page.notFound) return <p className="muted">Trek not found. <Link to="/admin/treks">Back to treks</Link></p>;
   if (!d) return <PageState page={page} />;
-  const t = d.Trek;
-  const isNew = !t.ID;
+  const isNew = !d.Trek.ID;
+  // A new trek can start from a known trek: its fixed facts fill the form.
+  const known = isNew && tpl ? (d.Library || []).find((k) => k.Slug === tpl) : null;
+  const t = known ? { ...d.Trek, ...known } : d.Trek;
 
   return (
     <>
@@ -170,7 +174,18 @@ export function TrekForm() {
         </form>
       )}
 
-      <form key={t.ID || 'new'} onSubmit={submit(isNew ? '/admin/treks/new' : `/admin/treks/${id}`)} className="form panel">
+      {isNew && (d.Library || []).length > 0 && (
+        <div className="panel start-from">
+          <label>Start from a known trek
+            <select value={tpl} onChange={(e) => setTpl(e.target.value)}>
+              <option value="">Blank trek</option>
+              {d.Library.map((k) => <option key={k.Slug} value={k.Slug}>{k.Name}</option>)}
+            </select>
+            <span className="hint">Fills in the trek's fixed details (region, distance, summary, description, itinerary, inclusions and more). Then add the price, cover photo and pickup times, and check everything before saving.</span>
+          </label>
+        </div>
+      )}
+      <form key={t.ID || `new-${tpl}`} onSubmit={submit(isNew ? '/admin/treks/new' : `/admin/treks/${id}`)} className="form panel">
         {(error || d.Err) && <div className="flash err">{error || d.Err}</div>}
         <div className="row">
           <label>Name <input name="name" defaultValue={t.Name} required maxLength={120} /></label>

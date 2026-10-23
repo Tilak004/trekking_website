@@ -105,7 +105,7 @@ func (a *App) renderTrekForm(w http.ResponseWriter, r *http.Request, t Trek, bat
 		a.serverError(w, err)
 		return
 	}
-	data := map[string]any{"Trek": t, "Batches": batches, "Leads": leads, "Today": today(), "Photos": a.listPhotos(""), "Defaults": a.trekDefaults(),
+	data := map[string]any{"Trek": t, "Batches": batches, "Leads": leads, "Today": today(), "Photos": a.listPhotos(""), "Defaults": a.trekDefaults(), "Library": trekLibrary,
 		"Difficulties": []string{"Easy", "Easy–Moderate", "Moderate", "Difficult", "Very Difficult"}}
 	if errMsg != "" {
 		data["Err"] = errMsg
