@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { inr, initial, photoURL } from '../../lib/util.js';
+import { inr, photoURL } from '../../lib/util.js';
 
 // Trek finder: a few quick questions, and the trek grid re-sorts live.
 
@@ -66,13 +66,6 @@ function FinderCard({ t, badge }) {
       <div className="card-body">
         <p className="eyebrow">{t.region}</p>
         <h3>{t.name}</h3>
-        {t.lead && (
-          <span className="card-lead">
-            {t.lead.photo ? <img src={photoURL(t.lead.photo)} alt="" /> : <i>{initial(t.lead.name)}</i>}
-            Led by {t.lead.name}
-            {t.lead.verified && <b title="Verified lead"> ✓</b>}
-          </span>
-        )}
         <div className="card-bottom">
           {open ? <span>Next: <strong>{t.next}</strong></span> : <span className="soon-tag">Opening soon</span>}
           {t.ratings > 0 && <span className="rating">★ {t.rating.toFixed(1)}</span>}
