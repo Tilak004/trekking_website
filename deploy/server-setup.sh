@@ -80,10 +80,18 @@ else
   echo "    kept your existing /etc/caddy/admin-auth.caddy"
 fi
 
-echo "==> Caddy config"
-sed "s/DOMAIN/$DOMAIN/g" "$HERE/Caddyfile" > /etc/caddy/Caddyfile
-systemctl enable caddy
-systemctl restart caddy
+echo "==> Caddy config (checked before it is applied, so a mistake can never take the site down)"
+sed "s/DOMAIN/$DOMAIN/g" "$HERE/Caddyfile" > /etc/caddy/Caddyfile.new
+if caddy validate --config /etc/caddy/Caddyfile.new --adapter caddyfile; then
+  [ -f /etc/caddy/Caddyfile ] && cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.previous
+  mv /etc/caddy/Caddyfile.new /etc/caddy/Caddyfile
+  systemctl enable caddy
+  systemctl reload-or-restart caddy
+else
+  echo "!! The new Caddy config is invalid, so the old one was kept. Nothing was changed." >&2
+  rm -f /etc/caddy/Caddyfile.new
+  exit 1
+fi
 
 echo "==> Services"
 install -m 644 "$HERE/beyond-public.service" /etc/systemd/system/beyond-public.service
