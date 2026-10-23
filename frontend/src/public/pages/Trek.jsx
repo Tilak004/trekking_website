@@ -26,7 +26,7 @@ function TrailStatus({ t }) {
   return null;
 }
 
-function Hero({ t }) {
+function Hero({ t, bookable }) {
   return (
     <>
       <section className="banner" style={t.Photo ? { backgroundImage: `url('${photoURL(t.Photo)}')` } : undefined}>
@@ -36,7 +36,9 @@ function Hero({ t }) {
           <h1>{t.Name}</h1>
           <p className="banner-sub">{t.Region}</p>
           <TrailStatus t={t} />
-          <a className="btn banner-cta" href="#book">Book now</a>
+          {bookable
+            ? <a className="btn banner-cta" href="#book">Book now</a>
+            : <><span className="soon-tag banner-soon">Opening soon</span>{' '}<a className="btn banner-cta" href="#enquire">Enquire now</a></>}
         </div>
       </section>
       <div className="wrap">
@@ -127,9 +129,12 @@ export default function Trek() {
   const batches = d.Batches || [];
   const existing = d.Existing;
   const closed = t.TrailStatus === 'closed';
+  // Bookable only when a departure is published and still has seats.
+  const openBatches = ((d.BookingData && d.BookingData.batches) || []).filter((b) => b.left > 0);
+  const bookable = openBatches.length > 0;
 
   return (
-    <PageShell hero={<Hero t={t} />}>
+    <PageShell hero={<Hero t={t} bookable={bookable} />}>
       {!t.Active && <div className="flash err">This trek is inactive and hidden from trekkers (you're seeing it as admin).</div>}
 
       <nav className="section-nav">
@@ -138,7 +143,7 @@ export default function Trek() {
         {pickups.length > 0 && <a href="#pickup">Pickup</a>}
         <a href="#inclusions">Inclusions</a>
         {carry.length > 0 && <a href="#carry">What to carry</a>}
-        <a href="#book">Book</a>
+        <a href="#book">{bookable ? 'Book' : 'Enquire'}</a>
         <a href="#faqs">FAQs</a>
         <a href="#reviews">Reviews</a>
       </nav>
@@ -203,10 +208,10 @@ export default function Trek() {
 
           <section id="book" className="trek-section book-section">
             <span id="dates" />
-            <h2>Book or enquire</h2>
+            <h2>{bookable ? 'Book or enquire' : 'Opening soon'}</h2>
             <div className="book-grid">
               <div className="panel book-panel">
-                <h3>Book now</h3>
+                <h3>{bookable ? 'Book now' : 'Dates coming soon'}</h3>
                 {closed && (
                   <div className="bp-none">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 7.5v5.5M12 16.5v.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
@@ -219,15 +224,13 @@ export default function Trek() {
                     <p>You already have a <span className={`status ${existing.Status}`}>{existing.Status}</span> booking for {fmtDate(existing.StartDate)}.</p>
                     <p><Link to="/my">View my bookings →</Link></p>
                   </>
-                ) : batches.length === 0 ? (
+                ) : !bookable ? (
                   <>
-                    <p className="bk-label">Select date to register</p>
                     <div className="bp-none">
                       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 7.5v5.5M12 16.5v.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
-                      {' '}No fixed departures right now
+                      {' '}{batches.length ? 'All current departures are full' : 'No departures open yet'}
                     </div>
-                    <div className="bk-actions"><button className="btn big" disabled>No departures available</button></div>
-                    <p className="bk-hint">Online booking opens once dates are announced. Send an enquiry and we'll tell you first.</p>
+                    <p className="bk-hint">Send us an enquiry and we'll let you know as soon as seats open.</p>
                   </>
                 ) : (
                   <Booking key={slug} d={d.BookingData} />

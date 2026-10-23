@@ -289,7 +289,8 @@ SELECT t.id, t.slug, t.name, t.region, t.duration, t.distance_km, t.max_altitude
        t.price, t.summary, t.description, t.pickup_points, t.photo, t.active,
        t.best_season, t.itinerary, t.inclusions, t.exclusions, t.things_to_carry, t.faqs,
        t.lat, t.lng, t.tags, t.elevation, t.trail_status, t.trail_note, t.trail_updated,
-       COALESCE((SELECT MIN(b.start_date) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now')), ''),
+       COALESCE((SELECT MIN(b.start_date) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now')
+          AND b.seats > (SELECT COALESCE(SUM(k.people), 0) FROM bookings k WHERE k.batch_id = b.id AND k.status IN ('approved', 'completed'))), ''),
        (SELECT COALESCE(AVG(r.trek_rating), 0.0) FROM reviews r JOIN bookings k ON k.id = r.booking_id
           JOIN batches b ON b.id = k.batch_id WHERE b.trek_id = t.id),
        (SELECT COUNT(*) FROM reviews r JOIN bookings k ON k.id = r.booking_id

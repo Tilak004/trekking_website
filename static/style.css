@@ -1856,3 +1856,5 @@ html[data-theme~="sage"] .why .section-head h2::after { content: ""; display: bl
   html[data-theme~="sage"] .site-header .menu-btn span::before { top: -7px; left: 0; right: 0; }
   html[data-theme~="sage"] .site-header .menu-btn span::after { top: 7px; left: 0; right: 0; }
 }
+.banner .banner-soon { display: inline-block; margin: 10px 8px 0 0; background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.5); vertical-align: middle; }
+.banner .banner-soon + .banner-cta { vertical-align: middle; }
