@@ -31,7 +31,7 @@ export function About() {
       <section className="about-story">
         <div>
           <h2>How it started</h2>
-          <p>Prahladh has finished a full Ironman. Lepakshi races 24-hour adventure races and spends most free days out in the hills. Tilak has walked just about every major trail in the Western Ghats, and crossed Hampta Pass on a first trip to the Himalayas.</p>
+          <p>Prahladh has finished a full Ironman. Lepakshi races 24-hour adventure races and spends most free days out in the hills. Tilak has walked just about every major trail in the Western Ghats and has trekked in the Himalayas too.</p>
           <p>Somewhere along the way we noticed that the trek lead makes or breaks the day: the right pace, a calm voice on a slippery descent, knowing exactly where to stop for the view. So we started Beyond Expeditions to give every trekker that kind of day.</p>
         </div>
         <div className="about-values">
@@ -54,8 +54,8 @@ export function About() {
             <figcaption><b>Lepakshi</b><span>Races 24-hour adventure races. Happiest when the trail goes on longer than planned.</span></figcaption>
           </figure>
           <figure className="founder">
-            <img src="/photos/founders/tilak.jpg" alt="Tilak jumping in the snow at Hampta Pass" loading="lazy" />
-            <figcaption><b>Tilak</b><span>Has walked just about every trail in the Western Ghats. Hampta Pass was the first Himalayan one, and not the last!</span></figcaption>
+            <img src="/photos/founders/tilak.jpg" alt="Tilak jumping in the snow on a Himalayan trek" loading="lazy" />
+            <figcaption><b>Tilak</b><span>The all-rounder. Treks the Western Ghats and the Himalayas, runs half marathons and never says no to badminton. Here, Tilak plans the treks and looks after social media, marketing and tech. Loves meeting new people on the trail!</span></figcaption>
           </figure>
         </div>
       </section>
