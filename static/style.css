@@ -1858,3 +1858,6 @@ html[data-theme~="sage"] .why .section-head h2::after { content: ""; display: bl
 }
 .banner .banner-soon { display: inline-block; margin: 10px 8px 0 0; background: rgba(255,255,255,.18); color: #fff; border: 1px solid rgba(255,255,255,.5); vertical-align: middle; }
 .banner .banner-soon + .banner-cta { vertical-align: middle; }
+html[data-theme~="sage"] .why-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
+@media (max-width: 980px) { html[data-theme~="sage"] .why-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { html[data-theme~="sage"] .why-grid { grid-template-columns: 1fr; } }

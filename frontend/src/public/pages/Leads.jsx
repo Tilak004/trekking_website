@@ -45,6 +45,7 @@ export function Leads() {
         <div className="why-grid">
           <div className="why-item"><h3>People who know the trail</h3><p>Our leads have walked these hills many times over. They set a pace everyone can enjoy and make sure nobody gets left behind.</p></div>
           <div className="why-item"><h3>Small groups, real conversations</h3><p>We cap every batch, so it feels like a trip with friends, not a crowd on a hill.</p></div>
+          <div className="why-item"><h3>Learn as you walk</h3><p>We teach the basics of map reading and navigation along the way, and how to use a compass, so you leave a more confident trekker.</p></div>
           <div className="why-item"><h3>Ask first, pay later</h3><p>Request a seat for free. We'll call you, answer every question, and only then share payment details.</p></div>
         </div>
       </section>
