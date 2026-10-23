@@ -7,11 +7,11 @@ import NotFound from './NotFound.jsx';
 
 const FOUNDER_LEADS = [
   { name: 'Prahladh', photo: 'prahladh.jpg', alt: 'Prahladh in the Himalayas', role: 'Ironman finisher',
-    text: 'Knows pacing inside out. Sets a rhythm the whole group can keep, so everyone reaches the top together.' },
+    text: 'Ironman finisher. Swims, cycles and runs further than most people drive on a weekend.' },
   { name: 'Lepakshi', photo: 'lepakshi.jpg', alt: "Lepakshi with a finisher's medal at the BMF Ultra", role: '24-hour adventure racer',
-    text: 'Calm when the trail gets long or the weather turns, and great at keeping spirits up on the climb.' },
+    text: 'Races 24-hour adventure races. Happiest when the trail goes on longer than planned.' },
   { name: 'Tilak', photo: 'tilak.jpg', alt: 'Tilak jumping in the snow on a Himalayan trek', role: 'Western Ghats regular',
-    text: 'Has walked these trails many times: where it gets slippery, where to rest and where the best view is.' },
+    text: 'Knows the Western Ghats trail by trail, and has trekked the Himalayas too. Happiest planning the next one.' },
 ];
 
 export function Leads() {
@@ -33,7 +33,7 @@ export function Leads() {
         {FOUNDER_LEADS.map((f) => (
           <figure className="founder" key={f.name}>
             <img src={`/photos/founders/${f.photo}`} alt={f.alt} loading="lazy" />
-            <figcaption><b>{f.name}</b><em>{f.role}</em><span>{f.text}</span></figcaption>
+            <figcaption><b>{f.name}</b><span>{f.text}</span></figcaption>
           </figure>
         ))}
       </div>

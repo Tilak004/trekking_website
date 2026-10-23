@@ -41,24 +41,6 @@ export function About() {
         </div>
       </section>
 
-      <section className="founders">
-        <h2>Meet the founders</h2>
-        <div className="founder-grid">
-          <figure className="founder">
-            <img src="/photos/founders/prahladh.jpg" alt="Prahladh in the Himalayas" loading="lazy" />
-            <figcaption><b>Prahladh</b><span>Ironman finisher. Swims, cycles and runs further than most people drive on a weekend.</span></figcaption>
-          </figure>
-          <figure className="founder">
-            <img src="/photos/founders/lepakshi.jpg" alt="Lepakshi with a finisher's medal at the BMF Ultra" loading="lazy" />
-            <figcaption><b>Lepakshi</b><span>Races 24-hour adventure races. Happiest when the trail goes on longer than planned.</span></figcaption>
-          </figure>
-          <figure className="founder">
-            <img src="/photos/founders/tilak.jpg" alt="Tilak jumping in the snow on a Himalayan trek" loading="lazy" />
-            <figcaption><b>Tilak</b><span>Knows the Western Ghats trail by trail, and has trekked the Himalayas too. Happiest planning the next one.</span></figcaption>
-          </figure>
-        </div>
-      </section>
-
       <div className="photo-strip">
         <img src="/photos/gallery/WhatsApp Image 2026-10-15 at 5.30.50 PM (1).jpeg" alt="Rolling grassland in the Western Ghats" loading="lazy" />
         <img src="/photos/gallery/WhatsApp Image 2026-10-15 at 5.30.42 PM.jpeg" alt="Cliffs above the clouds" loading="lazy" />

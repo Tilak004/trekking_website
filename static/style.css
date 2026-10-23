@@ -1839,3 +1839,9 @@ html[data-theme~="sage"] .hero-features .features { background: transparent !imp
 @media (max-width: 760px) { .founder-grid { grid-template-columns: 1fr; } .founder img { aspect-ratio: 4 / 3; } }
 .founder figcaption em { font-style: normal; font-size: .85rem; font-weight: 600; color: var(--accent); }
 .page-head + .founder-grid { margin-top: 6px; }
+
+/* "Why trek with us": item titles sit below the section heading in size */
+html[data-theme~="sage"] .why .section-head h2 { font-size: 1.5rem; }
+html[data-theme~="sage"] .why-item h3 { font-size: 1.05rem; font-weight: 600; line-height: 1.3; margin: 0 0 6px; }
+html[data-theme~="sage"] .why-item p { font-size: .95rem; line-height: 1.55; }
+html[data-theme~="sage"] .why-grid { align-items: start; }
