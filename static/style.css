@@ -1848,3 +1848,11 @@ html[data-theme~="sage"] .why-grid { align-items: start; }
 /* "Why trek with us" heading in deep gold so it stands apart from the item titles */
 html[data-theme~="sage"] .why .section-head h2 { color: #8f6b2a; margin-bottom: 14px; }
 html[data-theme~="sage"] .why .section-head h2::after { content: ""; display: block; width: 44px; height: 2px; margin: 8px auto 0; background: var(--gold); border-radius: 2px; }
+
+/* phone header: a compact, evenly spaced menu icon that stays inside the screen */
+@media (max-width: 860px) {
+  html[data-theme~="sage"] .site-header .menu-btn { flex: none; box-sizing: content-box; width: 22px; height: 16px; padding: 10px 8px; margin: 0 -8px 0 4px; }
+  html[data-theme~="sage"] .site-header .menu-btn span { top: 17px; left: 8px; right: 8px; height: 2px; }
+  html[data-theme~="sage"] .site-header .menu-btn span::before { top: -7px; left: 0; right: 0; }
+  html[data-theme~="sage"] .site-header .menu-btn span::after { top: 7px; left: 0; right: 0; }
+}
