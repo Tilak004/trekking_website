@@ -333,6 +333,14 @@ func (a *App) consoleSaveEvent(w http.ResponseWriter, r *http.Request) {
 		a.renderEvent(w, r, e, "Please pick a trek from the list.")
 		return
 	}
+	if publish {
+		var price int
+		a.db.QueryRow(`SELECT price FROM treks WHERE id = ?`, e.TrekID).Scan(&price)
+		if price <= 0 {
+			a.renderEvent(w, r, e, "This trek has no price yet. Set the price per person on the trek (Treks → Edit) before publishing.")
+			return
+		}
+	}
 	if id == 0 {
 		status := BatchDraft
 		if publish {
@@ -374,6 +382,10 @@ func (a *App) consoleEventStatus(w http.ResponseWriter, r *http.Request) {
 	to := r.FormValue("status")
 	switch {
 	case to == BatchLive && (e.IsDraft() || e.IsPending()):
+		if e.Price <= 0 {
+			redirect(w, r, "/admin/events/%d?err=no_price", e.ID)
+			return
+		}
 	case to == BatchDraft && e.IsLive():
 		if e.Active > 0 {
 			redirect(w, r, "/admin/events/%d?err=event_has_bookings", e.ID)

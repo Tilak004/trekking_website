@@ -146,6 +146,10 @@ func (a *App) adminSaveTrek(w http.ResponseWriter, r *http.Request) {
 	if t.Slug == "" {
 		t.Slug = slugify(t.Name)
 	}
+	if t.Active && t.Price <= 0 {
+		a.renderTrekForm(w, r, t, nil, "Set the price per person before making the trek visible to trekkers.")
+		return
+	}
 	if t.Name == "" || t.Slug == "" || t.Price < 0 {
 		a.renderTrekForm(w, r, t, nil, "Name is required and price can't be negative.")
 		return

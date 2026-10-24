@@ -1879,3 +1879,40 @@ html[data-theme~="sage"] .why-grid { grid-template-columns: repeat(4, minmax(0, 
   html[data-theme~="sage"] .site-header .menu a.on { background: rgba(201,164,92,.16); color: #fff !important; box-shadow: inset 3px 0 0 var(--gold); font-weight: 600; }
   html[data-theme~="sage"] .site-header .nav { position: relative; }
 }
+
+/* home hero: gallery photos cross-fade over the layered hero photo */
+.hero.layered .hero-slides { display: block; position: absolute; inset: 0; overflow: hidden; z-index: 3; pointer-events: none; }
+.hero.layered .slide { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.4s ease; }
+.hero.layered .slide.on { opacity: 1; }
+.hero.layered .hl-corner { z-index: 5; }
+
+/* trek cards: Book now on bookable treks */
+.trek-card .card-book { position: relative; z-index: 2; margin: 10px 0 0; align-self: flex-start; }
+html[data-theme~="sage"] .trek-card .card-book { background: var(--gold) !important; border-color: var(--gold) !important; color: var(--frame) !important; }
+
+/* "Send on WhatsApp" after a booking request: WhatsApp green with white text */
+html[data-theme~="sage"] main a.btn-wa, html[data-theme~="sage"] .btn-wa { background: #25d366 !important; color: #fff !important; border: 0; }
+html[data-theme~="sage"] main a.btn-wa:hover { background: #1ebe5b !important; color: #fff !important; }
+html[data-theme~="sage"] .btn-wa svg { fill: currentColor; color: #fff; }
+
+/* footer links: one per line on every screen */
+html[data-theme~="sage"] .site-footer .footer-grid > div > a, html[data-theme~="sage"] .site-footer .footer-grid > div > span { display: block !important; width: fit-content; }
+
+/* trek finder on phones: one "Filter treks" bar; questions fold out on tap,
+   and each question's choices are a single swipeable row */
+/* folded on every screen: "Filter treks" bar, questions open on tap */
+.finder-toggle { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; margin: 0 0 14px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); font: 600 .95rem var(--font-body); cursor: pointer; }
+.finder-toggle:hover { border-color: var(--accent); }
+.finder-toggle .muted { font-weight: 500; }
+.finder-toggle i { font-style: normal; margin-left: 4px; }
+.finder .finder-panel { display: none !important; }
+.finder .finder-panel.open { display: grid !important; margin-bottom: 16px; }
+@media (max-width: 640px) {
+  .finder .finder-q { min-width: 0; overflow: hidden; }
+  .finder .finder-panel.open { grid-template-columns: minmax(0, 1fr); }
+  .finder .finder-q .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; max-width: 100%; }
+  .finder .finder-q .chips::-webkit-scrollbar { display: none; }
+  .finder .finder-q .chip { flex: none; }
+  .finder .finder-q { padding: 10px 12px 12px; gap: 8px; }
+}

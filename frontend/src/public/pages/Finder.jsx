@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { inr, photoURL } from '../../lib/util.js';
 
 // Trek finder: a few quick questions, and the trek grid re-sorts live.
@@ -54,6 +54,8 @@ const Mountains = () => (
 // A trek card from the finder's trimmed-down trek data.
 function FinderCard({ t, badge }) {
   const open = !!t.next;
+  const navigate = useNavigate();
+  const book = (e) => { e.preventDefault(); e.stopPropagation(); navigate(`/treks/${t.slug}#book`); };
   return (
     <Link className="card trek-card" to={`/treks/${t.slug}`}>
       <div className="card-img" style={t.photo ? { backgroundImage: `url('${photoURL(t.photo)}')` } : undefined}>
@@ -70,6 +72,10 @@ function FinderCard({ t, badge }) {
           {open ? <span>Next: <strong>{t.next}</strong></span> : <span className="soon-tag">Opening soon</span>}
           {t.ratings > 0 && <span className="rating">★ {t.rating.toFixed(1)}</span>}
         </div>
+        {open && t.trail !== 'closed' && (
+          <span className="btn small card-book" role="button" tabIndex={0} onClick={book}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') book(e); }}>Book now</span>
+        )}
       </div>
     </Link>
   );
@@ -80,6 +86,7 @@ export default function Finder({ treks }) {
   const [when, setWhen] = useState('any');
   const [length, setLength] = useState('any');
   const [vibes, setVibes] = useState([]);
+  const [open, setOpen] = useState(false); // phones: filters folded away until asked for
 
   const results = useMemo(() => {
     const list = treks
@@ -100,9 +107,14 @@ export default function Finder({ treks }) {
     setVibes([]);
   };
 
+  const active = (level !== 'any') + (when !== 'any') + (length !== 'any') + (vibes.length > 0);
   return (
     <div className="finder">
-      <div className="finder-panel">
+      <button type="button" className={'finder-toggle' + (open ? ' open' : '')} aria-expanded={open} onClick={() => setOpen(!open)}>
+        <span>Filter treks{active ? ` · ${active} on` : ''}</span>
+        <span className="muted">{results.length} {results.length === 1 ? 'trek' : 'treks'} <i aria-hidden="true">{open ? '▴' : '▾'}</i></span>
+      </button>
+      <div className={'finder-panel' + (open ? ' open' : '')}>
         <div className="finder-q"><span>How fit are you?</span><Chips options={LEVELS} value={level} onChange={setLevel} /></div>
         <div className="finder-q"><span>How long?</span><Chips options={LENGTH} value={length} onChange={setLength} /></div>
         <div className="finder-q"><span>What do you want to see?</span><Chips options={VIBES} value={vibes} onChange={setVibes} multi /></div>

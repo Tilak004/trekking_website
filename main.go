@@ -183,6 +183,7 @@ var flashErrors = map[string]string{
 	"batch_has_bookings": "This batch has bookings, so it can't be deleted.",
 	"bad_group_link":     "Trek saved, but the WhatsApp group link wasn't. It should start with https://chat.whatsapp.com/",
 	"bad_channel_link":   "The channel link wasn't saved. It should start with https://whatsapp.com/channel/",
+	"no_price":           "This trek has no price yet. Set the price per person on the trek (Treks → Edit) before publishing.",
 	"trek_has_bookings":  "This trek has bookings, so it can't be deleted. Untick \"Visible to trekkers\" to hide it instead.",
 	"bad_review":         "Please give a rating from 1 to 5.",
 	"cannot_review":      "You can only review a completed trek, once.",

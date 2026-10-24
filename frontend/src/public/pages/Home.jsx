@@ -40,8 +40,11 @@ function Slides({ slides }) {
   }, [slides.length]);
   return (
     <div className="hero-slides" aria-hidden="true">
-      {slides.map((s, i) => (
-        <div key={s.Photo} className={'slide' + (i === on ? ' on' : '')} style={{ backgroundImage: `url('${photoURL(s.Photo)}')` }} />
+      {slides.map((s, i) => {
+        // Only load the photos already shown, the current one and the next one.
+        const load = s.Photo && (i <= on + 1 || (on === slides.length - 1 && i === 0));
+        return <div key={s.Photo || 'base'} className={'slide' + (i === on ? ' on' : '')} style={load ? { backgroundImage: `url('${photoURL(s.Photo)}')` } : undefined} />;
+      })}
       ))}
     </div>
   );
@@ -55,6 +58,7 @@ function Hero({ d, brand }) {
           <img className="hl-bg" src="/photos/hero-layers/background.webp" alt="Green hills of the Western Ghats" />
           <h1 className="sr-only">{brand} · Weekend treks in the Western Ghats</h1>
           <img className="hl-fg" src="/photos/hero-layers/foreground.webp" alt="" aria-hidden="true" />
+          {d.HeroSlides && d.HeroSlides.length > 0 && <Slides slides={[{ Photo: '' }, ...d.HeroSlides.filter((s) => s.Photo !== d.HeroPhoto)]} />}
           <div className="hl-corner hl-left">
             <div className="hero-ctas">
               <a className="btn" href="#treks"><Icon name="compass" /> Explore treks</a>
