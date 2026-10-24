@@ -61,7 +61,9 @@ func (a *App) trekDefaults() TrekDefaults {
 }
 
 func (a *App) adminTrekDefaults(w http.ResponseWriter, r *http.Request) {
-	a.render(w, r, "admin_trek_defaults.html", map[string]any{"Defaults": a.trekDefaults()})
+	var channel string
+	a.db.QueryRow(`SELECT value FROM settings WHERE key = 'whatsapp_channel'`).Scan(&channel)
+	a.render(w, r, "admin_trek_defaults.html", map[string]any{"Defaults": a.trekDefaults(), "Channel": channel})
 }
 
 func (a *App) adminSaveTrekDefaults(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +79,15 @@ func (a *App) adminSaveTrekDefaults(w http.ResponseWriter, r *http.Request) {
 			a.serverError(w, err)
 			return
 		}
+	}
+	channel, ok := cleanWALink(r.FormValue("whatsapp_channel"), channelLinkPrefix)
+	if !ok {
+		redirect(w, r, "/admin/trek-defaults?err=bad_channel_link")
+		return
+	}
+	if _, err := a.db.Exec(`INSERT INTO settings (key, value) VALUES ('whatsapp_channel', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`, channel); err != nil {
+		a.serverError(w, err)
+		return
 	}
 	redirect(w, r, "/admin/trek-defaults?msg=saved")
 }

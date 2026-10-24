@@ -127,3 +127,4 @@ body.console { background: var(--surface-2); margin: 0; font-size: 1rem; }
 .danger-zone p { margin: 0; }
 .danger-zone .btn, .danger-zone .btn:hover { background: #b3402e !important; border-color: #b3402e !important; color: #fff !important; }
 .danger-zone .btn:hover { background: #963524 !important; border-color: #963524 !important; }
+.cancel-event { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; } .cancel-event label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; font-weight: 600; } .danger-zone + .danger-zone { margin-top: 12px; }

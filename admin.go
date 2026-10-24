@@ -105,7 +105,7 @@ func (a *App) renderTrekForm(w http.ResponseWriter, r *http.Request, t Trek, bat
 		a.serverError(w, err)
 		return
 	}
-	data := map[string]any{"Trek": t, "Batches": batches, "Leads": leads, "Today": today(), "Photos": a.listPhotos(""), "Defaults": a.trekDefaults(), "Library": trekLibrary,
+	data := map[string]any{"Trek": t, "Batches": batches, "Leads": leads, "Today": today(), "Photos": a.listPhotos(""), "Defaults": a.trekDefaults(), "Library": trekLibrary, "WhatsAppGroup": a.trekGroup(t.ID),
 		"Difficulties": []string{"Easy", "Easy–Moderate", "Moderate", "Difficult", "Very Difficult"}}
 	if errMsg != "" {
 		data["Err"] = errMsg
@@ -175,6 +175,10 @@ lat = ?, lng = ?, tags = ?, elevation = ? WHERE id = ?`, append(args, t.ID)...)
 			return
 		}
 		a.serverError(w, err)
+		return
+	}
+	if err := a.saveTrekGroup(t.ID, r); err != nil {
+		redirect(w, r, "/admin/treks/%d?err=bad_group_link", t.ID)
 		return
 	}
 	redirect(w, r, "/admin/treks/%d?msg=saved", t.ID)

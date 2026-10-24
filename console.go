@@ -51,6 +51,7 @@ func (a *App) adminRoutes() http.Handler {
 	mux.HandleFunc("GET /admin/events/{id}", adm(a.consoleEvent))
 	mux.HandleFunc("POST /admin/events/{id}", adm(a.consoleSaveEvent))
 	mux.HandleFunc("POST /admin/events/{id}/status", adm(a.consoleEventStatus))
+	mux.HandleFunc("POST /admin/events/{id}/cancel", adm(a.consoleCancelEvent))
 	mux.HandleFunc("POST /admin/events/{id}/delete", adm(a.consoleDeleteEvent))
 	mux.HandleFunc("POST /admin/batches/{id}/review", adm(a.adminReviewBatch))
 
@@ -174,7 +175,8 @@ func (e Event) MarshalJSON() ([]byte, error) {
 		plain
 		Left, Revenue, Fill          int
 		Past, IsDraft, IsLive, IsPending bool
-	}{plain(e), e.Left(), e.Revenue(), e.Fill(), e.Past(), e.IsDraft(), e.IsLive(), e.IsPending()})
+		IsCancelled                      bool
+	}{plain(e), e.Left(), e.Revenue(), e.Fill(), e.Past(), e.IsDraft(), e.IsLive(), e.IsPending(), e.Status == BatchCancelled})
 }
 
 func pct(n, of int) int {
@@ -229,6 +231,7 @@ var eventFilters = []struct {
 	{"upcoming", "Upcoming", `WHERE b.start_date >= date('now') AND b.status IN ('live', 'draft', 'pending') ORDER BY b.start_date, b.id`},
 	{"draft", "Drafts", `WHERE b.status = 'draft' ORDER BY b.start_date, b.id`},
 	{"pending", "Proposed by leads", `WHERE b.status = 'pending' ORDER BY b.start_date, b.id`},
+	{"cancelled", "Cancelled", `WHERE b.status = 'cancelled' ORDER BY b.start_date DESC, b.id DESC`},
 	{"past", "Past", `WHERE b.start_date < date('now') AND b.status = 'live' ORDER BY b.start_date DESC, b.id DESC`},
 	{"all", "All", `ORDER BY b.start_date DESC, b.id DESC`},
 }

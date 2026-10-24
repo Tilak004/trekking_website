@@ -15,6 +15,31 @@ function PostButton({ path, fields, className, children, confirm }) {
   );
 }
 
+// CancelEvent cancels a date from our side (too few trekkers, weather, closure):
+// it comes off the website and every registration gets a full refund.
+function CancelEvent({ e }) {
+  const { submit, busy } = useSubmit();
+  return (
+    <section className="panel danger-zone">
+      <strong>Cancel this event</strong>
+      <p className="muted small">Use this when the trek can't run (for example too few seats filled). The date comes off the website,
+        all {e.Active} registration{e.Active === 1 ? '' : 's'} are cancelled, and everyone who paid is owed a <b>full refund</b>
+        (₹{inr(e.Collected)} collected so far). You then send each trekker a ready-written WhatsApp message and mark refunds as sent.</p>
+      <form onSubmit={submit(`/admin/events/${e.ID}/cancel`, { confirm: `Cancel ${e.TrekName} on ${fmtDate(e.StartDate)}? ${e.Active} registration(s) will be cancelled with full refunds (₹${inr(e.Collected)} collected). This can't be undone.` })} className="cancel-event">
+        <label>Reason (goes into the message to trekkers)
+          <select name="reason" defaultValue="low">
+            <option value="low">Not enough trekkers</option>
+            <option value="weather">Bad weather</option>
+            <option value="closed">Trail closed by the forest department</option>
+            <option value="other">Other reasons</option>
+          </select>
+        </label>
+        <button className="btn small act-rejected" disabled={busy}>Cancel event &amp; refund everyone</button>
+      </form>
+    </section>
+  );
+}
+
 export function Events() {
   const page = usePage();
   useTitle('Events');
@@ -51,6 +76,9 @@ export function Events() {
                   ) : e.IsDraft ? (
                     <PostButton path={`/admin/events/${e.ID}/status`} fields={{ status: 'live' }} className="btn small">Publish</PostButton>
                   ) : null}
+                  {!e.Active && !e.Requested && (
+                    <PostButton path={`/admin/events/${e.ID}/delete`} className="linklike danger small" confirm={`Delete the ${e.TrekName} event on ${fmtDate(e.StartDate)}? This can't be undone.`}>Delete</PostButton>
+                  )}
                 </td>
               </tr>
             )) : <tr><td colSpan={6} className="muted">Nothing here. <Link to="/admin/events/new">Create an event</Link>.</td></tr>}
@@ -109,6 +137,8 @@ export function EventPage() {
                 <div><strong>Published.</strong> Trekkers can see and book this event.{e.TrekHidden && <> <span className="warn">The trek is hidden, so it won't show on the site until you make it visible in <Link to={`/admin/treks/${e.TrekID}`}>trek settings</Link>.</span></>}</div>
                 <PostButton path={`/admin/events/${e.ID}/status`} fields={{ status: 'draft' }} className="btn ghost">Unpublish</PostButton>
               </>
+            ) : e.IsCancelled ? (
+              <div><strong>Cancelled.</strong> This date is off the website. Send each trekker the cancellation message below and mark refunds as sent.</div>
             ) : (
               <div><strong>Rejected.</strong> This proposed date is not visible to trekkers.</div>
             )}
@@ -169,17 +199,18 @@ export function EventPage() {
             </div>
             <RegTable bookings={d.Bookings} back={d.Back} />
           </section>
-          <section className="panel danger-zone">
+          {(e.IsLive || e.IsDraft) && e.Active > 0 && <CancelEvent e={e} />}
+          {!e.IsCancelled && <section className="panel danger-zone">
             <strong>Delete this event</strong>
             {d.Bookings && d.Bookings.length > 0 ? (
-              <p className="muted small">This event has registrations, so it can't be deleted (that would lose booking and payment records). To take it off the site instead, cancel or reject its active registrations and press <b>Unpublish</b> above.</p>
+              <p className="muted small">This event has registrations, so it can't be deleted (that would lose booking and payment records). If the trek can't run, use <b>Cancel this event</b> above: it comes off the site and everyone is refunded, while the records are kept.</p>
             ) : (
               <>
                 <p className="muted small">Removes this date for good. This can't be undone.</p>
                 <PostButton path={`/admin/events/${e.ID}/delete`} className="btn small act-rejected" confirm={`Delete the ${e.TrekName} event on ${fmtDate(e.StartDate)}? This can't be undone.`}>Delete event</PostButton>
               </>
             )}
-          </section>
+          </section>}
         </>
       )}
     </>

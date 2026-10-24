@@ -51,8 +51,25 @@ function Actions({ k, back }) {
         ) : (
           <Act path={`/admin/bookings/${id}/cancel`} back={back} className="btn small act-cancelled" confirm={`Cancel booking #${id}? Nothing was paid, so there is no refund.`}>Cancel</Act>
         )}
+        {k.GroupInviteWA && (
+          <a className="btn small act-approved" href={k.GroupInviteWA} target="_blank" rel="noopener noreferrer" title="Opens WhatsApp to the trekker with the group invite written">Send group invite</a>
+        )}
+        {k.PaidAt && !k.GroupInviteWA && <span className="muted small">Add the trek's WhatsApp group link to send an invite.</span>}
         {k.PaidAt && (
           <Act path={`/admin/bookings/${id}/paid`} fields={{ paid: 0 }} back={back} className="linklike small" confirm={`Mark booking #${id} as NOT paid?`}>Undo paid</Act>
+        )}
+      </>
+    );
+  }
+  if (k.Status === 'completed' && k.ThankYouWA) {
+    return <a className="btn small" href={k.ThankYouWA} target="_blank" rel="noopener noreferrer" title="Thanks, review link and the channel link">Send thank-you</a>;
+  }
+  if (k.Status === 'cancelled' && k.CancelNoticeWA) {
+    return (
+      <>
+        <a className="btn small" href={k.CancelNoticeWA} target="_blank" rel="noopener noreferrer" title="Opens WhatsApp to the trekker with the cancellation and refund written">Send cancellation message</a>
+        {k.RefundAmount > 0 && !k.RefundedAt && (
+          <Act path={`/admin/bookings/${k.ID}/refunded`} back={back} className="btn small act-approved" confirm={`Have you sent the ₹${inr(k.RefundAmount)} refund to ${k.UserName}?`}>Mark refunded</Act>
         )}
       </>
     );

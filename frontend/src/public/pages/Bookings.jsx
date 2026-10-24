@@ -60,6 +60,12 @@ function Booking({ k }) {
               : k.RefundAmount ? <span className="status requested">Refund ₹{inr(k.RefundAmount)} on its way</span> : null)
             : k.PaidAt ? <span className="status paid">Paid</span>
             : k.Status === 'approved' && k.PayToken ? <Link className="btn small" to={k.PayPath}>Pay ₹{inr(k.Amount)}</Link> : null}
+          {k.GroupLink && k.Status === 'approved' && (
+            <a className="wa-link" href={k.GroupLink} target="_blank" rel="noopener noreferrer"><Icon name="waicon" /> Join the trek's WhatsApp group</a>
+          )}
+          {k.Status === 'completed' && k.ChannelLink && (
+            <a className="wa-link" href={k.ChannelLink} target="_blank" rel="noopener noreferrer"><Icon name="waicon" /> Follow our WhatsApp channel</a>
+          )}
           {k.Status === 'requested' && (
             <a className="wa-link" href={k.WALink} target="_blank" rel="noopener noreferrer"><Icon name="waicon" /> Send on WhatsApp</a>
           )}
@@ -140,6 +146,9 @@ export function Pay() {
             <p className="eyebrow">Booking #{k.ID}</p>
             <h1>Payment received ✓</h1>
             <p className="muted">Thanks {firstWord(k.UserName)}! Your seat on <strong>{k.TrekName}</strong> ({fmtDate(k.StartDate)}) is confirmed. See you on the trail.</p>
+            {k.GroupLink && (
+              <a className="btn big block" href={k.GroupLink} target="_blank" rel="noopener noreferrer">Join the {k.TrekName} WhatsApp group</a>
+            )}
           </>
         ) : (
           <>

@@ -125,6 +125,8 @@ export function TrekDefaults() {
           <span className="hint">Optional groups: a line ending in a colon, like <code>Clothing:</code>, starts a group.</span></label>
         <label>FAQs <textarea name="faqs" rows="12" defaultValue={v.faqs} />
           <span className="hint">First line is the question, the next lines are the answer. Leave a blank line between questions.</span></label>
+        <label>WhatsApp channel link <input name="whatsapp_channel" defaultValue={d.Channel || ''} placeholder="https://whatsapp.com/channel/…" />
+          <span className="hint">Sent to trekkers after their trek, so they can follow future announcements.</span></label>
         <button className="btn" disabled={busy}>Save defaults</button>
       </form>
     </>
@@ -242,6 +244,8 @@ export function TrekForm() {
         </label>
         <label>Pickup points (one per line) <textarea name="pickup_points" rows="4" defaultValue={t.PickupPoints} placeholder={'Majestic, Shanthala Silks | 11:00 PM\nIndiranagar Metro | 11:30 PM\nSilk Board Junction | 1:00 AM'} />
           <span className="hint">Add the time after a <code>|</code>. Trekkers see the times on the trek page and pick one when booking.</span></label>
+        <label>WhatsApp group invite link <input name="whatsapp_group" defaultValue={d.WhatsAppGroup || ''} placeholder="https://chat.whatsapp.com/…" />
+          <span className="hint">The trek's permanent WhatsApp group (Group info → Invite via link → Copy link). Only trekkers who have paid get it. Turn on "Approve new members" in the group.</span></label>
         <label className="check"><input type="checkbox" name="active" defaultChecked={t.Active} /> Visible to trekkers</label>
         <button className="btn" disabled={busy}>Save trek</button>
       </form>

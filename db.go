@@ -223,6 +223,9 @@ type Booking struct {
 	RefundAmount   int
 	RefundReason   string
 	RefundedAt     string
+	WhatsAppGroup  string `json:"-"` // trek group invite; exposed only as GroupLink once paid
+	ChannelLink    string
+	CancelReason   string // why we cancelled the whole event, if we did
 }
 
 type Review struct {
@@ -276,6 +279,10 @@ func openDB(path string) (*sql.DB, error) {
 	migrateTrailStatus(db)
 	migratePickups(db)
 	migrateSettings(db)
+	migrateWAGroups(db)
+	migrateFounderLeads(db)
+	migrateEventCancel(db)
+	removeSampleEvents(db)
 	if err := migrateInteractive(db); err != nil {
 		return nil, fmt.Errorf("migrate interactive: %w", err)
 	}
@@ -433,7 +440,8 @@ SELECT k.id, k.status, k.people, k.pickup, k.emergency_name, k.emergency_phone, 
        b.id, b.start_date, t.name, t.slug, COALESCE(l.name, ''), b.lead_id IS NOT NULL,
        u.name, u.email, u.phone,
        EXISTS (SELECT 1 FROM reviews r WHERE r.booking_id = k.id),
-       t.price, k.pay_token, k.paid_at, k.paid_amount, k.refund_amount, k.refund_reason, k.refunded_at
+       t.price, k.pay_token, k.paid_at, k.paid_amount, k.refund_amount, k.refund_reason, k.refunded_at,
+       t.whatsapp_group, COALESCE((SELECT value FROM settings WHERE key = 'whatsapp_channel'), ''), b.cancel_reason
 FROM bookings k
 JOIN batches b ON b.id = k.batch_id
 JOIN treks t ON t.id = b.trek_id
@@ -444,7 +452,7 @@ func scanBooking(s scanner) (Booking, error) {
 	var k Booking
 	err := s.Scan(&k.ID, &k.Status, &k.People, &k.Pickup, &k.EmergencyName, &k.EmergencyPhone, &k.Age, &k.Medical,
 		&k.Note, &k.CreatedAt, &k.BatchID, &k.StartDate, &k.TrekName, &k.TrekSlug, &k.LeadName, &k.HasLead,
-		&k.UserName, &k.UserEmail, &k.UserPhone, &k.Reviewed, &k.Price, &k.PayToken, &k.PaidAt, &k.PaidAmount, &k.RefundAmount, &k.RefundReason, &k.RefundedAt)
+		&k.UserName, &k.UserEmail, &k.UserPhone, &k.Reviewed, &k.Price, &k.PayToken, &k.PaidAt, &k.PaidAmount, &k.RefundAmount, &k.RefundReason, &k.RefundedAt, &k.WhatsAppGroup, &k.ChannelLink, &k.CancelReason)
 	return k, err
 }
 
@@ -520,45 +528,24 @@ func seed(db *sql.DB) error {
 	}
 	log.Printf("adding sample treks and leads (edit or deactivate them in the admin panel)")
 
-	var leadIDs []int64
 	for _, l := range sampleLeads {
-		res, err := db.Exec(`INSERT INTO leads (slug, name, headline, bio, achievements) VALUES (?, ?, ?, ?, ?)`,
-			slugify(l.Name), l.Name, l.Headline, l.Bio, l.Achievements)
-		if err != nil {
+		if _, err := db.Exec(`INSERT INTO leads (slug, name, headline, bio, achievements) VALUES (?, ?, ?, ?, ?)`,
+			slugify(l.Name), l.Name, l.Headline, l.Bio, l.Achievements); err != nil {
 			return err
 		}
-		id, _ := res.LastInsertId()
-		leadIDs = append(leadIDs, id)
 	}
 
 	pickups := defaultPickups
-	for i, t := range sampleTreks {
-		res, err := db.Exec(`INSERT INTO treks (slug, name, region, duration, distance_km, max_altitude, difficulty, price, summary, description, pickup_points)
+	// Treks only: real dates (events) are created in the admin console.
+	for _, t := range sampleTreks {
+		_, err := db.Exec(`INSERT INTO treks (slug, name, region, duration, distance_km, max_altitude, difficulty, price, summary, description, pickup_points)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, slugify(t.Name), t.Name, t.Region, t.Duration, t.DistanceKm, t.MaxAltitude,
 			t.Difficulty, t.Price, t.Summary, t.Description, pickups)
 		if err != nil {
 			return err
 		}
-		trekID, _ := res.LastInsertId()
-		// Two upcoming weekend batches per trek, rotating through the leads.
-		for j, weeks := range []int{1, 3} {
-			start := nextSaturday().AddDate(0, 0, 7*(weeks+i%2))
-			lead := leadIDs[(i+j)%len(leadIDs)]
-			if _, err := db.Exec(`INSERT INTO batches (trek_id, lead_id, start_date, seats) VALUES (?, ?, ?, 20)`,
-				trekID, lead, start.Format("2006-01-02")); err != nil {
-				return err
-			}
-		}
 	}
 	return nil
-}
-
-func nextSaturday() time.Time {
-	d := time.Now()
-	for d.Weekday() != time.Saturday {
-		d = d.AddDate(0, 0, 1)
-	}
-	return d
 }
 
 // Sample content only: verify distances, altitudes, prices and permits before going live.
