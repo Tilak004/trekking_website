@@ -45,7 +45,6 @@ function Slides({ slides }) {
         const load = s.Photo && (i <= on + 1 || (on === slides.length - 1 && i === 0));
         return <div key={s.Photo || 'base'} className={'slide' + (i === on ? ' on' : '')} style={load ? { backgroundImage: `url('${photoURL(s.Photo)}')` } : undefined} />;
       })}
-      ))}
     </div>
   );
 }
