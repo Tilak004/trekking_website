@@ -24,7 +24,7 @@ type Site struct {
 
 var site = Site{
 	Name:        "Beyond Expeditions",
-	Tagline:     "Find your wild.",
+	Tagline:     "For the soul that seeks more.",
 	Description: "Thoughtfully crafted treks and expeditions for those who seek more than a view. Expert guides, small groups and every detail cared for, from the first step to the summit.",
 	Phone:       "+91 77604 24521",
 	Phone2:      "+91 94817 40319",
