@@ -161,12 +161,12 @@ WHERE k.user_id = ? AND b.trek_id = ? AND k.status IN ('requested', 'approved')`
 		return
 	}
 
-	// Instant booking: the seat is held for holdHours while the trekker pays. The seat
+	// Instant booking: the seat is held for holdMinutes while the trekker pays. The seat
 	// check and the insert are one statement, so two people can't take the last seat.
 	token := randomToken(8)
 	res, err := a.db.Exec(`INSERT INTO bookings (user_id, batch_id, people, pickup, emergency_name, emergency_phone, age, medical, note,
                       status, hold_until, pay_token)
-SELECT ?, b.id, ?, ?, ?, ?, ?, ?, ?, 'approved', datetime('now', '+`+strconv.Itoa(holdHours)+` hours'), ?
+SELECT ?, b.id, ?, ?, ?, ?, ?, ?, ?, 'approved', datetime('now', '+`+strconv.Itoa(holdMinutes)+` minutes'), ?
 FROM batches b
 WHERE b.id = ? AND b.seats - (SELECT COALESCE(SUM(k.people), 0) FROM bookings k
                               WHERE k.batch_id = b.id AND k.status IN ('approved', 'completed')) >= ?`,

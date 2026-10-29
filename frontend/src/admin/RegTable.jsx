@@ -51,7 +51,7 @@ function Actions({ k, back }) {
           <>
             <ConfirmPay k={k} back={back} />
             <Act path={`/admin/bookings/${id}/claim-reject`} back={back} className="linklike small danger"
-              confirm={`Payment for #${id} not found? The claim is cleared and ${k.UserName} gets 1 more hour to pay and send the right reference.`}>Not received</Act>
+              confirm={`Payment for #${id} not found? The claim is cleared and ${k.UserName} gets another 10 minutes to pay and send the right reference.`}>Not received</Act>
           </>
         )}
         {!k.PaidAt && !k.Claimed && (

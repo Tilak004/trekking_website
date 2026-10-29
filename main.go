@@ -95,7 +95,7 @@ func main() {
 		log.Printf("%s admin console running on %s (version %s)", site.Name, *addr, version)
 	} else {
 		log.Printf("%s running on %s (version %s)", site.Name, *addr, version)
-		app.startHoldSweeper() // releases seats whose 4-hour payment hold ran out
+		app.startHoldSweeper() // releases seats whose 10-minute payment hold ran out
 		// Only the public process runs the nightly backup, so it happens once.
 		if !strings.Contains(base, "demo") {
 			startBackups(db, *photosDir, loadBackupConfig())
@@ -165,9 +165,9 @@ var flashMessages = map[string]string{
 	"trek_deleted":      "Trek deleted.",
 	"event_cancelled":   "Event cancelled. It's off the website and every registration is cancelled with a full refund. Send each trekker the cancellation message below, then mark refunds as sent.",
 	"status":            "Booking updated.",
-	"held":              "Your seat is held. Pay within 4 hours to keep it.",
+	"held":              "Your seat is held. Pay within 10 minutes to keep it.",
 	"utr_sent":          "Thanks! We're checking your payment and will confirm on WhatsApp shortly.",
-	"claim_rejected":    "Payment claim cleared. The trekker has one more hour to pay and send the right reference.",
+	"claim_rejected":    "Payment claim cleared. The trekker has another 10 minutes to pay and send the right reference.",
 	"applied":           "Application received! We'll review it and get back to you.",
 	"lead_updated":      "Your trek-lead profile is updated.",
 	"lead_status":       "Trek lead updated.",

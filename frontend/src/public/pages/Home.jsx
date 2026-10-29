@@ -25,7 +25,7 @@ function HeroFeatures() {
         <div className="feature"><Icon name="mountain" /><span>Leads who know every turn</span></div>
         <div className="feature"><Icon name="users" /><span>Small groups, never crowds</span></div>
         <div className="feature"><Icon name="calendar" /><span>Pickups in Bangalore</span></div>
-        <div className="feature"><Icon name="wallet" /><span>Seat held free for 4 hours</span></div>
+        <div className="feature"><Icon name="wallet" /><span>Seat held free for 10 minutes</span></div>
       </div>
     </div>
   );

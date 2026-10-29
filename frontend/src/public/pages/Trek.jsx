@@ -236,7 +236,7 @@ export default function Trek() {
                   <Booking key={slug} d={d.BookingData} />
                 )}
                 <ul className="assurances">
-                  <li>Seat held for 4 hours, no rush</li>
+                  <li>Seat held for 10 minutes while you pay</li>
                   <li>Confirmed on WhatsApp once you've paid</li>
                   <li><Link to="/cancellation-policy">Clear cancellation &amp; refund policy</Link></li>
                 </ul>

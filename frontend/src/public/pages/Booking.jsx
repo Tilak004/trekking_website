@@ -117,7 +117,7 @@ export default function Booking({ d }) {
           // a separate element (key): if React reused the same button, the click that moves to step 2 would also submit the form
           : <button key="send" type="submit" className="btn big" disabled={busy}>Hold my seat &amp; pay</button>}
       </div>
-      <p className="bk-hint">Your seat is held for 4 hours while you pay by UPI. We confirm on WhatsApp once we see your payment.</p>
+      <p className="bk-hint">Your seat is held for 10 minutes while you pay by UPI. We confirm on WhatsApp once we see your payment.</p>
     </form>
   );
 }

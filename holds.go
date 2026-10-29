@@ -6,15 +6,16 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
-// Seat holds. Booking is instant: the trekker's seat is held for holdHours while
+// Seat holds. Booking is instant: the trekker's seat is held for holdMinutes while
 // they pay by UPI, and they send us the 12-digit UPI reference (UTR) from their
 // payment. The console then shows "Payment claimed": the admin checks the UPI
 // app, taps Confirm, and WhatsApp opens with the confirmation message written.
-// A hold nobody pays within holdHours is released automatically. A booking that
+// A hold nobody pays within holdMinutes is released automatically. A booking that
 // has a UTR waiting for the admin never expires.
 //
 //	approved + hold_until set, no UTR   → seat held, countdown running
@@ -24,7 +25,7 @@ import (
 // Older bookings (status "requested", or approved by hand) have no hold_until
 // and keep working as before.
 
-const holdHours = 4
+const holdMinutes = 10
 
 func migrateHolds(db *sql.DB) {
 	db.Exec(`ALTER TABLE bookings ADD COLUMN hold_until TEXT NOT NULL DEFAULT ''`)
@@ -48,10 +49,10 @@ WHERE status = 'approved' AND paid_at = '' AND utr = '' AND hold_until != '' AND
 	}
 }
 
-// startHoldSweeper releases expired holds every half minute.
+// startHoldSweeper releases expired holds every 15 seconds.
 func (a *App) startHoldSweeper() {
 	go func() {
-		for range time.Tick(30 * time.Second) {
+		for range time.Tick(15 * time.Second) {
 			a.expireHolds()
 		}
 	}()
@@ -118,10 +119,10 @@ func (a *App) payClaim(w http.ResponseWriter, r *http.Request) {
 }
 
 // adminRejectClaim is for a UTR that doesn't match a payment: the claim is cleared
-// and the trekker gets one more hour to pay and send the right reference.
+// and the trekker gets another hold period to pay and send the right reference.
 func (a *App) adminRejectClaim(w http.ResponseWriter, r *http.Request) {
 	back, sep := backTo(r)
-	if _, err := a.db.Exec(`UPDATE bookings SET utr = '', claimed_at = '', hold_until = datetime('now', '+1 hours')
+	if _, err := a.db.Exec(`UPDATE bookings SET utr = '', claimed_at = '', hold_until = datetime('now', '+`+strconv.Itoa(holdMinutes)+` minutes')
 WHERE id = ? AND status = 'approved' AND paid_at = ''`, pathID(r)); err != nil {
 		a.serverError(w, err)
 		return

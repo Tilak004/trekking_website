@@ -190,7 +190,7 @@ export function Pay() {
           <p className="eyebrow">Booking #{k.ID}</p>
           <h1>{expired ? 'Your seat hold ended' : 'This booking is cancelled'}</h1>
           <p className="muted">{expired
-            ? `We didn't receive a payment within 4 hours, so the seat on ${k.TrekName} was released for other trekkers.`
+            ? `We didn't receive a payment within 10 minutes, so the seat on ${k.TrekName} was released for other trekkers.`
             : `The booking for ${k.TrekName} (${fmtDate(k.StartDate)}) is no longer active.`}</p>
           <Link className="btn big block" to={`/treks/${k.TrekSlug}`}>Book again</Link>
           {expired && Site && (
