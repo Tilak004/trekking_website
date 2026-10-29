@@ -53,8 +53,8 @@ export function About() {
         </div>
         <ol className="steps">
           <li><strong>Pick a trek</strong><span>Choose a trail and a date that suits you.</span></li>
-          <li><strong>Send a request</strong><span>It's free. Tell us your pickup point and any medical notes.</span></li>
-          <li><strong>We confirm</strong><span>We call or WhatsApp you to confirm your seat and share payment details.</span></li>
+          <li><strong>Hold your seat</strong><span>Tell us your pickup point and any medical notes. Your seat is held for 4 hours.</span></li>
+          <li><strong>Pay &amp; we confirm</strong><span>Pay by UPI, send us the 12-digit reference, and we confirm your seat on WhatsApp.</span></li>
           <li><strong>Trek!</strong><span>Show up, meet your group and lead, and enjoy the hills.</span></li>
         </ol>
       </section>
@@ -122,10 +122,10 @@ export function Terms() {
         <p className="muted">Last updated: {year()}</p>
 
         <h2>1. About these terms</h2>
-        <p>These terms apply when you use this website or join a trek organised by {Brand} ("we", "us"). By sending a booking request you agree to them.</p>
+        <p>These terms apply when you use this website or join a trek organised by {Brand} ("we", "us"). By booking a seat you agree to them.</p>
 
         <h2>2. Bookings</h2>
-        <p>A booking request is not a confirmed booking. Your seat is confirmed only when we confirm it with you and receive payment. Prices are per person and include only the items listed under "Included" on the trek page.</p>
+        <p>Booking holds your seat for 4 hours. If we haven't received your payment by then, the seat is released automatically. Your seat is confirmed only once we have received your payment and confirmed it with you on WhatsApp. Prices are per person and include only the items listed under "Included" on the trek page.</p>
 
         <h2>3. Fitness and health</h2>
         <p>Trekking is physically demanding. You confirm that you are fit enough for the trek you choose and that you have told us about any medical conditions that could affect you on the trail. Participants under 18 must be accompanied by a parent or guardian.</p>
@@ -203,7 +203,7 @@ export function Cancellation() {
             </tbody>
           </table>
         </div>
-        <p>Cancelling a booking <em>request</em> before we've confirmed it is always free. To cancel a confirmed booking, use <Link to="/my">My Bookings</Link> or message us on WhatsApp.</p>
+        <p>Cancelling a booking before you've paid is always free, and an unpaid seat hold is released automatically after 4 hours. To cancel a confirmed booking, use <Link to="/my">My Bookings</Link> or message us on WhatsApp.</p>
 
         <h2>If we cancel</h2>
         <p>We may cancel or reschedule a trek because of heavy rain, forest department closures, unsafe conditions or too few participants. If that happens, you can choose a full refund or a free move to another date or trek.</p>

@@ -43,7 +43,8 @@ func (a *App) adminSetBookingStatus(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if _, err := a.db.Exec(`UPDATE bookings SET status = ? WHERE id = ?`, status, k.ID); err != nil {
+	// A booking the admin approves by hand has no seat-hold timer (see holds.go).
+	if _, err := a.db.Exec(`UPDATE bookings SET status = ?, hold_until = '' WHERE id = ?`, status, k.ID); err != nil {
 		a.serverError(w, err)
 		return
 	}

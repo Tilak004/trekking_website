@@ -1916,3 +1916,12 @@ html[data-theme~="sage"] .site-footer .footer-grid > div > a, html[data-theme~="
   .finder .finder-q .chip { flex: none; }
   .finder .finder-q { padding: 10px 12px 12px; gap: 8px; }
 }
+
+/* Seat hold + UPI reference (pay page) */
+.hold-banner { margin: 14px 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--warn); font-size: .95rem; text-align: left; }
+.hold-timer { font-variant-numeric: tabular-nums; }
+.utr-form { margin-top: 16px; padding: 12px; border-radius: 14px; background: var(--surface-2); text-align: left; }
+.utr-form p { margin: 4px 0 10px; }
+.utr-row { display: flex; gap: 8px; }
+.utr-row input { flex: 1; min-width: 0; font-size: 1.05rem; letter-spacing: .04em; }
+.utr-row .btn { flex: none; }

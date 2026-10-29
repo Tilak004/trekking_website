@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -127,6 +128,7 @@ func (a *App) bookTrek(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	a.expireHolds() // seats from timed-out holds are free again
 	batch, err := a.batchByID(int64(formInt(r, "batch_id")))
 	if err != nil || batch.TrekID != t.ID || batch.Status != BatchLive || batch.StartDate < today() {
 		redirect(w, r, "%s?err=bad_batch", back)
@@ -159,19 +161,27 @@ WHERE k.user_id = ? AND b.trek_id = ? AND k.status IN ('requested', 'approved')`
 		return
 	}
 
-	res, err := a.db.Exec(`INSERT INTO bookings (user_id, batch_id, people, pickup, emergency_name, emergency_phone, age, medical, note)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, u.ID, batch.ID, people, pickup, emName, emPhone, age,
-		trimTo(r.FormValue("medical"), 1000), trimTo(r.FormValue("note"), 1000))
+	// Instant booking: the seat is held for holdHours while the trekker pays. The seat
+	// check and the insert are one statement, so two people can't take the last seat.
+	token := randomToken(8)
+	res, err := a.db.Exec(`INSERT INTO bookings (user_id, batch_id, people, pickup, emergency_name, emergency_phone, age, medical, note,
+                      status, hold_until, pay_token)
+SELECT ?, b.id, ?, ?, ?, ?, ?, ?, ?, 'approved', datetime('now', '+`+strconv.Itoa(holdHours)+` hours'), ?
+FROM batches b
+WHERE b.id = ? AND b.seats - (SELECT COALESCE(SUM(k.people), 0) FROM bookings k
+                              WHERE k.batch_id = b.id AND k.status IN ('approved', 'completed')) >= ?`,
+		u.ID, people, pickup, emName, emPhone, age, trimTo(r.FormValue("medical"), 1000), trimTo(r.FormValue("note"), 1000),
+		token, batch.ID, people)
 	if err != nil {
 		a.serverError(w, err)
 		return
 	}
-	id, _ := res.LastInsertId()
-	if _, err := a.db.Exec(`UPDATE bookings SET pay_token = ? WHERE id = ?`, randomToken(8), id); err != nil {
-		a.serverError(w, err)
+	if n, _ := res.RowsAffected(); n == 0 {
+		redirect(w, r, "%s?err=full", back)
 		return
 	}
-	redirect(w, r, "/my/bookings/%d/sent", id)
+	id, _ := res.LastInsertId()
+	redirect(w, r, "/pay/%d/%s?msg=held", id, token)
 }
 
 // bookingSent asks the trekker to forward their new request to us on WhatsApp,
@@ -270,6 +280,7 @@ WHERE b.lead_id = ? AND t.active = 1 AND b.status = 'live' AND b.start_date >= d
 }
 
 func (a *App) myBookings(w http.ResponseWriter, r *http.Request) {
+	a.expireHolds()
 	bookings, err := a.queryBookings(`WHERE k.user_id = ? ORDER BY b.start_date DESC`, currentUser(r).ID)
 	if err != nil {
 		a.serverError(w, err)

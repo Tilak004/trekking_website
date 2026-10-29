@@ -59,6 +59,7 @@ func (a *App) adminRoutes() http.Handler {
 	mux.HandleFunc("GET /admin/registrations.csv", adm(a.consoleRegistrationsCSV))
 	mux.HandleFunc("POST /admin/bookings/{id}/status", adm(a.adminSetBookingStatus))
 	mux.HandleFunc("POST /admin/bookings/{id}/paid", adm(a.adminSetPaid))
+	mux.HandleFunc("POST /admin/bookings/{id}/claim-reject", adm(a.adminRejectClaim))
 	mux.HandleFunc("POST /admin/bookings/{id}/cancel", adm(a.adminCancelBooking))
 	mux.HandleFunc("POST /admin/bookings/{id}/refunded", adm(a.adminMarkRefunded))
 	mux.HandleFunc("GET /admin/bookings/{id}/payreq", adm(a.adminPayRequest))
@@ -173,7 +174,7 @@ func (e Event) MarshalJSON() ([]byte, error) {
 	type plain Event
 	return json.Marshal(struct {
 		plain
-		Left, Revenue, Fill          int
+		Left, Revenue, Fill              int
 		Past, IsDraft, IsLive, IsPending bool
 		IsCancelled                      bool
 	}{plain(e), e.Left(), e.Revenue(), e.Fill(), e.Past(), e.IsDraft(), e.IsLive(), e.IsPending(), e.Status == BatchCancelled})
@@ -455,7 +456,7 @@ func registrationFilter(r *http.Request) (where string, args []any, f map[string
 
 func (a *App) consoleRegistrations(w http.ResponseWriter, r *http.Request) {
 	where, args, f := registrationFilter(r)
-	bookings, err := a.queryBookings(where+` ORDER BY b.start_date, CASE k.status WHEN 'requested' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END, k.id LIMIT 1000`, args...)
+	bookings, err := a.queryBookings(where+` ORDER BY b.start_date, CASE WHEN k.status = 'approved' AND k.utr != '' AND k.paid_at = '' THEN 0 WHEN k.status = 'requested' THEN 1 WHEN k.status = 'approved' THEN 2 ELSE 3 END, k.id LIMIT 1000`, args...)
 	if err != nil {
 		a.serverError(w, err)
 		return
@@ -518,13 +519,14 @@ func csvSafe(s string) string {
 
 func (a *App) consoleDashboard(w http.ResponseWriter, r *http.Request) {
 	var d struct {
-		Requested, Pending, Drafts, LeadApps, UpcomingLive int
-		Enquiries                                          int
-		Collected, ToCollect, Trekkers, WeekRegs           int
-		SeatsTaken, SeatsTotal                             int
+		Requested, Claimed, Pending, Drafts, LeadApps, UpcomingLive int
+		Enquiries                                                   int
+		Collected, ToCollect, Trekkers, WeekRegs                    int
+		SeatsTaken, SeatsTotal                                      int
 	}
 	q := func(dest *int, sqlText string) { a.db.QueryRow(sqlText).Scan(dest) }
 	q(&d.Requested, `SELECT COUNT(*) FROM bookings k JOIN batches b ON b.id = k.batch_id WHERE k.status = 'requested' AND b.start_date >= date('now')`)
+	q(&d.Claimed, `SELECT COUNT(*) FROM bookings k JOIN batches b ON b.id = k.batch_id WHERE k.status = 'approved' AND k.utr != '' AND k.paid_at = '' AND b.start_date >= date('now')`)
 	q(&d.Pending, `SELECT COUNT(*) FROM batches WHERE status = 'pending'`)
 	q(&d.Drafts, `SELECT COUNT(*) FROM batches WHERE status = 'draft'`)
 	q(&d.LeadApps, `SELECT COUNT(*) FROM leads WHERE status = 'pending'`)
@@ -542,7 +544,9 @@ func (a *App) consoleDashboard(w http.ResponseWriter, r *http.Request) {
 		a.serverError(w, err)
 		return
 	}
-	waiting, err := a.queryBookings(`WHERE k.status = 'requested' AND b.start_date >= date('now') ORDER BY k.id DESC LIMIT 6`)
+	// Payments to verify come first, then older-style requests waiting for approval.
+	waiting, err := a.queryBookings(`WHERE (k.status = 'requested' OR (k.status = 'approved' AND k.utr != '' AND k.paid_at = ''))
+AND b.start_date >= date('now') ORDER BY (k.utr != '') DESC, k.id DESC LIMIT 8`)
 	if err != nil {
 		a.serverError(w, err)
 		return

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon.jsx';
 import { PageState } from '../../components/common.jsx';
@@ -54,12 +55,15 @@ function Booking({ k }) {
           </p>
         </div>
         <div className="booking-side">
-          <span className={`status ${k.Status}`}>{k.Status}</span>
+          {k.Held ? <span className="status pending">Seat held · <HoldTimer seconds={k.HoldSecondsLeft} /> left</span>
+            : k.Claimed ? <span className="status pending">Checking your payment</span>
+            : k.Status === 'cancelled' && k.RefundReason === 'expired' ? <span className="status cancelled">Hold ended</span>
+            : <span className={`status ${k.Status}`}>{k.Status}</span>}
           {k.Status === 'cancelled'
             ? (k.RefundedAt ? <span className="status completed">Refunded ₹{inr(k.RefundAmount)}</span>
               : k.RefundAmount ? <span className="status requested">Refund ₹{inr(k.RefundAmount)} on its way</span> : null)
             : k.PaidAt ? <span className="status paid">Paid</span>
-            : k.Status === 'approved' && k.PayToken ? <Link className="btn small" to={k.PayPath}>Pay ₹{inr(k.Amount)}</Link> : null}
+            : k.Status === 'approved' && k.PayToken && !k.Claimed ? <Link className="btn small" to={k.PayPath}>Pay ₹{inr(k.Amount)}</Link> : null}
           {k.GroupLink && k.Status === 'approved' && (
             <a className="wa-link" href={k.GroupLink} target="_blank" rel="noopener noreferrer"><Icon name="waicon" /> Join the trek's WhatsApp group</a>
           )}
@@ -129,6 +133,45 @@ export function BookingSent() {
   );
 }
 
+// "3h 12m" / "12m 05s" until the seat hold ends. Counts down on its own and
+// reloads the page when it reaches zero so the page shows the released seat.
+export function HoldTimer({ seconds }) {
+  const [left, setLeft] = useState(seconds);
+  useEffect(() => {
+    setLeft(seconds);
+    const end = Date.now() + seconds * 1000;
+    const t = setInterval(() => {
+      const s = Math.max(0, Math.round((end - Date.now()) / 1000));
+      setLeft(s);
+      if (s === 0) {
+        clearInterval(t);
+        window.dispatchEvent(new Event('beyond:refresh'));
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [seconds]);
+  const h = Math.floor(left / 3600);
+  const m = Math.floor((left % 3600) / 60);
+  const s = left % 60;
+  return <strong className="hold-timer">{h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m ${String(s).padStart(2, '0')}s`}</strong>;
+}
+
+// Where the trekker sends the 12-digit UPI reference after paying.
+function UtrForm({ k }) {
+  const { submit, busy, error } = useSubmit();
+  return (
+    <form onSubmit={submit(`${k.PayPath}/utr`)} className="utr-form">
+      <strong>Paid? Send us the UPI reference</strong>
+      <p className="small muted">In your UPI app, open the payment and copy the 12-digit <b>UTR / UPI reference number</b>.</p>
+      {error && <div className="flash err">{error}</div>}
+      <div className="utr-row">
+        <input name="utr" inputMode="numeric" autoComplete="off" required pattern="[0-9 ]{12,16}" maxLength={16} placeholder="123456789012" aria-label="UPI reference (UTR)" />
+        <button className="btn" disabled={busy}>I've paid</button>
+      </div>
+    </form>
+  );
+}
+
 export function Pay() {
   const page = usePage();
   const { Site } = useSession();
@@ -138,6 +181,40 @@ export function Pay() {
   if (!d) return <PageShell><PageState page={page} /></PageShell>;
   const k = d.Booking;
   const paidMsg = `Hi! I've paid ₹${inr(k.Amount)} for booking #${k.ID} (${k.TrekName}, ${fmtDate(k.StartDate)}). Sharing the screenshot here.`;
+  const summary = `${k.TrekName} · ${fmtDate(k.StartDate)} · ${k.People} ${k.People === 1 ? 'person' : 'people'}`;
+  if (k.Status === 'cancelled' || k.Status === 'rejected') {
+    const expired = k.RefundReason === 'expired';
+    return (
+      <PageShell>
+        <section className="pay panel">
+          <p className="eyebrow">Booking #{k.ID}</p>
+          <h1>{expired ? 'Your seat hold ended' : 'This booking is cancelled'}</h1>
+          <p className="muted">{expired
+            ? `We didn't receive a payment within 4 hours, so the seat on ${k.TrekName} was released for other trekkers.`
+            : `The booking for ${k.TrekName} (${fmtDate(k.StartDate)}) is no longer active.`}</p>
+          <Link className="btn big block" to={`/treks/${k.TrekSlug}`}>Book again</Link>
+          {expired && Site && (
+            <a className="wa-inline" href={whatsappTo(Site.BookingsWA, `Hi! I paid for booking #${k.ID} (${k.TrekName}, ${fmtDate(k.StartDate)}) but my seat hold had ended.`)} target="_blank" rel="noopener noreferrer">
+              <Icon name="waicon" /> Already paid? Message us on WhatsApp
+            </a>
+          )}
+        </section>
+      </PageShell>
+    );
+  }
+  if (k.Claimed) {
+    return (
+      <PageShell>
+        <section className="pay panel">
+          <p className="eyebrow">Booking #{k.ID}</p>
+          <h1>Payment received, we're checking it</h1>
+          <p className="muted">Thanks {firstWord(k.UserName)}! We've got your UPI reference <code>{k.Utr}</code> for ₹{inr(k.Amount)}. We'll confirm your seat on <strong>{k.TrekName}</strong> on WhatsApp as soon as we see the payment.</p>
+          <p className="small muted">{summary}</p>
+          <p className="small"><Link to="/my">Go to my bookings →</Link></p>
+        </section>
+      </PageShell>
+    );
+  }
   return (
     <PageShell>
       <section className="pay panel">
@@ -154,7 +231,10 @@ export function Pay() {
           <>
             <p className="eyebrow">Booking #{k.ID}</p>
             <h1>Pay ₹{inr(k.Amount)}</h1>
-            <p className="muted">{k.TrekName} · {fmtDate(k.StartDate)} · {k.People} {k.People === 1 ? 'person' : 'people'}</p>
+            <p className="muted">{summary}</p>
+            {k.Held && (
+              <p className="hold-banner">Your seat is held for <HoldTimer seconds={k.HoldSecondsLeft} />. Pay and send us the UPI reference before then, or the seat is released.</p>
+            )}
 
             <a className="btn big block pay-upi" href={k.UPI}>Pay with UPI app</a>
             <p className="small muted pay-apps">Opens Google Pay, PhonePe, Paytm or any UPI app with the amount filled in.</p>
@@ -169,12 +249,15 @@ export function Pay() {
               </div>
             </div>
 
+            {k.HoldUntil ? <UtrForm k={k} /> : null}
             {Site && (
               <a className="wa-inline" href={whatsappTo(Site.BookingsWA, paidMsg)} target="_blank" rel="noopener noreferrer">
-                <Icon name="waicon" /> Paid? Send us the screenshot on WhatsApp
+                <Icon name="waicon" /> {k.HoldUntil ? 'Trouble paying? Message us on WhatsApp' : 'Paid? Send us the screenshot on WhatsApp'}
               </a>
             )}
-            <p className="small muted">We'll mark your booking paid once we see it. Please pay only after we've confirmed your seat.</p>
+            <p className="small muted">{k.HoldUntil
+              ? "We'll confirm your seat on WhatsApp once we see your payment."
+              : "We'll mark your booking paid once we see it. Please pay only after we've confirmed your seat."}</p>
           </>
         )}
       </section>

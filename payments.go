@@ -55,6 +55,7 @@ func (a *App) bookingByPayToken(r *http.Request) (Booking, error) {
 
 // payPage shows the UPI button and QR code for one booking.
 func (a *App) payPage(w http.ResponseWriter, r *http.Request) {
+	a.expireHolds()
 	k, err := a.bookingByPayToken(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		a.notFound(w, r)
@@ -95,9 +96,10 @@ func (a *App) adminSetPaid(w http.ResponseWriter, r *http.Request) {
 	}
 	var err error
 	if r.FormValue("paid") == "1" {
-		_, err = a.db.Exec(`UPDATE bookings SET paid_at = datetime('now'), paid_amount = ? WHERE id = ?`, formInt(r, "amount"), pathID(r))
+		_, err = a.db.Exec(`UPDATE bookings SET paid_at = datetime('now'), paid_amount = ?, hold_until = '' WHERE id = ?`, formInt(r, "amount"), pathID(r))
 	} else {
-		_, err = a.db.Exec(`UPDATE bookings SET paid_at = '', paid_amount = 0 WHERE id = ?`, pathID(r))
+		// Not paid after all: forget the trekker's UPI reference too, and don't let an old hold time cancel it.
+		_, err = a.db.Exec(`UPDATE bookings SET paid_at = '', paid_amount = 0, utr = '', claimed_at = '', hold_until = '' WHERE id = ?`, pathID(r))
 	}
 	if err != nil {
 		a.serverError(w, err)

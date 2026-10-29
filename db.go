@@ -226,6 +226,9 @@ type Booking struct {
 	WhatsAppGroup  string `json:"-"` // trek group invite; exposed only as GroupLink once paid
 	ChannelLink    string
 	CancelReason   string // why we cancelled the whole event, if we did
+	HoldUntil      string // UTC time the seat hold ends, empty for older bookings (see holds.go)
+	Utr            string // UPI reference the trekker sent after paying
+	ClaimedAt      string
 }
 
 type Review struct {
@@ -282,6 +285,7 @@ func openDB(path string) (*sql.DB, error) {
 	migrateWAGroups(db)
 	migrateFounderLeads(db)
 	migrateEventCancel(db)
+	migrateHolds(db)
 	removeSampleEvents(db)
 	if err := migrateInteractive(db); err != nil {
 		return nil, fmt.Errorf("migrate interactive: %w", err)
@@ -441,7 +445,8 @@ SELECT k.id, k.status, k.people, k.pickup, k.emergency_name, k.emergency_phone, 
        u.name, u.email, u.phone,
        EXISTS (SELECT 1 FROM reviews r WHERE r.booking_id = k.id),
        t.price, k.pay_token, k.paid_at, k.paid_amount, k.refund_amount, k.refund_reason, k.refunded_at,
-       t.whatsapp_group, COALESCE((SELECT value FROM settings WHERE key = 'whatsapp_channel'), ''), b.cancel_reason
+       t.whatsapp_group, COALESCE((SELECT value FROM settings WHERE key = 'whatsapp_channel'), ''), b.cancel_reason,
+       k.hold_until, k.utr, k.claimed_at
 FROM bookings k
 JOIN batches b ON b.id = k.batch_id
 JOIN treks t ON t.id = b.trek_id
@@ -452,7 +457,8 @@ func scanBooking(s scanner) (Booking, error) {
 	var k Booking
 	err := s.Scan(&k.ID, &k.Status, &k.People, &k.Pickup, &k.EmergencyName, &k.EmergencyPhone, &k.Age, &k.Medical,
 		&k.Note, &k.CreatedAt, &k.BatchID, &k.StartDate, &k.TrekName, &k.TrekSlug, &k.LeadName, &k.HasLead,
-		&k.UserName, &k.UserEmail, &k.UserPhone, &k.Reviewed, &k.Price, &k.PayToken, &k.PaidAt, &k.PaidAmount, &k.RefundAmount, &k.RefundReason, &k.RefundedAt, &k.WhatsAppGroup, &k.ChannelLink, &k.CancelReason)
+		&k.UserName, &k.UserEmail, &k.UserPhone, &k.Reviewed, &k.Price, &k.PayToken, &k.PaidAt, &k.PaidAmount, &k.RefundAmount, &k.RefundReason, &k.RefundedAt, &k.WhatsAppGroup, &k.ChannelLink, &k.CancelReason,
+		&k.HoldUntil, &k.Utr, &k.ClaimedAt)
 	return k, err
 }
 

@@ -15,6 +15,25 @@ function Act({ path, fields, back, className, children, confirm, title }) {
   );
 }
 
+// One tap: marks the booking paid and opens WhatsApp to the trekker with the
+// confirmation already written (the admin only has to press send there).
+function ConfirmPay({ k, back }) {
+  const { submit } = useSubmit();
+  const send = submit(`/admin/bookings/${k.ID}/paid`);
+  const onSubmit = (e) => {
+    if (k.ConfirmWA) window.open(k.ConfirmWA, '_blank', 'noopener');
+    return send(e);
+  };
+  return (
+    <form onSubmit={onSubmit} className="inline">
+      <input type="hidden" name="paid" value="1" />
+      <input type="hidden" name="amount" value={k.Amount} />
+      <input type="hidden" name="back" value={back} />
+      <button className="btn small act-approved" title="Marks it paid and opens WhatsApp with the confirmation written">Confirm payment &amp; send WhatsApp</button>
+    </form>
+  );
+}
+
 function Actions({ k, back }) {
   const id = k.ID;
   if (k.Status === 'requested') {
@@ -28,9 +47,16 @@ function Actions({ k, back }) {
   if (k.Status === 'approved') {
     return (
       <>
-        {!k.PaidAt && (
+        {k.Claimed && (
           <>
-            <Link className="btn small ghost" to={`/admin/bookings/${id}/payreq`}>Send payment request</Link>
+            <ConfirmPay k={k} back={back} />
+            <Act path={`/admin/bookings/${id}/claim-reject`} back={back} className="linklike small danger"
+              confirm={`Payment for #${id} not found? The claim is cleared and ${k.UserName} gets 1 more hour to pay and send the right reference.`}>Not received</Act>
+          </>
+        )}
+        {!k.PaidAt && !k.Claimed && (
+          <>
+            {!k.Held && <Link className="btn small ghost" to={`/admin/bookings/${id}/payreq`}>Send payment request</Link>}
             <Act path={`/admin/bookings/${id}/paid`} fields={{ paid: 1, amount: k.Amount }} back={back} className="btn small">Mark paid</Act>
           </>
         )}
@@ -51,8 +77,8 @@ function Actions({ k, back }) {
         ) : (
           <Act path={`/admin/bookings/${id}/cancel`} back={back} className="btn small act-cancelled" confirm={`Cancel booking #${id}? Nothing was paid, so there is no refund.`}>Cancel</Act>
         )}
-        {k.GroupInviteWA && (
-          <a className="btn small act-approved" href={k.GroupInviteWA} target="_blank" rel="noopener noreferrer" title="Opens WhatsApp to the trekker with the group invite written">Send group invite</a>
+        {k.PaidAt && k.ConfirmWA && (
+          <a className="btn small act-approved" href={k.ConfirmWA} target="_blank" rel="noopener noreferrer" title="Opens WhatsApp to the trekker with the confirmation (and the trek group invite) written">Send confirmation</a>
         )}
         {k.PaidAt && !k.GroupInviteWA && <span className="muted small">Add the trek's WhatsApp group link to send an invite.</span>}
         {k.PaidAt && (
@@ -133,14 +159,19 @@ export default function RegTable({ bookings, back, showEvent }) {
                 {!k.Medical && !k.Note && <span className="muted">—</span>}
               </td>
               <td>
-                <span className={`status ${k.Status}`}>{k.Status}</span>
+                {k.Claimed ? <span className="status pending">Payment claimed</span>
+                  : k.Held ? <span className="status pending">Seat held</span>
+                  : <span className={`status ${k.Status}`}>{k.Status}</span>}
+                {k.Claimed && <><br /><span className="small">UTR <code>{k.Utr}</code></span></>}
+                {k.Held && <><br /><span className="muted small">releases in {k.HoldSecondsLeft >= 3600 ? `${Math.floor(k.HoldSecondsLeft / 3600)}h ${Math.floor((k.HoldSecondsLeft % 3600) / 60)}m` : `${Math.ceil(k.HoldSecondsLeft / 60)}m`}</span></>}
+                {k.Status === 'cancelled' && k.RefundReason === 'expired' && <><br /><span className="muted small">hold expired, never paid</span></>}
                 {k.PaidAt ? <><br /><span className="status paid">Paid ₹{inr(k.PaidAmount)}</span></>
                   : (k.Status === 'approved' || k.Status === 'requested') ? <><br /><span className="muted small">Due ₹{inr(k.Amount)}</span></> : null}
                 {k.Status === 'cancelled' && (
                   <>
                     {k.RefundedAt ? <><br /><span className="status completed">Refunded ₹{inr(k.RefundAmount)}</span></>
                       : k.RefundAmount ? <><br /><span className="status requested">Refund ₹{inr(k.RefundAmount)} pending</span></> : null}
-                    {k.RefundReason ? <><br /><span className="muted small">{k.RefundReason === 'us' ? 'Cancelled by us' : 'Cancelled by trekker'}</span></> : null}
+                    {k.RefundReason && k.RefundReason !== 'expired' ? <><br /><span className="muted small">{k.RefundReason === 'us' ? 'Cancelled by us' : 'Cancelled by trekker'}</span></> : null}
                   </>
                 )}
               </td>

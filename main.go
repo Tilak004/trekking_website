@@ -95,6 +95,7 @@ func main() {
 		log.Printf("%s admin console running on %s (version %s)", site.Name, *addr, version)
 	} else {
 		log.Printf("%s running on %s (version %s)", site.Name, *addr, version)
+		app.startHoldSweeper() // releases seats whose 4-hour payment hold ran out
 		// Only the public process runs the nightly backup, so it happens once.
 		if !strings.Contains(base, "demo") {
 			startBackups(db, *photosDir, loadBackupConfig())
@@ -141,6 +142,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /my/bookings/{id}/sent", a.requireUser(a.bookingSent))
 	mux.HandleFunc("GET /pay/{id}/{token}", a.payPage)
 	mux.HandleFunc("GET /pay/{id}/{token}/qr.png", a.payQR)
+	mux.HandleFunc("POST /pay/{id}/{token}/utr", a.payClaim)
 	mux.HandleFunc("POST /my/bookings/{id}/cancel", a.requireUser(a.cancelBooking))
 	mux.HandleFunc("POST /my/bookings/{id}/review", a.requireUser(a.reviewBooking))
 
@@ -163,6 +165,9 @@ var flashMessages = map[string]string{
 	"trek_deleted":      "Trek deleted.",
 	"event_cancelled":   "Event cancelled. It's off the website and every registration is cancelled with a full refund. Send each trekker the cancellation message below, then mark refunds as sent.",
 	"status":            "Booking updated.",
+	"held":              "Your seat is held. Pay within 4 hours to keep it.",
+	"utr_sent":          "Thanks! We're checking your payment and will confirm on WhatsApp shortly.",
+	"claim_rejected":    "Payment claim cleared. The trekker has one more hour to pay and send the right reference.",
 	"applied":           "Application received! We'll review it and get back to you.",
 	"lead_updated":      "Your trek-lead profile is updated.",
 	"lead_status":       "Trek lead updated.",
@@ -180,6 +185,8 @@ var flashErrors = map[string]string{
 	"full":               "Not enough seats left in that batch.",
 	"bad_batch":          "That batch is not available.",
 	"already_booked":     "You already have an active booking for this trek.",
+	"bad_utr":            "That doesn't look like a UPI reference. It's the 12-digit number in your payment details (UTR / transaction ID).",
+	"utr_used":           "That UPI reference has already been used for another booking. Please check the number.",
 	"batch_has_bookings": "This batch has bookings, so it can't be deleted.",
 	"bad_group_link":     "Trek saved, but the WhatsApp group link wasn't. It should start with https://chat.whatsapp.com/",
 	"bad_channel_link":   "The channel link wasn't saved. It should start with https://whatsapp.com/channel/",

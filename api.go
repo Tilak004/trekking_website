@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
-	"context"
 	"encoding/json"
 	"html"
 	"io/fs"
@@ -130,20 +130,25 @@ func (k Booking) MarshalJSON() ([]byte, error) {
 	type plain Booking
 	return json.Marshal(struct {
 		plain
-		Amount         int
-		PayPath        string
-		UPI            string
-		CustomerRefund int
-		RefundRule     string
-		DaysToTrek     int
-		TrekPassed     bool
-		WALink         string
-		GroupLink      string
-		GroupInviteWA  string
-		ThankYouWA     string
-		CancelNoticeWA string
+		Amount          int
+		PayPath         string
+		UPI             string
+		CustomerRefund  int
+		RefundRule      string
+		DaysToTrek      int
+		TrekPassed      bool
+		WALink          string
+		GroupLink       string
+		GroupInviteWA   string
+		ThankYouWA      string
+		CancelNoticeWA  string
+		Held            bool
+		Claimed         bool
+		HoldSecondsLeft int
+		ConfirmWA       string
 	}{plain(k), k.Amount(), k.PayPath(), k.UPILink(), k.CustomerRefund(), k.RefundRule(), k.DaysToTrek(), k.TrekPassed(),
-		bookingsWALink(bookingMessage(k)), k.GroupLink(), k.GroupInviteWA(), k.ThankYouWA(publicURL()), k.CancelNoticeWA()})
+		bookingsWALink(bookingMessage(k)), k.GroupLink(), k.GroupInviteWA(), k.ThankYouWA(publicURL()), k.CancelNoticeWA(),
+		k.Held(), k.Claimed(), k.HoldSecondsLeft(), k.ConfirmWA()})
 }
 
 // scrubKeys are fields that exist on our structs but were never shown on public
@@ -166,9 +171,10 @@ func scrubKeys(page string, admin bool) map[string]bool {
 	default:
 		drop["PayToken"], drop["PayPath"], drop["UPI"], drop["UserEmail"] = true, true, true, true
 		drop["GroupLink"] = true
+		drop["Utr"], drop["ClaimedAt"] = true, true // the UPI reference is only for its owner and our team
 	}
 	// messages the admin sends from WhatsApp are for the console only
-	drop["GroupInviteWA"], drop["ThankYouWA"], drop["WhatsAppGroup"], drop["CancelNoticeWA"] = true, true, true, true
+	drop["GroupInviteWA"], drop["ThankYouWA"], drop["WhatsAppGroup"], drop["CancelNoticeWA"], drop["ConfirmWA"] = true, true, true, true, true
 	return drop
 }
 

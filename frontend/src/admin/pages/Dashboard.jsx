@@ -41,10 +41,11 @@ export default function Dashboard() {
         <div className="kpi"><span>Seats filled</span><strong>{d.Fill}%</strong><em>{D.SeatsTaken} of {D.SeatsTotal} · {D.UpcomingLive} live events</em></div>
       </div>
 
-      {(D.Requested || D.Pending || D.Drafts || D.LeadApps) ? (
+      {(D.Claimed || D.Requested || D.Pending || D.Drafts || D.LeadApps) ? (
         <section className="c-todo">
           <h2>Needs your attention</h2>
           <ul>
+            {D.Claimed ? <li><Link to="/admin/registrations"><b>{D.Claimed}</b> {D.Claimed === 1 ? 'payment' : 'payments'} claimed, check your UPI app and confirm</Link></li> : null}
             {D.Requested ? <li><Link to="/admin/registrations?status=requested"><b>{D.Requested}</b> registration {D.Requested === 1 ? 'request' : 'requests'} waiting for approval</Link></li> : null}
             {D.Pending ? <li><Link to="/admin/events?show=pending"><b>{D.Pending}</b> {D.Pending === 1 ? 'date' : 'dates'} proposed by trek leads</Link></li> : null}
             {D.Drafts ? <li><Link to="/admin/events?show=draft"><b>{D.Drafts}</b> draft {D.Drafts === 1 ? 'event' : 'events'} not yet published</Link></li> : null}
@@ -58,7 +59,7 @@ export default function Dashboard() {
         <EventList events={d.Upcoming} />
       </section>
       <section className="c-block">
-        <div className="c-head"><h2>Waiting for approval</h2><Link to="/admin/registrations?status=requested">All →</Link></div>
+        <div className="c-head"><h2>Payments to verify &amp; requests</h2><Link to="/admin/registrations">All →</Link></div>
         <RegTable bookings={d.Bookings} back={d.Back} showEvent />
       </section>
     </>
