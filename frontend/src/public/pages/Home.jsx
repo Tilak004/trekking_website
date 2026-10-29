@@ -75,7 +75,7 @@ function Hero({ d, brand }) {
       <div className="wrap hero-inner">
         <p className="hero-script">Explore</p>
         <h1 className="hero-title">The Western Ghats</h1>
-        <p className="hero-tagline">Find your wild.</p>
+        <p className="hero-tagline">For the soul that seeks more.</p>
         <p className="hero-intro">Small groups, honest prices and a trek lead who knows every turn of the trail. All you bring is your shoes.</p>
         <div className="hero-ctas">
           <a className="btn big" href="#treks"><Icon name="compass" /> Explore treks</a>
@@ -90,7 +90,7 @@ function Hero({ d, brand }) {
 export default function Home() {
   const page = usePage();
   const d = page.data;
-  useTitle('Find your wild');
+  useTitle('For the soul that seeks more');
   const state = <PageState page={page} />;
   if (!d) return <PageShell>{state}</PageShell>;
 
