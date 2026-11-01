@@ -51,6 +51,10 @@ func (a *App) spa(next http.Handler) http.Handler {
 		case strings.HasPrefix(p, "/static/"), strings.HasPrefix(p, "/photos/"),
 			strings.HasSuffix(p, "/qr.png"), strings.HasSuffix(p, ".csv"):
 			next.ServeHTTP(w, r)
+		case p == "/robots.txt":
+			a.robotsTxt(w, r)
+		case p == "/sitemap.xml":
+			a.sitemapXML(w, r)
 		case r.Method == http.MethodGet || r.Method == http.MethodHead:
 			a.serveShell(w, r, shell)
 		default:
@@ -65,12 +69,18 @@ func (a *App) serveShell(w http.ResponseWriter, r *http.Request, shell string) {
 		http.Error(w, "The frontend isn't built yet. Run: cd frontend && npm run build", http.StatusServiceUnavailable)
 		return
 	}
-	title, desc, image := a.shellMeta(r)
+	title, desc, image, found := a.shellMeta(r)
 	base := baseURL(r)
 	var meta bytes.Buffer
 	esc := html.EscapeString
 	meta.WriteString("<title>" + esc(title) + "</title>\n")
 	meta.WriteString(`<meta name="description" content="` + esc(desc) + `">` + "\n")
+	if a.adminMode || !found || noindex(r.URL.Path) {
+		meta.WriteString(`<meta name="robots" content="noindex">` + "\n")
+	} else {
+		meta.WriteString(`<link rel="canonical" href="` + esc(base+r.URL.Path) + `">` + "\n")
+		meta.WriteString(`<script type="application/ld+json">` + string(a.structuredData(r, base)) + "</script>\n")
+	}
 	meta.WriteString(`<meta property="og:type" content="website">` + "\n")
 	meta.WriteString(`<meta property="og:site_name" content="` + esc(site.Name) + `">` + "\n")
 	meta.WriteString(`<meta property="og:title" content="` + esc(title) + `">` + "\n")
@@ -83,33 +93,50 @@ func (a *App) serveShell(w http.ResponseWriter, r *http.Request, shell string) {
 	out := bytes.Replace(raw, []byte("<!--META-->"), meta.Bytes(), 1)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
+	if !found {
+		w.WriteHeader(http.StatusNotFound) // the React app shows its own not-found page
+	}
 	w.Write(out)
 }
 
 // shellMeta picks the title, description and share image for a page, so link
-// previews (WhatsApp, Instagram) show the right trek or lead.
-func (a *App) shellMeta(r *http.Request) (title, desc, image string) {
-	title, desc = site.Name+" · "+site.Tagline, site.Description
+// previews (WhatsApp, Instagram) and search results show the right trek or lead.
+// found is false for pages that don't exist (unknown paths, inactive treks).
+func (a *App) shellMeta(r *http.Request) (title, desc, image string, found bool) {
+	title, desc, found = site.Name+" · "+site.Tagline, site.Description, true
 	if h := a.heroPhoto(); h != "" {
 		image = "/photos/" + h
 	}
 	if a.adminMode {
-		return "Admin · " + site.Name, desc, ""
+		return "Admin · " + site.Name, desc, "", true
 	}
 	p := r.URL.Path
+	if !knownPage.MatchString(p) {
+		return "Page not found · " + site.Name, desc, image, false
+	}
 	switch {
 	case strings.HasPrefix(p, "/treks/"):
-		if t, err := a.trekWhere(`t.slug = ? AND t.active = 1`, strings.TrimPrefix(p, "/treks/")); err == nil {
-			title, desc = t.Name+" · "+site.Name, t.Summary
-			if t.Photo != "" {
-				image = "/photos/" + t.Photo
-			}
+		t, err := a.trekWhere(`t.slug = ? AND t.active = 1`, strings.TrimPrefix(p, "/treks/"))
+		if err != nil {
+			return "Trek not found · " + site.Name, desc, image, false
+		}
+		title, desc = t.Name+" · "+site.Name, t.Summary
+		if t.Photo != "" {
+			image = "/photos/" + t.Photo
 		}
 	case strings.HasPrefix(p, "/leads/"):
-		if l, err := a.leadWhere(`l.slug = ? AND l.active = 1 AND l.status = 'approved'`, strings.TrimPrefix(p, "/leads/")); err == nil {
-			title, desc = l.Name+" · "+site.Name, l.Headline
-			if l.Photo != "" {
-				image = "/photos/" + l.Photo
+		l, err := a.leadWhere(`l.slug = ? AND l.active = 1 AND l.status = 'approved'`, strings.TrimPrefix(p, "/leads/"))
+		if err != nil {
+			return "Lead not found · " + site.Name, desc, image, false
+		}
+		title, desc = l.Name+" · "+site.Name, l.Headline
+		if l.Photo != "" {
+			image = "/photos/" + l.Photo
+		}
+	default:
+		for _, s := range staticPages {
+			if s.Path == p {
+				title, desc = s.Title+" · "+site.Name, s.Desc
 			}
 		}
 	}
