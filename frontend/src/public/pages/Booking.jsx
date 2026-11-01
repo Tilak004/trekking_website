@@ -76,7 +76,7 @@ export default function Booking({ d }) {
               <b>{f.people}</b>
               <button type="button" aria-label="More" disabled={f.people >= maxPeople} onClick={() => setF({ ...f, people: Math.min(maxPeople, f.people + 1) })}>+</button>
             </div>
-            {d.price > 0 && <p className="bk-total">₹{inr(d.price * f.people)} <span>total for {f.people} {f.people === 1 ? 'person' : 'people'} · pay only after we confirm</span></p>}
+            {d.price > 0 && <p className="bk-total">₹{inr(d.price * f.people)} <span>total for {f.people} {f.people === 1 ? 'person' : 'people'} · pay by UPI</span></p>}
           </div>
         )}
 
@@ -103,7 +103,7 @@ export default function Booking({ d }) {
             )}
             <label>Anything else? (optional) <textarea rows="2" value={f.note} onChange={set('note')} maxLength={1000}
               placeholder="Friends joining, medical notes, questions…" /></label>
-            {d.price > 0 && <p className="bk-total">₹{inr(d.price * f.people)} <span>for {f.people} · pay only after we confirm</span></p>}
+            {d.price > 0 && <p className="bk-total">₹{inr(d.price * f.people)} <span>for {f.people} · pay by UPI</span></p>}
           </div>
         )}
       </div>

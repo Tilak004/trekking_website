@@ -46,13 +46,13 @@ export function Leads() {
           <div className="why-item"><h3>People who know the trail</h3><p>Our leads have walked these hills many times over. They set a pace everyone can enjoy and make sure nobody gets left behind.</p></div>
           <div className="why-item"><h3>Small groups, real conversations</h3><p>We cap every batch, so it feels like a trip with friends, not a crowd on a hill.</p></div>
           <div className="why-item"><h3>Learn as you walk</h3><p>We teach the basics of map reading and navigation along the way, and how to use a compass, so you leave a more confident trekker.</p></div>
-          <div className="why-item"><h3>Ask first, pay later</h3><p>Request a seat for free. We'll call you, answer every question, and only then share payment details.</p></div>
+          <div className="why-item"><h3>Book in minutes</h3><p>Pick a date and fill in your details. Your seat is held for 10 minutes while you pay by UPI, and we confirm it on WhatsApp.</p></div>
         </div>
       </section>
 
       <section className="cta-band">
         <h2>Ready when you are!</h2>
-        <p>No account needed. Pick a date, send a request and we'll take it from there.</p>
+        <p>No account needed. Pick a date, fill in your details and pay by UPI. We'll take it from there.</p>
         <Link className="btn big" to="/#treks">See upcoming treks</Link>
       </section>
     </PageShell>

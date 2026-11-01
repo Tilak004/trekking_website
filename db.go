@@ -282,6 +282,7 @@ func openDB(path string) (*sql.DB, error) {
 	migrateTrailStatus(db)
 	migratePickups(db)
 	migrateSettings(db)
+	migrateBookingFAQ(db)
 	migrateWAGroups(db)
 	migrateFounderLeads(db)
 	migrateEventCancel(db)

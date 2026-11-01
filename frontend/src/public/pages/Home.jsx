@@ -138,6 +138,17 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {d.FAQs && d.FAQs.length > 0 && (
+        <section id="faqs" className="section">
+          <div className="section-head">
+            <h2>Questions, answered</h2>
+          </div>
+          <div className="faqs">
+            {d.FAQs.map(([q, a]) => <details key={q}><summary>{q}</summary><p>{a}</p></details>)}
+          </div>
+        </section>
+      )}
     </PageShell>
   );
 }

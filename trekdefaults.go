@@ -33,7 +33,7 @@ func migrateSettings(db *sql.DB) {
 			"Personal medicines",
 		}, "\n"),
 		"default_faqs": strings.Join([]string{
-			"Do I need to pay to request a seat?\nNo. Booking requests are free. We confirm your seat over WhatsApp or a call and share payment details then.",
+			bookingFAQ,
 			newBoardFAQ,
 			"What if it rains heavily or the trail is closed?\nYour safety comes first. If the forest department closes the trail or conditions are unsafe, we'll move you to another date or trek. See our cancellation policy for refunds.",
 			"Is insurance included?\nNo. Our price does not include travel, accident or medical insurance, and any medical or evacuation costs are yours. If you want cover, you can buy personal accident insurance on your own before the trek.",

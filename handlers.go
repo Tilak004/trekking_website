@@ -63,7 +63,7 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 		photoReviews = photoReviews[:6]
 	}
 	a.render(w, r, "home.html", map[string]any{
-		"FinderData": finder, "Stats": stats, "PhotoReviews": photoReviews,
+		"FinderData": finder, "Stats": stats, "PhotoReviews": photoReviews, "FAQs": a.homeFAQs(),
 		"Treks": treks, "Upcoming": upcoming, "Soon": soon, "Leads": leads, "MinPrice": minPrice, "HeroPhoto": a.heroPhoto(), "HeroSlides": a.heroSlides(treks), "HeroLayers": a.heroLayers(), "HeroStyle": a.heroStyle(), "Gallery": a.listPhotos("gallery"),
 	})
 }
