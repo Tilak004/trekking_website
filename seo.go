@@ -43,6 +43,15 @@ var staticPages = []struct{ Path, Title, Desc string }{
 // else is answered with a real 404 instead of an empty 200.
 var knownPage = regexp.MustCompile(`^/($|treks/[^/]+$|leads(/[^/]+)?$|lead-with-us$|lead$|gallery$|about$|contact$|terms$|privacy$|cancellation-policy$|login$|signup$|my$|my/bookings/\d+/sent$|pay/\d+/[^/]+$)`)
 
+// googleVerification is the Search Console ownership file: Google fetches
+// /<name> and expects exactly "google-site-verification: <name>".
+const googleVerification = "google1c53086d0db301f5.html"
+
+func (a *App) googleVerify(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprint(w, "google-site-verification: "+googleVerification)
+}
+
 func (a *App) robotsTxt(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	if a.adminMode {

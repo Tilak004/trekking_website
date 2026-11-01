@@ -55,6 +55,8 @@ func (a *App) spa(next http.Handler) http.Handler {
 			a.robotsTxt(w, r)
 		case p == "/sitemap.xml":
 			a.sitemapXML(w, r)
+		case p == "/"+googleVerification && !a.adminMode:
+			a.googleVerify(w, r)
 		case r.Method == http.MethodGet || r.Method == http.MethodHead:
 			a.serveShell(w, r, shell)
 		default:
