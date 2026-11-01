@@ -120,12 +120,50 @@ func faqBlocks(s string) [][2]string {
 	return out
 }
 
+func faqPage(faqs [][2]string) map[string]any {
+	var qs []any
+	for _, f := range faqs {
+		qs = append(qs, map[string]any{"@type": "Question", "name": f[0], "acceptedAnswer": map[string]any{"@type": "Answer", "text": f[1]}})
+	}
+	return map[string]any{"@type": "FAQPage", "mainEntity": qs}
+}
+
+// homeFAQs are the questions people search for before booking a trek. They are
+// shown on the home page and published as FAQPage data, which is what Google and
+// AI answer engines quote. Answers only repeat what the site's policies say.
+func (a *App) homeFAQs() [][2]string {
+	answer := func(faq string) string { _, ans, _ := strings.Cut(faq, "\n"); return ans }
+	var names []string
+	if treks, err := a.listTreks(true); err == nil {
+		for _, t := range treks {
+			names = append(names, t.Name)
+		}
+	}
+	faqs := [][2]string{}
+	if len(names) > 0 {
+		faqs = append(faqs, [2]string{"Which weekend treks do you run from Bangalore?",
+			"Treks in the Western Ghats and the granite hills around Bangalore. Right now: " + strings.Join(names, ", ") + ". Each trek page has the route, difficulty, itinerary and next dates."})
+	}
+	return append(faqs,
+		[2]string{"How do I book a trek and pay?", answer(bookingFAQ)},
+		[2]string{"Where do you pick up from in Bangalore?", answer(newBoardFAQ)},
+		[2]string{"I've never trekked before. Can I join?", "Yes. Every trek page shows its difficulty. Easy and easy–moderate treks suit beginners who can walk for a few hours with short breaks. For moderate and difficult treks, regular walks or jogging for a few weeks beforehand help a lot."},
+		[2]string{"How big are the groups?", "Small. We cap every batch, so it feels like a trip with friends, not a crowd on a hill."},
+		[2]string{"Who leads the treks?", "Trek leads who have walked these hills many times over. They set a pace everyone can enjoy, make sure nobody gets left behind, and teach the basics of map reading, navigation and using a compass along the way. Every lead has a profile on our Leads page."},
+		[2]string{"What should I carry?", "Trekking shoes with good grip, 2 litres of water, a rain jacket in the monsoon (June to November), light snacks, a cap and sunscreen, a small backpack, a government photo ID and any personal medicines. Each trek page has its full list."},
+		[2]string{"What if I need to cancel?", "7 or more days before the trek: full refund minus a ₹200 processing fee. 3 to 6 days before: 50% refund, or move to another date for free. Less than 3 days before: no refund, but you can move to another date once. Cancelling before you've paid is always free."},
+		[2]string{"What happens if it rains heavily or the trail is closed?", "Your safety comes first. If we cancel or reschedule because of heavy rain, a forest department closure or unsafe conditions, you choose a full refund or a free move to another date or trek."},
+		[2]string{"Is insurance included?", "No. Our price does not include travel, accident or medical insurance. If you want cover, you can buy personal accident insurance on your own before the trek."},
+	)
+}
+
 // structuredData builds the JSON-LD for a page.
 func (a *App) structuredData(r *http.Request, base string) []byte {
 	graph := []any{organization(base)}
 	p := r.URL.Path
 	if p == "/" {
-		graph = append(graph, map[string]any{"@type": "WebSite", "@id": base + "/#site", "name": site.Name, "url": base + "/", "publisher": map[string]any{"@id": base + "/#org"}})
+		graph = append(graph, map[string]any{"@type": "WebSite", "@id": base + "/#site", "name": site.Name, "url": base + "/", "publisher": map[string]any{"@id": base + "/#org"}},
+			faqPage(a.homeFAQs()))
 	}
 	if slug, ok := strings.CutPrefix(p, "/treks/"); ok {
 		if t, err := a.trekWhere(`t.slug = ? AND t.active = 1`, slug); err == nil {
@@ -154,11 +192,7 @@ func (a *App) structuredData(r *http.Request, base string) []byte {
 				},
 			})
 			if faqs := faqBlocks(t.FAQs); len(faqs) > 0 {
-				var qs []any
-				for _, f := range faqs {
-					qs = append(qs, map[string]any{"@type": "Question", "name": f[0], "acceptedAnswer": map[string]any{"@type": "Answer", "text": f[1]}})
-				}
-				graph = append(graph, map[string]any{"@type": "FAQPage", "mainEntity": qs})
+				graph = append(graph, faqPage(faqs))
 			}
 		}
 	}
