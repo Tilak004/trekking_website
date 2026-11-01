@@ -28,11 +28,21 @@ const (
 	defaultPickups    = "Near BMS College, Basavanagudi\nBanashankari bus stand"
 	oldBaseFAQ        = "Can I join directly at the base village?\nYes. Choose \"Reach base village directly\" as your pickup point and we'll share the meeting point and time."
 	newBoardFAQ       = "Where do we board?\nAt one of two pickup points in Bangalore: near BMS College, Basavanagudi, or Banashankari bus stand. Pick one when you book and we'll share the exact time on WhatsApp."
+	// booking moved from free requests to an instant seat hold paid by UPI QR
+	oldPayFAQ  = "Do I need to pay to request a seat?\nNo. Booking requests are free. We confirm your seat over WhatsApp or a call and share payment details then."
+	bookingFAQ = "How do I book and pay?\nPick a date and fill in your details. Your seat is held for 10 minutes while you pay by scanning the UPI QR code, and we confirm your seat on WhatsApp once we see the payment."
 )
 
 func migratePickups(db *sql.DB) {
 	db.Exec(`UPDATE treks SET pickup_points = ? WHERE pickup_points = ?`, defaultPickups, oldDefaultPickups)
 	db.Exec(`UPDATE treks SET faqs = replace(faqs, ?, ?) WHERE instr(faqs, ?) > 0`, oldBaseFAQ, newBoardFAQ, oldBaseFAQ)
+}
+
+// migrateBookingFAQ swaps the old "booking requests are free" FAQ for the
+// current booking flow, only where the text is still exactly the starter text.
+func migrateBookingFAQ(db *sql.DB) {
+	db.Exec(`UPDATE treks SET faqs = replace(faqs, ?, ?) WHERE instr(faqs, ?) > 0`, oldPayFAQ, bookingFAQ, oldPayFAQ)
+	db.Exec(`UPDATE settings SET value = replace(value, ?, ?) WHERE key = 'default_faqs' AND instr(value, ?) > 0`, oldPayFAQ, bookingFAQ, oldPayFAQ)
 }
 
 func migrateTrailStatus(db *sql.DB) {
