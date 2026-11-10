@@ -13,12 +13,12 @@ export function useSubmit() {
   const [error, setError] = useState('');
 
   const run = useCallback(
-    async (path, form, { confirm: ask, onDone } = {}) => {
+    async (path, form, { confirm: ask, onDone, submitter } = {}) => {
       if (ask && !window.confirm(ask)) return;
       setBusy(true);
       setError('');
       try {
-        const res = await post(path, form);
+        const res = await post(path, form, submitter);
         if (res && res.redirect) {
           const here = window.location.pathname + window.location.search;
           if (res.redirect === here) window.dispatchEvent(new Event('beyond:refresh'));
@@ -42,7 +42,7 @@ export function useSubmit() {
   const submit = useCallback(
     (path, opts) => (e) => {
       e.preventDefault();
-      return run(typeof path === 'function' ? path(e.currentTarget) : path, e.currentTarget, opts);
+      return run(typeof path === 'function' ? path(e.currentTarget) : path, e.currentTarget, { ...opts, submitter: e.nativeEvent && e.nativeEvent.submitter });
     },
     [run],
   );

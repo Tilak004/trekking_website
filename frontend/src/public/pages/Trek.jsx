@@ -26,7 +26,7 @@ function TrailStatus({ t }) {
   return null;
 }
 
-function Hero({ t, bookable }) {
+function Hero({ t, bookable, phase, opens }) {
   return (
     <>
       <section className="banner" style={t.Photo ? { backgroundImage: `url('${photoURL(t.Photo)}')` } : undefined}>
@@ -38,7 +38,7 @@ function Hero({ t, bookable }) {
           <TrailStatus t={t} />
           {bookable
             ? <a className="btn banner-cta" href="#book">Book now</a>
-            : <><span className="soon-tag banner-soon">Opening soon</span>{' '}<a className="btn banner-cta" href="#enquire">Enquire now</a></>}
+            : <><span className="soon-tag banner-soon">{phase === 'sold_out' ? 'Sold out' : opens ? `Opening soon · ${opens}` : 'Opening soon'}</span>{' '}<a className="btn banner-cta" href="#enquire">Enquire now</a></>}
         </div>
       </section>
       <div className="wrap">
@@ -130,11 +130,15 @@ export default function Trek() {
   const existing = d.Existing;
   const closed = t.TrailStatus === 'closed';
   // Bookable only when a departure is published and still has seats.
-  const openBatches = ((d.BookingData && d.BookingData.batches) || []).filter((b) => b.left > 0);
+  const dates = (d.BookingData && d.BookingData.batches) || [];
+  const openBatches = dates.filter((b) => b.phase === 'open' && b.left > 0);
   const bookable = openBatches.length > 0;
+  const soonDate = dates.find((b) => b.phase === 'opening_soon');
+  const phase = bookable ? 'open' : soonDate ? 'opening_soon' : dates.some((b) => b.phase === 'sold_out') ? 'sold_out' : 'opening_soon';
+  const opens = soonDate ? soonDate.opens : '';
 
   return (
-    <PageShell hero={<Hero t={t} bookable={bookable} />}>
+    <PageShell hero={<Hero t={t} bookable={bookable} phase={phase} opens={opens} />}>
       {!t.Active && <div className="flash err">This trek is inactive and hidden from trekkers (you're seeing it as admin).</div>}
 
       <nav className="section-nav">
@@ -208,10 +212,10 @@ export default function Trek() {
 
           <section id="book" className="trek-section book-section">
             <span id="dates" />
-            <h2>{bookable ? 'Book or enquire' : 'Opening soon'}</h2>
+            <h2>{bookable ? 'Book or enquire' : phase === 'sold_out' ? 'Sold out' : 'Opening soon'}</h2>
             <div className="book-grid">
               <div className="panel book-panel">
-                <h3>{bookable ? 'Book now' : 'Dates coming soon'}</h3>
+                <h3>{bookable ? 'Book now' : phase === 'sold_out' ? 'All seats taken' : 'Bookings open soon'}</h3>
                 {closed && (
                   <div className="bp-none">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 7.5v5.5M12 16.5v.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
@@ -228,8 +232,13 @@ export default function Trek() {
                   <>
                     <div className="bp-none">
                       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 7.5v5.5M12 16.5v.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
-                      {' '}{batches.length ? 'All current departures are full' : 'No departures open yet'}
+                      {' '}{phase === 'sold_out' ? 'All current departures are sold out' : soonDate ? `Bookings open ${opens}` : 'No departures open yet'}
                     </div>
+                    {dates.length > 0 && (
+                      <ul className="date-status">
+                        {dates.map((b) => <li key={b.id}><b>{b.label}</b> <span className={`ds ${b.phase}`}>{b.phase === 'opening_soon' ? `Opens ${b.opens}` : b.phase === 'sold_out' ? 'Sold out' : 'Event completed'}</span></li>)}
+                      </ul>
+                    )}
                     <p className="bk-hint">Send us an enquiry and we'll let you know as soon as seats open.</p>
                   </>
                 ) : (

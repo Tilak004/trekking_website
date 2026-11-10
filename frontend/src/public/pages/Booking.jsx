@@ -6,13 +6,20 @@ import { digitsOnly, inr } from '../../lib/util.js';
 // WhatsApp number. It posts the same fields the server always took, so all
 // validation still happens on the server.
 
+// What each date shows besides the open ones, which show seats left.
+const DATE_NOTE = {
+  opening_soon: (b) => `Opens ${b.opens}`,
+  sold_out: () => 'Sold out',
+  completed: () => 'Event completed',
+};
+
 const digits = (s) => digitsOnly(s).slice(-10);
 
 // Two stages: (1) date + number of people, (2) contact details, pickup and a
 // note, then send.
 export default function Booking({ d }) {
   const { submit, busy, error } = useSubmit();
-  const firstOpen = d.batches.find((b) => b.left > 0);
+  const firstOpen = d.batches.find((b) => b.phase === 'open' && b.left > 0);
   const [step, setStep] = useState(0);
   const [f, setF] = useState({
     batch: firstOpen ? firstOpen.id : null,
@@ -62,11 +69,11 @@ export default function Booking({ d }) {
             <p className="bk-label">Select date to register{years && ` — ${years}`}</p>
             <div className="bk-dates">
               {d.batches.map((b) => (
-                <button type="button" key={b.id} disabled={b.left <= 0}
+                <button type="button" key={b.id} disabled={b.phase !== 'open' || b.left <= 0}
                   className={b.id === f.batch ? 'bk-date on' : 'bk-date'}
                   onClick={() => setF({ ...f, batch: b.id, people: Math.min(f.people, b.left) })}>
                   <b>{b.label}</b>
-                  <small>{b.left <= 0 ? 'Full' : `${b.left} seats left`}</small>
+                  <small>{DATE_NOTE[b.phase] ? DATE_NOTE[b.phase](b) : b.left <= 0 ? 'Sold out' : `${b.left} seats left`}</small>
                 </button>
               ))}
             </div>

@@ -99,6 +99,8 @@ type FinderTrek struct {
 	Ratings    int       `json:"ratings"`
 	Lead       *LeadMini `json:"lead"`
 	Trail      string    `json:"trail"` // "closed" shows a badge on the card
+	Status     string    `json:"status"` // opening_soon, open or sold_out (see phases.go)
+	Opens      string    `json:"opens"`  // when bookings open, while opening soon
 }
 
 func finderTrek(t Trek) FinderTrek {
@@ -109,6 +111,14 @@ func finderTrek(t Trek) FinderTrek {
 	}
 	if t.NextBatch != "" {
 		f.Price, f.Next = t.Price, formatDate(t.NextBatch)
+	}
+	// A trek with no published dates reads as opening soon too.
+	f.Status = t.Phase()
+	if f.Status == "" {
+		f.Status = PhaseOpeningSoon
+	}
+	if f.Status == PhaseOpeningSoon {
+		f.Opens = opensAtLabel(t.NextOpens)
 	}
 	return f
 }
@@ -156,6 +166,8 @@ type BookingBatch struct {
 	Year  string `json:"year"`
 	Left  int    `json:"left"`
 	Lead  string `json:"lead"`
+	Phase string `json:"phase"` // opening_soon, open, sold_out or completed
+	Opens string `json:"opens"` // when bookings open, while opening soon
 }
 
 func bookingData(t Trek, batches []Batch, u *User) BookingData {
@@ -167,7 +179,11 @@ func bookingData(t Trek, batches []Batch, u *User) BookingData {
 		d.LoggedIn, d.Name, d.Phone = true, u.Name, u.Phone
 	}
 	for _, b := range batches {
-		d.Batches = append(d.Batches, BookingBatch{ID: b.ID, Label: formatDate(b.StartDate), Year: yearOf(b.StartDate), Left: b.Left(), Lead: b.LeadName})
+		bb := BookingBatch{ID: b.ID, Label: formatDate(b.StartDate), Year: yearOf(b.StartDate), Left: b.Left(), Lead: b.LeadName, Phase: b.Phase()}
+		if bb.Phase == PhaseOpeningSoon {
+			bb.Opens = opensAtLabel(b.OpensAt)
+		}
+		d.Batches = append(d.Batches, bb)
 	}
 	return d
 }

@@ -28,7 +28,8 @@ async function request(path, { method = 'GET', body, signal } = {}) {
 export const get = (path, signal) => request(path, { signal });
 
 // post sends a form (an HTMLFormElement, FormData or plain object).
-export function post(path, form) {
-  const body = form instanceof HTMLFormElement ? new FormData(form) : form || {};
+export function post(path, form, submitter) {
+  // The clicked submit button counts too (its name/value), as in a normal form post.
+  const body = form instanceof HTMLFormElement ? new FormData(form, submitter || undefined) : form || {};
   return request(path, { method: 'POST', body });
 }

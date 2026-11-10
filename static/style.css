@@ -1925,3 +1925,16 @@ html[data-theme~="sage"] .site-footer .footer-grid > div > a, html[data-theme~="
 .utr-row { display: flex; gap: 8px; }
 .utr-row input { flex: 1; min-width: 0; font-size: 1.05rem; letter-spacing: .04em; }
 .utr-row .btn { flex: none; }
+
+/* Event phases: opening soon, booking open, sold out, event completed */
+.card-img .tag.open.sold { background: #8a2c1f; }
+.soon-tag.sold { color: #8a2c1f; background: #fbe5e1; }
+.date-status { list-style: none; margin: 12px 0 4px; padding: 0; display: grid; gap: 6px; }
+.date-status li { display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: .95rem; }
+.date-status .ds { font-size: .84rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--sun-100); color: var(--sun-dark); }
+.date-status .ds.sold_out { background: #fbe5e1; color: #8a2c1f; }
+.date-status .ds.completed { background: var(--surface-2); color: var(--muted); }
+.status.ph-opening_soon { background: var(--sun-100); color: var(--sun-dark); }
+.status.ph-open { background: var(--forest-100); color: var(--forest-700); }
+.status.ph-sold_out { background: #fbe5e1; color: #8a2c1f; }
+.status.ph-completed { background: var(--surface-2); color: var(--muted); }

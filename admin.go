@@ -197,9 +197,14 @@ func (a *App) adminAddBatch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Please give a valid date and at least 1 seat.", http.StatusBadRequest)
 		return
 	}
+	opensAt, ok := opensAtFromForm(strings.TrimSpace(r.FormValue("opens_at")))
+	if !ok {
+		http.Error(w, "Please set the date and time bookings open.", http.StatusBadRequest)
+		return
+	}
 	// New dates start as drafts; publish them from the event page.
-	res, err := a.db.Exec(`INSERT INTO batches (trek_id, lead_id, start_date, seats, status) VALUES (?, ?, ?, ?, 'draft')`,
-		trekID, nullID(formInt(r, "lead_id")), date, seats)
+	res, err := a.db.Exec(`INSERT INTO batches (trek_id, lead_id, start_date, seats, status, opens_at) VALUES (?, ?, ?, ?, 'draft', ?)`,
+		trekID, nullID(formInt(r, "lead_id")), date, seats, opensAt)
 	if err != nil {
 		a.serverError(w, err)
 		return

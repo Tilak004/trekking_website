@@ -184,6 +184,7 @@ var flashMessages = map[string]string{
 var flashErrors = map[string]string{
 	"full":               "Not enough seats left in that batch.",
 	"bad_batch":          "That batch is not available.",
+	"not_open":           "Bookings for that date haven't opened yet.",
 	"already_booked":     "You already have an active booking for this trek.",
 	"bad_utr":            "That doesn't look like a UPI reference. It's the 12-digit number in your payment details (UTR / transaction ID).",
 	"utr_used":           "That UPI reference has already been used for another booking. Please check the number.",

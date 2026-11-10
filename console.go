@@ -159,6 +159,7 @@ type Event struct {
 	LeadID             int64
 	LeadName           string
 	TrekHidden         bool
+	OpensAt            string // UTC time bookings open, empty = open once published (see phases.go)
 }
 
 func (e Event) Left() int       { return e.Seats - e.Taken }
@@ -168,6 +169,7 @@ func (e Event) Fill() int       { return pct(e.Taken, e.Seats) }
 func (e Event) IsDraft() bool   { return e.Status == BatchDraft }
 func (e Event) IsLive() bool    { return e.Status == BatchLive }
 func (e Event) IsPending() bool { return e.Status == BatchPending }
+func (e Event) Phase() string   { return phaseOf(e.StartDate, e.OpensAt, e.Left()) }
 
 // MarshalJSON adds the values the console templates computed with Event's methods.
 func (e Event) MarshalJSON() ([]byte, error) {
@@ -177,7 +179,10 @@ func (e Event) MarshalJSON() ([]byte, error) {
 		Left, Revenue, Fill              int
 		Past, IsDraft, IsLive, IsPending bool
 		IsCancelled                      bool
-	}{plain(e), e.Left(), e.Revenue(), e.Fill(), e.Past(), e.IsDraft(), e.IsLive(), e.IsPending(), e.Status == BatchCancelled})
+		Phase, PhaseLabel                string
+		OpensField, OpensLabel           string // datetime-local value and the readable time, in Indian time
+	}{plain(e), e.Left(), e.Revenue(), e.Fill(), e.Past(), e.IsDraft(), e.IsLive(), e.IsPending(), e.Status == BatchCancelled,
+		e.Phase(), phaseLabels[e.Phase()], opensAtField(e.OpensAt), opensAtLabel(e.OpensAt)})
 }
 
 func pct(n, of int) int {
@@ -188,7 +193,7 @@ func pct(n, of int) int {
 }
 
 const eventSelect = `
-SELECT b.id, b.trek_id, t.name, t.slug, t.region, t.price, b.start_date, b.seats, b.status,
+SELECT b.id, b.trek_id, t.name, t.slug, t.region, t.price, b.start_date, b.seats, b.status, b.opens_at,
        COALESCE(b.lead_id, 0), COALESCE(l.name, ''), t.active = 0,
        COALESCE((SELECT SUM(k.people) FROM bookings k WHERE k.batch_id = b.id AND k.status IN (` + confirmedStatuses + `)), 0),
        (SELECT COUNT(*) FROM bookings k WHERE k.batch_id = b.id AND k.status NOT IN ('rejected', 'cancelled')),
@@ -199,7 +204,7 @@ FROM batches b JOIN treks t ON t.id = b.trek_id LEFT JOIN leads l ON l.id = b.le
 
 func scanEvent(s scanner) (Event, error) {
 	var e Event
-	err := s.Scan(&e.ID, &e.TrekID, &e.TrekName, &e.TrekSlug, &e.Region, &e.Price, &e.StartDate, &e.Seats, &e.Status,
+	err := s.Scan(&e.ID, &e.TrekID, &e.TrekName, &e.TrekSlug, &e.Region, &e.Price, &e.StartDate, &e.Seats, &e.Status, &e.OpensAt,
 		&e.LeadID, &e.LeadName, &e.TrekHidden, &e.Taken, &e.Active, &e.Requested, &e.Collected, &e.Due)
 	return e, err
 }
@@ -308,6 +313,7 @@ func (a *App) consoleSaveEvent(w http.ResponseWriter, r *http.Request) {
 	publish := r.FormValue("action") == "publish"
 	e := Event{ID: id, TrekID: int64(formInt(r, "trek_id")), StartDate: r.FormValue("start_date"),
 		Seats: formInt(r, "seats"), LeadID: int64(formInt(r, "lead_id")), Status: BatchDraft}
+	opensForm := strings.TrimSpace(r.FormValue("opens_at"))
 	if id != 0 {
 		old, err := a.eventByID(id)
 		if err != nil {
@@ -320,6 +326,14 @@ func (a *App) consoleSaveEvent(w http.ResponseWriter, r *http.Request) {
 	if _, err := time.Parse("2006-01-02", e.StartDate); err != nil {
 		a.renderEvent(w, r, e, "Please pick a valid start date.")
 		return
+	}
+	// New events must say when bookings open; an older event may leave it blank (open now).
+	if opensForm != "" || id == 0 {
+		var ok bool
+		if e.OpensAt, ok = opensAtFromForm(opensForm); !ok {
+			a.renderEvent(w, r, e, "Please set the date and time bookings open.")
+			return
+		}
 	}
 	if e.Seats < 1 || e.Seats > 500 || e.Seats < e.Taken {
 		msg := "Group size must be between 1 and 500."
@@ -347,8 +361,8 @@ func (a *App) consoleSaveEvent(w http.ResponseWriter, r *http.Request) {
 		if publish {
 			status = BatchLive
 		}
-		res, err := a.db.Exec(`INSERT INTO batches (trek_id, lead_id, start_date, seats, status) VALUES (?, ?, ?, ?, ?)`,
-			e.TrekID, nullID(int(e.LeadID)), e.StartDate, e.Seats, status)
+		res, err := a.db.Exec(`INSERT INTO batches (trek_id, lead_id, start_date, seats, status, opens_at) VALUES (?, ?, ?, ?, ?, ?)`,
+			e.TrekID, nullID(int(e.LeadID)), e.StartDate, e.Seats, status, e.OpensAt)
 		if err != nil {
 			a.serverError(w, err)
 			return
@@ -361,8 +375,8 @@ func (a *App) consoleSaveEvent(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if _, err := a.db.Exec(`UPDATE batches SET lead_id = ?, start_date = ?, seats = ? WHERE id = ?`,
-		nullID(int(e.LeadID)), e.StartDate, e.Seats, id); err != nil {
+	if _, err := a.db.Exec(`UPDATE batches SET lead_id = ?, start_date = ?, seats = ?, opens_at = ? WHERE id = ?`,
+		nullID(int(e.LeadID)), e.StartDate, e.Seats, e.OpensAt, id); err != nil {
 		a.serverError(w, err)
 		return
 	}

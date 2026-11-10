@@ -5,7 +5,7 @@ import { inr, photoURL } from '../../lib/util.js';
 // Trek finder: a few quick questions, and the trek grid re-sorts live.
 
 const LEVELS = [['any', 'Any'], ['easy', 'Beginner friendly'], ['moderate', 'Moderate'], ['hard', 'Challenging']];
-const WHEN = [['any', 'Any time'], ['open', 'Booking open'], ['soon', 'Opening soon']];
+const WHEN = [['any', 'Any time'], ['open', 'Booking open'], ['soon', 'Opening soon'], ['sold', 'Sold out']];
 const LENGTH = [['any', 'Any'], ['short', 'Half day'], ['day', 'Full day'], ['multi', '2 days +']];
 const VIBES = [
   ['sunrise', 'Sunrise'],
@@ -53,7 +53,7 @@ const Mountains = () => (
 
 // A trek card from the finder's trimmed-down trek data.
 function FinderCard({ t, badge }) {
-  const open = !!t.next;
+  const open = t.status === 'open';
   const navigate = useNavigate();
   const book = (e) => { e.preventDefault(); e.stopPropagation(); navigate(`/treks/${t.slug}#book`); };
   return (
@@ -61,7 +61,7 @@ function FinderCard({ t, badge }) {
       <div className="card-img" style={t.photo ? { backgroundImage: `url('${photoURL(t.photo)}')` } : undefined}>
         {!t.photo && <Mountains />}
         <span className="tag diff">{t.difficulty}</span>
-        {t.trail === 'closed' ? <span className="tag open closed">Trail closed</span> : open && <span className="tag open">Booking open</span>}
+        {t.trail === 'closed' ? <span className="tag open closed">Trail closed</span> : open ? <span className="tag open">Booking open</span> : t.status === 'sold_out' && <span className="tag open sold">Sold out</span>}
         {open && t.price > 0 && <span className="card-price">₹{inr(t.price)}</span>}
         {badge && <span className="tag match">{badge}</span>}
       </div>
@@ -69,7 +69,7 @@ function FinderCard({ t, badge }) {
         <p className="eyebrow">{t.region}</p>
         <h3>{t.name}</h3>
         <div className="card-bottom">
-          {open ? <span>Next: <strong>{t.next}</strong></span> : <span className="soon-tag">Opening soon</span>}
+          {open ? <span>Next: <strong>{t.next}</strong></span> : t.status === 'sold_out' ? <span className="soon-tag sold">Sold out</span> : <span className="soon-tag" title={t.opens ? `Bookings open ${t.opens}` : undefined}>Opening soon{t.opens ? ` · ${t.opens}` : ''}</span>}
           {t.ratings > 0 && <span className="rating">★ {t.rating.toFixed(1)}</span>}
         </div>
         {open && t.trail !== 'closed' && (
@@ -91,11 +91,11 @@ export default function Finder({ treks }) {
   const results = useMemo(() => {
     const list = treks
       .filter((t) => level === 'any' || levelOf(t.difficulty)[level])
-      .filter((t) => when === 'any' || (when === 'open') === !!t.next)
+      .filter((t) => when === 'any' || (when === 'open' ? t.status === 'open' : when === 'sold' ? t.status === 'sold_out' : t.status === 'opening_soon'))
       .filter((t) => length === 'any' || lengthOf(t.duration) === length)
       .map((t, i) => ({ t, i, score: vibes.filter((v) => t.tags.includes(v)).length }));
     // Best vibe match first, then bookable treks, then the original order.
-    list.sort((a, b) => b.score - a.score || Number(!!b.t.next) - Number(!!a.t.next) || a.i - b.i);
+    list.sort((a, b) => b.score - a.score || Number(b.t.status === 'open') - Number(a.t.status === 'open') || a.i - b.i);
     return list;
   }, [treks, level, when, length, vibes]);
 

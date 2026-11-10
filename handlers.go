@@ -134,6 +134,10 @@ func (a *App) bookTrek(w http.ResponseWriter, r *http.Request) {
 		redirect(w, r, "%s?err=bad_batch", back)
 		return
 	}
+	if batch.Phase() == PhaseOpeningSoon {
+		redirect(w, r, "%s?err=not_open", back)
+		return
+	}
 
 	people := formInt(r, "people")
 	pickup := trimTo(r.FormValue("pickup"), 100)
@@ -168,7 +172,7 @@ WHERE k.user_id = ? AND b.trek_id = ? AND k.status IN ('requested', 'approved')`
                       status, hold_until, pay_token)
 SELECT ?, b.id, ?, ?, ?, ?, ?, ?, ?, 'approved', datetime('now', '+`+strconv.Itoa(holdMinutes)+` minutes'), ?
 FROM batches b
-WHERE b.id = ? AND b.seats - (SELECT COALESCE(SUM(k.people), 0) FROM bookings k
+WHERE b.id = ? AND `+batchOpenedSQL+` AND b.seats - (SELECT COALESCE(SUM(k.people), 0) FROM bookings k
                               WHERE k.batch_id = b.id AND k.status IN ('approved', 'completed')) >= ?`,
 		u.ID, people, pickup, emName, emPhone, age, trimTo(r.FormValue("medical"), 1000), trimTo(r.FormValue("note"), 1000),
 		token, batch.ID, people)

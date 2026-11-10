@@ -128,3 +128,9 @@ body.console { background: var(--surface-2); margin: 0; font-size: 1rem; }
 .danger-zone .btn, .danger-zone .btn:hover { background: #b3402e !important; border-color: #b3402e !important; color: #fff !important; }
 .danger-zone .btn:hover { background: #963524 !important; border-color: #963524 !important; }
 .cancel-event { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; } .cancel-event label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; font-weight: 600; } .danger-zone + .danger-zone { margin-top: 12px; }
+
+/* Event phases (see phases.go) */
+.console .status.ph-opening_soon { background: var(--warn-bg); color: var(--warn); }
+.console .status.ph-open { background: var(--forest-100); color: var(--forest-700); }
+.console .status.ph-sold_out { background: #fbe5e1; color: #8a2c1f; }
+.console .status.ph-completed { background: var(--surface-2); color: var(--muted); }

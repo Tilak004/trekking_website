@@ -270,6 +270,7 @@ export function TrekForm() {
             <div className="row">
               <label>Start date <input type="date" name="start_date" min={d.Today} required /></label>
               <label>Seats <input type="number" name="seats" defaultValue="20" min="1" required /></label>
+              <label>Bookings open on <input type="datetime-local" name="opens_at" required title="Indian time" /></label>
               <label>Trek lead
                 <select name="lead_id" defaultValue="0">
                   <option value="0">— assign later —</option>

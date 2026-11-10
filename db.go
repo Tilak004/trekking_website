@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -174,7 +175,9 @@ type Trek struct {
 	TrailNote     string
 	TrailUpdated  string
 	Active        bool
-	NextBatch     string
+	NextBatch     string    // earliest published date that is open for booking with seats left
+	NextOpens     string    // earliest opens_at among dates not open yet (UTC), empty if none
+	Upcoming      int       // published dates still to come, whatever their phase
 	AvgRating     float64
 	Ratings       int
 	Lead          *LeadMini // next batch's lead, filled in by handlers that need it
@@ -191,9 +194,22 @@ type Batch struct {
 	LeadSlug  string
 	Bookings  int
 	Status    string
+	OpensAt   string // UTC time bookings open, empty = open straight away (see phases.go)
 }
 
-func (b Batch) Left() int { return b.Seats - b.Taken }
+func (b Batch) Left() int     { return b.Seats - b.Taken }
+func (b Batch) Phase() string { return phaseOf(b.StartDate, b.OpensAt, b.Left()) }
+
+// MarshalJSON adds the phase shown for each date on the trek page.
+func (b Batch) MarshalJSON() ([]byte, error) {
+	type plain Batch
+	return json.Marshal(struct {
+		plain
+		Left              int
+		Phase, PhaseLabel string
+		OpensLabel        string
+	}{plain(b), b.Left(), b.Phase(), phaseLabels[b.Phase()], opensAtLabel(b.OpensAt)})
+}
 
 type Booking struct {
 	ID             int64
@@ -287,6 +303,7 @@ func openDB(path string) (*sql.DB, error) {
 	migrateFounderLeads(db)
 	migrateEventCancel(db)
 	migrateHolds(db)
+	migratePhases(db)
 	removeSampleEvents(db)
 	if err := migrateInteractive(db); err != nil {
 		return nil, fmt.Errorf("migrate interactive: %w", err)
@@ -301,8 +318,11 @@ SELECT t.id, t.slug, t.name, t.region, t.duration, t.distance_km, t.max_altitude
        t.price, t.summary, t.description, t.pickup_points, t.photo, t.active,
        t.best_season, t.itinerary, t.inclusions, t.exclusions, t.things_to_carry, t.faqs,
        t.lat, t.lng, t.tags, t.elevation, t.trail_status, t.trail_note, t.trail_updated,
-       COALESCE((SELECT MIN(b.start_date) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now')
+       COALESCE((SELECT MIN(b.start_date) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now') AND ` + batchOpenedSQL + `
           AND b.seats > (SELECT COALESCE(SUM(k.people), 0) FROM bookings k WHERE k.batch_id = b.id AND k.status IN ('approved', 'completed'))), ''),
+       COALESCE((SELECT MIN(b.opens_at) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now')
+          AND NOT ` + batchOpenedSQL + `), ''),
+       (SELECT COUNT(*) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now')),
        (SELECT COALESCE(AVG(r.trek_rating), 0.0) FROM reviews r JOIN bookings k ON k.id = r.booking_id
           JOIN batches b ON b.id = k.batch_id WHERE b.trek_id = t.id),
        (SELECT COUNT(*) FROM reviews r JOIN bookings k ON k.id = r.booking_id
@@ -314,7 +334,7 @@ func scanTrek(s scanner) (Trek, error) {
 	err := s.Scan(&t.ID, &t.Slug, &t.Name, &t.Region, &t.Duration, &t.DistanceKm, &t.MaxAltitude, &t.Difficulty,
 		&t.Price, &t.Summary, &t.Description, &t.PickupPoints, &t.Photo, &t.Active,
 		&t.BestSeason, &t.Itinerary, &t.Inclusions, &t.Exclusions, &t.ThingsToCarry, &t.FAQs,
-		&t.Lat, &t.Lng, &t.Tags, &t.Elevation, &t.TrailStatus, &t.TrailNote, &t.TrailUpdated, &t.NextBatch, &t.AvgRating, &t.Ratings)
+		&t.Lat, &t.Lng, &t.Tags, &t.Elevation, &t.TrailStatus, &t.TrailNote, &t.TrailUpdated, &t.NextBatch, &t.NextOpens, &t.Upcoming, &t.AvgRating, &t.Ratings)
 	return t, err
 }
 
@@ -350,20 +370,20 @@ SELECT b.id, b.trek_id, b.start_date, b.seats,
        (SELECT COALESCE(SUM(k.people), 0) FROM bookings k WHERE k.batch_id = b.id AND k.status IN ('approved', 'completed')),
        COALESCE(b.lead_id, 0), COALESCE(l.name, ''), COALESCE(l.slug, ''),
        (SELECT COUNT(*) FROM bookings k WHERE k.batch_id = b.id),
-       b.status
+       b.status, b.opens_at
 FROM batches b LEFT JOIN leads l ON l.id = b.lead_id`
 
 func scanBatch(s scanner) (Batch, error) {
 	var b Batch
-	err := s.Scan(&b.ID, &b.TrekID, &b.StartDate, &b.Seats, &b.Taken, &b.LeadID, &b.LeadName, &b.LeadSlug, &b.Bookings, &b.Status)
+	err := s.Scan(&b.ID, &b.TrekID, &b.StartDate, &b.Seats, &b.Taken, &b.LeadID, &b.LeadName, &b.LeadSlug, &b.Bookings, &b.Status, &b.OpensAt)
 	return b, err
 }
 
 func (a *App) batchesForTrek(trekID int64, upcomingOnly bool) ([]Batch, error) {
 	q := batchSelect + ` WHERE b.trek_id = ?`
 	if upcomingOnly {
-		// The public view: only approved (live) dates that haven't happened yet.
-		q += ` AND b.start_date >= date('now') AND b.status = 'live'`
+		// The public view: approved (live) dates, upcoming ones and those finished in the last month.
+		q += ` AND b.start_date >= date('now', '-30 days') AND b.status = 'live'`
 	}
 	return a.queryBatches(q+` ORDER BY b.start_date`, trekID)
 }

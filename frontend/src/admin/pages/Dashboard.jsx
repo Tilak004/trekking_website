@@ -14,7 +14,7 @@ export function EventList({ events }) {
             <tr key={e.ID}>
               <td><strong>{e.TrekName}</strong><br /><span className="small">{fmtDate(e.StartDate)}{e.LeadName ? ` · Lead: ${e.LeadName}` : ''}</span></td>
               <td className="small">{e.Taken} / {e.Seats}{e.Requested ? <><br /><span className="warn">{e.Requested} waiting</span></> : null}</td>
-              <td><span className={`status ${e.Status}`}>{e.Status}</span></td>
+              <td><span className={`status ${e.Status}`}>{e.Status}</span> <span className={`status ph-${e.Phase}`}>{e.PhaseLabel}</span></td>
               <td><Link to={`/admin/events/${e.ID}`}>Open →</Link></td>
             </tr>
           )) : <tr><td colSpan={4} className="muted">No upcoming events. <Link to="/admin/events/new">Create one</Link>.</td></tr>}

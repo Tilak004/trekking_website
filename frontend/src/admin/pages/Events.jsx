@@ -65,7 +65,7 @@ export function Events() {
                   {e.Taken} / {e.Seats} seats{e.Requested ? <> · <span className="warn">{e.Requested} waiting</span></> : null}
                 </td>
                 <td className="small">₹{inr(e.Collected)} collected{e.Due ? <><br /><span className="muted">₹{inr(e.Due)} to collect</span></> : null}</td>
-                <td><span className={`status ${e.Status}`}>{e.Status}</span>{e.TrekHidden ? <><br /><span className="muted small" title="The trek itself is hidden from trekkers">trek hidden</span></> : null}</td>
+                <td><span className={`status ${e.Status}`}>{e.Status}</span> <span className={`status ph-${e.Phase}`}>{e.PhaseLabel}</span>{e.OpensLabel && e.Phase === 'opening_soon' ? <><br /><span className="muted small">opens {e.OpensLabel}</span></> : null}{e.TrekHidden ? <><br /><span className="muted small" title="The trek itself is hidden from trekkers">trek hidden</span></> : null}</td>
                 <td className="actions">
                   <Link className="btn small ghost" to={`/admin/events/${e.ID}`}>Open</Link>
                   {e.IsPending ? (
@@ -106,7 +106,7 @@ export function EventPage() {
       <p className="crumb"><Link to="/admin/events">← Events</Link></p>
       <div className="c-head">
         <h1>{isNew ? 'New event' : e.TrekName}</h1>
-        {!isNew && <span className={`status ${e.Status} big`}>{e.Status}</span>}
+        {!isNew && <span><span className={`status ${e.Status} big`}>{e.Status}</span> <span className={`status ph-${e.Phase} big`}>{e.PhaseLabel}</span></span>}
       </div>
 
       {!isNew && (
@@ -146,7 +146,7 @@ export function EventPage() {
         </>
       )}
 
-      <form key={`${e.ID}-${e.Status}-${e.StartDate}-${e.Seats}`} onSubmit={submit(isNew ? '/admin/events/new' : `/admin/events/${id}`)} className="form panel c-form">
+      <form key={`${e.ID}-${e.Status}-${e.StartDate}-${e.Seats}-${e.OpensAt}`} onSubmit={submit(isNew ? '/admin/events/new' : `/admin/events/${id}`)} className="form panel c-form">
         <h2>{isNew ? 'Details' : 'Event details'}</h2>
         {error && <div className="flash err">{error}</div>}
         <div className="row">
@@ -167,6 +167,7 @@ export function EventPage() {
             )}
           </label>
           <label>Start date <input type="date" name="start_date" defaultValue={e.StartDate} min={isNew ? d.Today : undefined} required /></label>
+          <label>Bookings open on <input type="datetime-local" name="opens_at" defaultValue={e.OpensField} required={isNew} /><span className="hint">Indian time. Until then the event shows "Opening soon" and can't be booked.</span></label>
           <label>Group size (seats) <input type="number" name="seats" defaultValue={e.Seats} min="1" max="500" required /></label>
           <label>Trek lead
             <select name="lead_id" defaultValue={e.LeadID || 0}>
