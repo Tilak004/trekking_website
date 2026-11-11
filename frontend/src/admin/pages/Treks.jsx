@@ -246,6 +246,8 @@ export function TrekForm() {
           <span className="hint">Add the time after a <code>|</code>. Trekkers see the times on the trek page and pick one when booking.</span></label>
         <label>WhatsApp group invite link <input name="whatsapp_group" defaultValue={d.WhatsAppGroup || ''} placeholder="https://chat.whatsapp.com/…" />
           <span className="hint">The trek's permanent WhatsApp group (Group info → Invite via link → Copy link). Only trekkers who have paid get it. Turn on "Approve new members" in the group.</span></label>
+        <label>Keep this trek a secret until <input type="datetime-local" name="reveal_at" defaultValue={d.RevealField || ''} />
+          <span className="hint">Indian time. Until then the website shows a mystery card with no name, photo or link, and bookings are refused. At this time the trek appears by itself. Leave blank to show it now.</span></label>
         <label className="check"><input type="checkbox" name="active" defaultChecked={t.Active} /> Visible to trekkers</label>
         <button className="btn" disabled={busy}>Save trek</button>
       </form>

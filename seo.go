@@ -70,7 +70,8 @@ func (a *App) sitemapXML(w http.ResponseWriter, r *http.Request) {
 	base := baseURL(r)
 	paths := []string{"/"}
 	if treks, err := a.listTreks(true); err == nil {
-		for _, t := range treks {
+		public, _ := splitTeased(treks)
+		for _, t := range public {
 			paths = append(paths, "/treks/"+t.Slug)
 		}
 	}
@@ -135,7 +136,8 @@ func (a *App) homeFAQs() [][2]string {
 	answer := func(faq string) string { _, ans, _ := strings.Cut(faq, "\n"); return ans }
 	var names []string
 	if treks, err := a.listTreks(true); err == nil {
-		for _, t := range treks {
+		public, _ := splitTeased(treks)
+		for _, t := range public {
 			names = append(names, t.Name)
 		}
 	}

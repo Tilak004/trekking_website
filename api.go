@@ -49,7 +49,8 @@ func (a *App) spa(next http.Handler) http.Handler {
 			w.Header().Set("Cache-Control", "no-store")
 			next.ServeHTTP(w, r2)
 		case strings.HasPrefix(p, "/static/"), strings.HasPrefix(p, "/photos/"),
-			strings.HasSuffix(p, "/qr.png"), strings.HasSuffix(p, ".csv"):
+			strings.HasSuffix(p, "/qr.png"), strings.HasSuffix(p, ".csv"),
+			strings.HasPrefix(p, "/treks/") && strings.Contains(p, "/photos/"):
 			next.ServeHTTP(w, r)
 		case p == "/robots.txt":
 			a.robotsTxt(w, r)
@@ -117,9 +118,15 @@ func (a *App) shellMeta(r *http.Request) (title, desc, image string, found bool)
 		return "Page not found · " + site.Name, desc, image, false
 	}
 	switch {
+	case strings.HasPrefix(p, "/treks/coming-soon-"):
+		slug := strings.TrimPrefix(p, "/treks/")
+		if _, ok := a.teasedTrek(slug); !ok {
+			return "Trek not found · " + site.Name, desc, image, false
+		}
+		return "Something's coming · " + site.Name, "Our first trek is almost here. Can you guess it?", "/treks/" + slug + "/photos/0.jpg", true
 	case strings.HasPrefix(p, "/treks/"):
 		t, err := a.trekWhere(`t.slug = ? AND t.active = 1`, strings.TrimPrefix(p, "/treks/"))
-		if err != nil {
+		if err != nil || t.Teased() {
 			return "Trek not found · " + site.Name, desc, image, false
 		}
 		title, desc = t.Name+" · "+site.Name, t.Summary

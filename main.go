@@ -114,6 +114,7 @@ func (a *App) routes() http.Handler {
 
 	mux.HandleFunc("GET /{$}", a.home)
 	mux.HandleFunc("GET /treks/{slug}", a.trekPage)
+	mux.HandleFunc("GET /treks/{slug}/photos/{file}", a.teaserPhoto)
 	mux.HandleFunc("POST /treks/{slug}/book", a.bookTrek)
 	mux.HandleFunc("POST /treks/{slug}/enquire", a.enquire)
 	mux.HandleFunc("GET /leads", a.leadsPage)

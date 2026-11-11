@@ -101,6 +101,7 @@ type FinderTrek struct {
 	Trail      string    `json:"trail"` // "closed" shows a badge on the card
 	Status     string    `json:"status"` // opening_soon, open or sold_out (see phases.go)
 	Opens      string    `json:"opens"`  // when bookings open, while opening soon
+	Teaser     bool      `json:"teaser"` // a secret trek: the card shows no details (see teaser.go)
 }
 
 func finderTrek(t Trek) FinderTrek {

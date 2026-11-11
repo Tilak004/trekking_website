@@ -73,7 +73,7 @@ func (a *App) heroSlides(treks []Trek) []Slide {
 	if hero != "" {
 		photos = append(photos, hero)
 	}
-	for _, g := range a.listPhotos("gallery") {
+	for _, g := range a.publicGallery() {
 		if used[g] {
 			continue
 		}

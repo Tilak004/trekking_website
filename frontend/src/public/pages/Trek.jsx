@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon.jsx';
 import { PageState, Reviews } from '../../components/common.jsx';
+import PhotoGrid from '../../components/PhotoGrid.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
 import { useSubmit } from '../../lib/useSubmit.js';
 import { blocks, carryGroups, fmtDate, inr, lines, mentions, paras, parsePickups, photoURL, rating, whatsappTo } from '../../lib/util.js';
@@ -24,6 +25,32 @@ function TrailStatus({ t }) {
     );
   }
   return null;
+}
+
+// A trek that's still a secret: its photos and reveal date, but no name or place.
+function TeaserTrek({ d }) {
+  const hero = (
+    <section className="banner" style={d.Photos[0] ? { backgroundImage: `url('${d.Photos[0]}')` } : undefined}>
+      <div className="wrap banner-inner">
+        <p className="crumb"><Link to="/#treks">← All treks</Link></p>
+        <span className="tag diff">Coming soon</span>
+        <h1>Something's coming</h1>
+        <p className="banner-sub">Our first trek</p>
+        <span className="soon-tag banner-soon">{d.Opens ? `Revealed ${d.Opens}` : 'Coming soon'}</span>{' '}
+        <a className="btn banner-cta" href={d.Follow} target="_blank" rel="noopener noreferrer">Follow for the reveal</a>
+      </div>
+    </section>
+  );
+  return (
+    <PageShell hero={hero}>
+      {d.Photos.length > 0 && (
+        <section id="photos" className="trek-section">
+          <h2>Can you guess this trek?</h2>
+          <PhotoGrid photos={d.Photos} alt="Our first trek" url={(p) => p} />
+        </section>
+      )}
+    </PageShell>
+  );
 }
 
 function Hero({ t, bookable, phase, opens }) {
@@ -114,11 +141,12 @@ export default function Trek() {
   const page = usePage();
   const { User, Msg, Site } = useSession();
   const d = page.data;
-  useTitle(d && `${d.Trek.Name} Trek`);
-  useWhatsAppMessage(d ? `Hi! I'm interested in the ${d.Trek.Name} trek.` : '');
+  useTitle(d && (d.Teaser ? "Something's coming" : `${d.Trek.Name} Trek`));
+  useWhatsAppMessage(d && d.Trek ? `Hi! I'm interested in the ${d.Trek.Name} trek.` : '');
 
   if (page.notFound) return <NotFound />;
   if (!d) return <PageShell><PageState page={page} /></PageShell>;
+  if (d.Teaser) return <TeaserTrek d={d} />;
   const t = d.Trek;
   const itinerary = blocks(t.Itinerary);
   const faqs = blocks(t.FAQs);
@@ -128,6 +156,7 @@ export default function Trek() {
   const pickups = parsePickups(t.PickupPoints);
   const batches = d.Batches || [];
   const existing = d.Existing;
+  const photos = d.Photos || [];
   const closed = t.TrailStatus === 'closed';
   // Bookable only when a departure is published and still has seats.
   const dates = (d.BookingData && d.BookingData.batches) || [];
@@ -143,6 +172,7 @@ export default function Trek() {
 
       <nav className="section-nav">
         <a href="#overview">Overview</a>
+        {photos.length > 0 && <a href="#photos">Photos</a>}
         {itinerary.length > 0 && <a href="#itinerary">Itinerary</a>}
         {pickups.length > 0 && <a href="#pickup">Pickup</a>}
         <a href="#inclusions">Inclusions</a>
@@ -159,6 +189,13 @@ export default function Trek() {
             <div className="prose">{paras(t.Description).map((p, i) => <p key={i}>{p}</p>)}</div>
             {t.Elevation && <Elevation points={t.Elevation} />}
           </section>
+
+          {photos.length > 0 && (
+            <section id="photos" className="trek-section">
+              <h2>Photos</h2>
+              <PhotoGrid photos={photos} alt={`${t.Name} trek`} />
+            </section>
+          )}
 
           {itinerary.length > 0 && (
             <section id="itinerary" className="trek-section">

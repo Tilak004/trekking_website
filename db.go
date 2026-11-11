@@ -174,6 +174,7 @@ type Trek struct {
 	TrailStatus   string // "", "open" or "closed"
 	TrailNote     string
 	TrailUpdated  string
+	RevealAt      string // UTC time the trek stops being a secret, empty = public (see teaser.go)
 	Active        bool
 	NextBatch     string    // earliest published date that is open for booking with seats left
 	NextOpens     string    // earliest opens_at among dates not open yet (UTC), empty if none
@@ -296,6 +297,7 @@ func openDB(path string) (*sql.DB, error) {
 	migrateRefunds(db)
 	migrateEnquiries(db)
 	migrateTrailStatus(db)
+	migrateReveal(db)
 	migratePickups(db)
 	migrateSettings(db)
 	migrateBookingFAQ(db)
@@ -317,7 +319,7 @@ const trekSelect = `
 SELECT t.id, t.slug, t.name, t.region, t.duration, t.distance_km, t.max_altitude, t.difficulty,
        t.price, t.summary, t.description, t.pickup_points, t.photo, t.active,
        t.best_season, t.itinerary, t.inclusions, t.exclusions, t.things_to_carry, t.faqs,
-       t.lat, t.lng, t.tags, t.elevation, t.trail_status, t.trail_note, t.trail_updated,
+       t.lat, t.lng, t.tags, t.elevation, t.trail_status, t.trail_note, t.trail_updated, t.reveal_at,
        COALESCE((SELECT MIN(b.start_date) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now') AND ` + batchOpenedSQL + `
           AND b.seats > (SELECT COALESCE(SUM(k.people), 0) FROM bookings k WHERE k.batch_id = b.id AND k.status IN ('approved', 'completed'))), ''),
        COALESCE((SELECT MIN(b.opens_at) FROM batches b WHERE b.trek_id = t.id AND b.status = 'live' AND b.start_date >= date('now')
@@ -334,7 +336,7 @@ func scanTrek(s scanner) (Trek, error) {
 	err := s.Scan(&t.ID, &t.Slug, &t.Name, &t.Region, &t.Duration, &t.DistanceKm, &t.MaxAltitude, &t.Difficulty,
 		&t.Price, &t.Summary, &t.Description, &t.PickupPoints, &t.Photo, &t.Active,
 		&t.BestSeason, &t.Itinerary, &t.Inclusions, &t.Exclusions, &t.ThingsToCarry, &t.FAQs,
-		&t.Lat, &t.Lng, &t.Tags, &t.Elevation, &t.TrailStatus, &t.TrailNote, &t.TrailUpdated, &t.NextBatch, &t.NextOpens, &t.Upcoming, &t.AvgRating, &t.Ratings)
+		&t.Lat, &t.Lng, &t.Tags, &t.Elevation, &t.TrailStatus, &t.TrailNote, &t.TrailUpdated, &t.RevealAt, &t.NextBatch, &t.NextOpens, &t.Upcoming, &t.AvgRating, &t.Ratings)
 	return t, err
 }
 
@@ -510,7 +512,7 @@ JOIN bookings k ON k.id = r.booking_id
 JOIN users u ON u.id = k.user_id
 JOIN batches b ON b.id = k.batch_id
 JOIN treks t ON t.id = b.trek_id
-WHERE `+where+` ORDER BY r.id DESC LIMIT 50`, args(arg)...)
+WHERE `+trekRevealedSQL+` AND `+where+` ORDER BY r.id DESC LIMIT 50`, args(arg)...)
 	if err != nil {
 		return nil, err
 	}

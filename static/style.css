@@ -683,6 +683,7 @@ img.avatar.photo { border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18
 [data-theme~="ghats"] .trek-card .eyebrow { color: rgba(255,255,255,.8); }
 [data-theme~="ghats"] .trek-card .card-bottom { border-top-color: rgba(255,255,255,.22); color: rgba(255,255,255,.92); padding-top: 8px; }
 [data-theme~="ghats"] .trek-card .card-bottom strong { color: #fff; }
+[data-theme~="ghats"] .trek-card .rating { color: #fff; }
 [data-theme~="ghats"] .trek-card .soon-tag { background: rgba(255,255,255,.16); color: #fff; }
 
 /* dark areas get the contour texture */
@@ -1938,3 +1939,8 @@ html[data-theme~="sage"] .site-footer .footer-grid > div > a, html[data-theme~="
 .status.ph-open { background: var(--forest-100); color: var(--forest-700); }
 .status.ph-sold_out { background: #fbe5e1; color: #8a2c1f; }
 .status.ph-completed { background: var(--surface-2); color: var(--muted); }
+
+/* a trek that is still a secret (see teaser.go) */
+.teaser-card .card-img { display: flex; align-items: flex-start; justify-content: center; padding-top: 14%; }
+.teaser-mark { position: relative; z-index: 1; font-size: clamp(4rem, 12vw, 7rem); font-weight: 800; line-height: 1; color: #fff; text-shadow: 0 6px 30px rgba(0,0,0,.45); }
+.teaser-card .card-book { align-self: flex-start; margin-top: 10px; }

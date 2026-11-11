@@ -64,7 +64,7 @@ func tenDigits(phone string) string {
 
 func (a *App) enquire(w http.ResponseWriter, r *http.Request) {
 	t, err := a.trekWhere(`t.slug = ? AND t.active = 1`, r.PathValue("slug"))
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) || (err == nil && t.Teased()) {
 		a.notFound(w, r)
 		return
 	} else if err != nil {

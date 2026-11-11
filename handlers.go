@@ -31,8 +31,9 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 			treks[i].Lead = &l
 		}
 	}
+	public, teased := splitTeased(treks)
 	var upcoming, soon []Trek
-	for _, t := range treks {
+	for _, t := range public {
 		if t.NextBatch != "" {
 			upcoming = append(upcoming, t)
 		} else {
@@ -40,10 +41,13 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	minPrice := 0
-	for _, t := range treks {
+	for _, t := range public {
 		if t.Price > 0 && (minPrice == 0 || t.Price < minPrice) {
 			minPrice = t.Price
 		}
+	}
+	for i, t := range teased {
+		finder = append(finder, a.teaserCard(t, i))
 	}
 	// Bookable treks first, the same order the server-rendered grid uses.
 	for _, t := range append(append([]Trek{}, upcoming...), soon...) {
@@ -64,14 +68,18 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 	}
 	a.render(w, r, "home.html", map[string]any{
 		"FinderData": finder, "Stats": stats, "PhotoReviews": photoReviews, "FAQs": a.homeFAQs(),
-		"Treks": treks, "Upcoming": upcoming, "Soon": soon, "Leads": leads, "MinPrice": minPrice, "HeroPhoto": a.heroPhoto(), "HeroSlides": a.heroSlides(treks), "HeroLayers": a.heroLayers(), "HeroStyle": a.heroStyle(), "Gallery": a.listPhotos("gallery"),
+		"Treks": public, "Upcoming": upcoming, "Soon": soon, "Leads": leads, "MinPrice": minPrice, "HeroPhoto": a.heroPhoto(), "HeroSlides": a.heroSlides(treks), "HeroLayers": a.heroLayers(), "HeroStyle": a.heroStyle(), "Gallery": a.publicGallery(),
 	})
 }
 
 func (a *App) trekPage(w http.ResponseWriter, r *http.Request) {
 	u := currentUser(r)
+	if t, ok := a.teasedTrek(r.PathValue("slug")); ok {
+		a.teaserPage(w, r, r.PathValue("slug"), t)
+		return
+	}
 	t, err := a.trekWhere(`t.slug = ?`, r.PathValue("slug"))
-	if errors.Is(err, sql.ErrNoRows) || (err == nil && !t.Active && (u == nil || !u.IsAdmin)) {
+	if errors.Is(err, sql.ErrNoRows) || (err == nil && (!t.Active || t.Teased()) && (u == nil || !u.IsAdmin)) {
 		a.notFound(w, r)
 		return
 	} else if err != nil {
@@ -89,7 +97,7 @@ func (a *App) trekPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := map[string]any{"Trek": t, "Batches": batches, "Reviews": reviews, "Existing": nil, "MetaDesc": t.Summary,
-		"BookingData": bookingData(t, batches, u)}
+		"BookingData": bookingData(t, batches, u), "Photos": a.listPhotos("treks/" + t.Slug)}
 	if t.Photo != "" {
 		data["MetaImage"] = "/photos/" + t.Photo
 	}
@@ -109,7 +117,7 @@ func (a *App) trekPage(w http.ResponseWriter, r *http.Request) {
 func (a *App) bookTrek(w http.ResponseWriter, r *http.Request) {
 	u := currentUser(r)
 	t, err := a.trekWhere(`t.slug = ? AND t.active = 1`, r.PathValue("slug"))
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) || (err == nil && t.Teased()) {
 		a.notFound(w, r)
 		return
 	} else if err != nil {
@@ -227,7 +235,7 @@ func bookingMessage(k Booking) string {
 }
 
 func (a *App) galleryPage(w http.ResponseWriter, r *http.Request) {
-	a.render(w, r, "gallery.html", map[string]any{"Gallery": a.listPhotos("gallery")})
+	a.render(w, r, "gallery.html", map[string]any{"Gallery": a.publicGallery()})
 }
 
 func (a *App) leadsPage(w http.ResponseWriter, r *http.Request) {
@@ -267,7 +275,7 @@ type LeadBatch struct {
 
 func (a *App) queryUpcomingForLead(leadID int64) ([]LeadBatch, error) {
 	rows, err := a.db.Query(`SELECT t.name, t.slug, b.start_date FROM batches b JOIN treks t ON t.id = b.trek_id
-WHERE b.lead_id = ? AND t.active = 1 AND b.status = 'live' AND b.start_date >= date('now') ORDER BY b.start_date LIMIT 20`, leadID)
+WHERE b.lead_id = ? AND t.active = 1 AND ` + trekRevealedSQL + ` AND b.status = 'live' AND b.start_date >= date('now') ORDER BY b.start_date LIMIT 20`, leadID)
 	if err != nil {
 		return nil, err
 	}

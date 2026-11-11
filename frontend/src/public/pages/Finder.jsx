@@ -81,6 +81,26 @@ function FinderCard({ t, badge }) {
   );
 }
 
+// A trek that's still a secret: a photo, but no name.
+function TeaserCard({ t }) {
+  return (
+    <Link className="card trek-card teaser-card" to={`/treks/${t.slug}`}>
+      <div className="card-img" style={{ backgroundImage: `url('${t.photo || '/static/teaser-trek.jpg'}')` }}>
+        <span className="tag open">Coming soon</span>
+        <span className="teaser-mark" aria-hidden="true">?</span>
+      </div>
+      <div className="card-body">
+        <p className="eyebrow">Our first trek</p>
+        <h3>Something's coming</h3>
+        <div className="card-bottom">
+          <span className="soon-tag">{t.opens ? `Revealed ${t.opens}` : 'Coming soon'}</span>
+        </div>
+        <span className="btn small card-book">See the photos</span>
+      </div>
+    </Link>
+  );
+}
+
 export default function Finder({ treks }) {
   const [level, setLevel] = useState('any');
   const [when, setWhen] = useState('any');
@@ -127,7 +147,7 @@ export default function Finder({ treks }) {
       {results.length ? (
         <div className="grid finder-grid">
           {results.map(({ t, score }, n) => (
-            <FinderCard key={t.slug} t={t} badge={vibes.length && score > 0 && n === 0 ? 'Best match' : null} />
+            t.teaser ? <TeaserCard key={t.slug} t={t} /> : <FinderCard key={t.slug} t={t} badge={vibes.length && score > 0 && n === 0 ? 'Best match' : null} />
           ))}
         </div>
       ) : (
