@@ -1454,6 +1454,8 @@ img.avatar.photo { border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18
 .pay-qr { display: flex; gap: 14px; align-items: center; text-align: left; background: var(--surface-2); border-radius: 14px; padding: 12px; margin-bottom: 12px; }
 .pay-qr img { width: 150px; height: 150px; border-radius: 8px; background: #fff; flex: none; }
 .pay-qr div { display: flex; flex-direction: column; gap: 3px; }
+.pay-qr .copy-upi { margin-top: 6px; align-self: flex-start; }
+@media (max-width: 480px) { .pay-qr .copy-upi { align-self: center; } }
 .status.paid { background: #e6f4ea; color: #1e7b3a; }
 @media (max-width: 480px) { .pay-qr { flex-direction: column; text-align: center; } .pay-qr div { align-items: center; } }
 

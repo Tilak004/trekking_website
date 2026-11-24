@@ -176,11 +176,21 @@ export function Pay() {
   const page = usePage();
   const { Site } = useSession();
   useTitle('Pay for your trek');
+  const [copied, setCopied] = useState('');
   if (page.notFound) return <NotFound />;
   const d = page.data;
   if (!d) return <PageShell><PageState page={page} /></PageShell>;
   const k = d.Booking;
   const paidMsg = `Hi! I've paid ₹${inr(k.Amount)} for booking #${k.ID} (${k.TrekName}, ${fmtDate(k.StartDate)}). Sharing the screenshot here.`;
+  const copyUPI = async () => {
+    try {
+      await navigator.clipboard.writeText(Site.UPI);
+      setCopied('✓ Copied');
+    } catch {
+      setCopied('Copy failed — select and copy it by hand');
+    }
+    setTimeout(() => setCopied(''), 2500);
+  };
   const summary = `${k.TrekName} · ${fmtDate(k.StartDate)} · ${k.People} ${k.People === 1 ? 'person' : 'people'}`;
   if (k.Status === 'cancelled' || k.Status === 'rejected') {
     const expired = k.RefundReason === 'expired';
@@ -246,6 +256,14 @@ export function Pay() {
                 <span className="small muted">Scan this QR with any UPI app.</span>
                 <span className="small">UPI ID: <code>{Site && Site.UPI}</code></span>
                 <span className="small">Amount: <strong>₹{inr(k.Amount)}</strong></span>
+                {Site && (
+                  <>
+                    <button type="button" className="btn small ghost copy-upi" onClick={copyUPI}>
+                      {copied || 'Copy UPI ID'}
+                    </button>
+                    <span className="small muted">Paste it in your UPI app's "Pay to UPI ID" option and pay ₹{inr(k.Amount)}.</span>
+                  </>
+                )}
               </div>
             </div>
 
