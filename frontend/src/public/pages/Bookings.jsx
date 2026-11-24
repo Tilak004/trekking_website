@@ -258,7 +258,7 @@ export function Pay() {
                 <span className="small">Amount: <strong>₹{inr(k.Amount)}</strong></span>
                 {Site && (
                   <>
-                    <button type="button" className="btn small ghost copy-upi" onClick={copyUPI}>
+                    <button type="button" className="btn big copy-upi" onClick={copyUPI}>
                       {copied || 'Copy UPI ID'}
                     </button>
                     <span className="small muted">Paste it in your UPI app's "Pay to UPI ID" option and pay ₹{inr(k.Amount)}.</span>
