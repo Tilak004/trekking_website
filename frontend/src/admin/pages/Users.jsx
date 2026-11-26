@@ -1,5 +1,6 @@
 import { PageState } from '../../components/common.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
+import { fmtDateTime } from '../../lib/util.js';
 
 export default function Users() {
   const page = usePage();
@@ -20,7 +21,7 @@ export default function Users() {
                 <td>{isGuest(u) ? <span className="muted">–</span> : u.Email}</td>
                 <td>{u.Phone}</td>
                 <td>{u.Bookings}</td>
-                <td className="small">{u.CreatedAt}</td>
+                <td className="small">{fmtDateTime(u.CreatedAt)}</td>
                 <td>{isGuest(u) ? <span className="status">Guest</span> : <span className="status approved">Registered</span>}</td>
               </tr>
             ))}

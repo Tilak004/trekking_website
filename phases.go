@@ -86,6 +86,14 @@ func opensAtLabel(stored string) string {
 	return ""
 }
 
+// istStamp is a stored UTC timestamp in Indian time for spreadsheets, e.g. "2026-11-26 15:00".
+func istStamp(stored string) string {
+	if t, ok := opensAtInIST(stored); ok {
+		return t.Format("2006-01-02 15:04")
+	}
+	return stored
+}
+
 // Phase is the trek's status on the website, taken from its next dates: open if any
 // date can be booked now, else opening soon, else sold out. Empty when it has no
 // upcoming published date at all.

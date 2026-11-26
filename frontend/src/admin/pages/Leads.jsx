@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { Avatar, PageState } from '../../components/common.jsx';
+import { PhotoPicker } from '../PhotoPicker.jsx';
 import { useSession } from '../../lib/session.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
 import { useSubmit } from '../../lib/useSubmit.js';
@@ -131,13 +132,10 @@ export function LeadForm() {
         <label>Bio <textarea name="bio" rows="5" defaultValue={l.Bio} /></label>
         <label>Achievements (one per line) <textarea name="achievements" rows="4" defaultValue={l.Achievements} /></label>
         <label>Certifications (one per line) <textarea name="certifications" rows="3" defaultValue={l.Certifications} /></label>
-        <label>Profile photo
-          <select name="photo" defaultValue={l.Photo}>
-            <option value="">— none (shows their initial) —</option>
-            {(d.Photos || []).map((p) => <option key={p}>{p}</option>)}
-          </select>
-          <span className="hint">Put lead photos in the <code>photos/leads</code> folder, then refresh this page.</span>
-        </label>
+        <div className="field">
+          <strong>Profile photo</strong>
+          <PhotoPicker name="photo" value={l.Photo} options={d.Photos} folder="leads" emptyLabel="— none (shows their initial) —" />
+        </div>
         <label>Phone (internal only, not shown publicly) <input name="phone" defaultValue={l.Phone} maxLength={30} /></label>
         <label className="check"><input type="checkbox" name="verified" defaultChecked={l.Verified} /> Verified (ID and experience checked) — shows a ✓ badge</label>
         <label className="check"><input type="checkbox" name="active" defaultChecked={l.Active} /> Show public profile (only for approved leads)</label>

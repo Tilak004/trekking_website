@@ -134,3 +134,21 @@ body.console { background: var(--surface-2); margin: 0; font-size: 1rem; }
 .console .status.ph-open { background: var(--forest-100); color: var(--forest-700); }
 .console .status.ph-sold_out { background: #fbe5e1; color: #8a2c1f; }
 .console .status.ph-completed { background: var(--surface-2); color: var(--muted); }
+
+/* Photo upload: drag and drop box, existing-photo picker, trek photo grid */
+.form .field { display: flex; flex-direction: column; gap: 6px; font-size: .88rem; }
+.photo-picker { display: flex; flex-direction: column; gap: 8px; }
+.dropzone { display: flex; align-items: center; gap: 14px; padding: 12px; border: 2px dashed var(--line); border-radius: 12px; background: var(--surface); cursor: pointer; }
+.dropzone:hover, .dropzone:focus-visible { border-color: var(--forest-500); outline: none; }
+.dropzone.over { border-color: var(--sun-dark); background: var(--sun-100); }
+.dropzone.busy { opacity: .6; pointer-events: none; }
+.dropzone img { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; flex: none; }
+.dz-empty { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--forest-100); color: var(--forest-700); font-size: 1.8rem; flex: none; }
+.dz-text { display: flex; flex-direction: column; gap: 2px; font-weight: 500; }
+.dz-text small { color: var(--muted); font-weight: 400; }
+.dz-existing { font-weight: 500; }
+.dz-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.dz-grid li { position: relative; }
+.dz-grid img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; display: block; }
+.dz-remove { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: rgba(11,29,20,.75); color: #fff; font-size: 1.1rem; line-height: 1; cursor: pointer; }
+.dz-remove:hover { background: var(--err); }

@@ -82,6 +82,8 @@ func (a *App) adminRoutes() http.Handler {
 	mux.HandleFunc("POST /admin/treks/{id}/delete", adm(a.adminDeleteTrek))
 	mux.HandleFunc("POST /admin/batches/{id}/lead", adm(a.adminSetBatchLead))
 	mux.HandleFunc("POST /admin/batches/{id}/delete", adm(a.adminDeleteBatch))
+	mux.HandleFunc("POST /admin/photos/upload", adm(a.adminUploadPhoto))
+	mux.HandleFunc("POST /admin/photos/delete", adm(a.adminDeletePhoto))
 	mux.HandleFunc("GET /admin/leads", adm(a.adminLeads))
 	mux.HandleFunc("GET /admin/leads/new", adm(a.adminLeadForm))
 	mux.HandleFunc("POST /admin/leads/new", adm(a.adminSaveLead))
@@ -508,7 +510,7 @@ func (a *App) consoleRegistrationsCSV(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", `attachment; filename="registrations-`+today()+`.csv"`)
 	c := csv.NewWriter(w)
 	c.Write([]string{"Booking", "Status", "Trek", "Date", "Name", "Phone", "Email", "People", "Age", "Pickup",
-		"Emergency contact", "Emergency phone", "Medical", "Note", "Booked on", "Amount due", "Paid amount", "Paid on"})
+		"Emergency contact", "Emergency phone", "Medical", "Note", "Booked on (IST)", "Amount due", "Paid amount", "Paid on (IST)"})
 	for _, k := range bookings {
 		email := k.UserEmail
 		if strings.HasPrefix(email, "guest-") { // placeholder address of a guest booking
@@ -516,7 +518,7 @@ func (a *App) consoleRegistrationsCSV(w http.ResponseWriter, r *http.Request) {
 		}
 		c.Write([]string{fmt.Sprint(k.ID), k.Status, k.TrekName, k.StartDate, csvSafe(k.UserName), k.UserPhone, email,
 			fmt.Sprint(k.People), fmt.Sprint(k.Age), csvSafe(k.Pickup), csvSafe(k.EmergencyName), k.EmergencyPhone,
-			csvSafe(k.Medical), csvSafe(k.Note), k.CreatedAt, fmt.Sprint(k.Amount()), fmt.Sprint(k.PaidAmount), k.PaidAt})
+			csvSafe(k.Medical), csvSafe(k.Note), istStamp(k.CreatedAt), fmt.Sprint(k.Amount()), fmt.Sprint(k.PaidAmount), istStamp(k.PaidAt)})
 	}
 	c.Flush()
 }

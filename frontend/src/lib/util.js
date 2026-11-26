@@ -13,7 +13,17 @@ export function fmtDate(s) {
   return `${day}, ${d.getUTCDate()} ${mon} ${d.getUTCFullYear()}`;
 }
 
-export const photoURL = (p) => '/photos/' + String(p).split('/').map(encodeURIComponent).join('/');
+// A stored UTC timestamp ("2026-11-26 09:30:00") in Indian time: "26 Nov 2026, 3:00 pm IST"
+export function fmtDateTime(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(s || '');
+  if (!m) return s || '';
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)));
+  const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+  const time = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
+  return `${date}, ${time} IST`;
+}
+
+export const photoURL =(p) => '/photos/' + String(p).split('/').map(encodeURIComponent).join('/');
 
 export const initial = (s) => ([...String(s || '').trim()][0] || '?').toUpperCase();
 export const firstWord = (s) => String(s || '').trim().split(/\s+/)[0] || '';

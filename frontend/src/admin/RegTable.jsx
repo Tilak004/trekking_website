@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useSubmit } from '../lib/useSubmit.js';
-import { fmtDate, inr, whatsappTo } from '../lib/util.js';
+import { fmtDate, fmtDateTime, inr, whatsappTo } from '../lib/util.js';
 
 // One small POST-button form. `fields` become hidden inputs; `back` returns the
 // admin to the page they were on.
@@ -144,7 +144,7 @@ export default function RegTable({ bookings, back, showEvent }) {
                     ? <><br /><a href={`mailto:${k.UserEmail}`}>{k.UserEmail}</a></>
                     : <><br /><span className="muted">Guest booking</span></>}
                 </span>
-                <br /><span className="muted small">#{k.ID} · booked {k.CreatedAt}</span>
+                <br /><span className="muted small">#{k.ID} · booked {fmtDateTime(k.CreatedAt)}</span>
               </td>
               {showEvent && <td><Link to={`/admin/events/${k.BatchID}`}>{k.TrekName}</Link><br /><span className="small">{fmtDate(k.StartDate)}</span></td>}
               <td className="small"><strong>{k.People}</strong> {k.People === 1 ? 'person' : 'people'}{k.Age ? <><br />Age {k.Age}</> : null}</td>

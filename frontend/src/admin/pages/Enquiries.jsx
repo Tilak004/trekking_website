@@ -2,6 +2,7 @@ import { PageState } from '../../components/common.jsx';
 import { useSession } from '../../lib/session.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
 import { useSubmit } from '../../lib/useSubmit.js';
+import { fmtDateTime } from '../../lib/util.js';
 
 function Replied({ q }) {
   const { submit } = useSubmit();
@@ -44,7 +45,7 @@ export default function Enquiries() {
                   </td>
                   <td>{q.TrekSlug ? <a href={`${PublicURL}/treks/${q.TrekSlug}`} target="_blank" rel="noopener noreferrer">{q.TrekName}</a> : <span className="muted">General question</span>}</td>
                   <td className="small enq-msg">{q.Message || '—'}</td>
-                  <td className="small">{q.CreatedAt}</td>
+                  <td className="small">{fmtDateTime(q.CreatedAt)}</td>
                   <td><Replied q={q} /></td>
                 </tr>
               );

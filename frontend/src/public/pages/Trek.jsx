@@ -34,8 +34,8 @@ function TeaserTrek({ d }) {
       <div className="wrap banner-inner">
         <p className="crumb"><Link to="/#treks">← All treks</Link></p>
         <span className="tag diff">Coming soon</span>
-        <h1>Something's coming</h1>
-        <p className="banner-sub">Our first trek</p>
+        <h1>Revealing soon</h1>
+        <p className="banner-sub">Our next trek</p>
         <span className="soon-tag banner-soon">{d.Opens ? `Revealed ${d.Opens}` : 'Coming soon'}</span>{' '}
         <a className="btn banner-cta" href={d.Follow} target="_blank" rel="noopener noreferrer">Follow for the reveal</a>
       </div>
@@ -46,7 +46,7 @@ function TeaserTrek({ d }) {
       {d.Photos.length > 0 && (
         <section id="photos" className="trek-section">
           <h2>Can you guess this trek?</h2>
-          <PhotoGrid photos={d.Photos} alt="Our first trek" url={(p) => p} />
+          <PhotoGrid photos={d.Photos} alt="Our next trek" url={(p) => p} />
         </section>
       )}
     </PageShell>
@@ -141,7 +141,7 @@ export default function Trek() {
   const page = usePage();
   const { User, Msg, Site } = useSession();
   const d = page.data;
-  useTitle(d && (d.Teaser ? "Something's coming" : `${d.Trek.Name} Trek`));
+  useTitle(d && (d.Teaser ? "Revealing soon" : `${d.Trek.Name} Trek`));
   useWhatsAppMessage(d && d.Trek ? `Hi! I'm interested in the ${d.Trek.Name} trek.` : '');
 
   if (page.notFound) return <NotFound />;

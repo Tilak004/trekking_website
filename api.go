@@ -123,7 +123,7 @@ func (a *App) shellMeta(r *http.Request) (title, desc, image string, found bool)
 		if _, ok := a.teasedTrek(slug); !ok {
 			return "Trek not found · " + site.Name, desc, image, false
 		}
-		return "Something's coming · " + site.Name, "Our first trek is almost here. Can you guess it?", "/treks/" + slug + "/photos/0.jpg", true
+		return "Revealing soon · " + site.Name, "Our next trek is almost here. Can you guess it?", "/treks/" + slug + "/photos/0.jpg", true
 	case strings.HasPrefix(p, "/treks/"):
 		t, err := a.trekWhere(`t.slug = ? AND t.active = 1`, strings.TrimPrefix(p, "/treks/"))
 		if err != nil || t.Teased() {

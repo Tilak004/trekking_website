@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { PageState } from '../../components/common.jsx';
+import { PhotoPicker, TrekPhotos } from '../PhotoPicker.jsx';
 import { useSession } from '../../lib/session.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
 import { useSubmit } from '../../lib/useSubmit.js';
@@ -225,13 +226,17 @@ export function TrekForm() {
           <span className="hint">First line is the question, the next lines are the answer. Leave a blank line between questions.</span>
           <UseDefault field="faqs" defaults={d.Defaults} />
         </label>
-        <label>Cover photo
-          <select name="photo" defaultValue={t.Photo}>
-            <option value="">— none (uses a mountain graphic) —</option>
-            {(d.Photos || []).map((p) => <option key={p}>{p}</option>)}
-          </select>
-          <span className="hint">Drop images into the <code>photos</code> folder next to the app, then refresh this page.</span>
-        </label>
+        <div className="field">
+          <strong>Cover photo</strong>
+          <PhotoPicker name="photo" value={t.Photo} options={d.Photos} emptyLabel="— none (uses a mountain graphic) —" />
+        </div>
+        <div className="field">
+          <strong>Trek photos</strong>
+          {isNew
+            ? <span className="hint">Save the trek first, then come back here to add its photos (they appear in the Photos section of the trek page).</span>
+            : <><span className="hint">The photos shown in the Photos section of the trek page. They upload straight away; you don't need to press Save.</span>
+              <TrekPhotos key={t.Slug} slug={t.Slug} photos={d.TrekPhotos} /></>}
+        </div>
         <div className="row">
           <label>Latitude <input name="lat" defaultValue={t.Lat || ''} placeholder="e.g. 13.13" inputMode="decimal" /></label>
           <label>Longitude <input name="lng" defaultValue={t.Lng || ''} placeholder="e.g. 75.27" inputMode="decimal" /></label>

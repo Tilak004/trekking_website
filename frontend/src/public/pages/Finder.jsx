@@ -90,8 +90,8 @@ function TeaserCard({ t }) {
         <span className="teaser-mark" aria-hidden="true">?</span>
       </div>
       <div className="card-body">
-        <p className="eyebrow">Our first trek</p>
-        <h3>Something's coming</h3>
+        <p className="eyebrow">Our next trek</p>
+        <h3>Revealing soon</h3>
         <div className="card-bottom">
           <span className="soon-tag">{t.opens ? `Revealed ${t.opens}` : 'Coming soon'}</span>
         </div>
