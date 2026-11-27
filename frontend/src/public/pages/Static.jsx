@@ -175,7 +175,7 @@ export function Privacy() {
         <p>We don't sell your data or share it with advertisers. We only share it with the trek lead for your batch, and with authorities if required by law or in an emergency.</p>
 
         <h2>Cookies</h2>
-        <p>We use a single cookie to keep you logged in. We don't use tracking or advertising cookies.</p>
+        <p>We use a cookie to keep you logged in. We also use Google Analytics, which sets cookies, to count visitors and see which pages are used, including whether someone has visited before. It records no names or contact details, and we don't use it for advertising. To opt out, block cookies for this site in your browser or use Google's opt-out add-on at tools.google.com/dlpage/gaoptout.</p>
 
         <h2>Your choices</h2>
         <p>You can ask us to correct or delete your data at any time by {site && <a href={`mailto:${site.Email}`}>emailing us</a>}.</p>

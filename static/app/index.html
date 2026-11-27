@@ -10,7 +10,20 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css">
-  <script type="module" crossorigin src="/static/app/assets/index-jOrLazvB.js"></script>
+<script>
+// Google Analytics, on the live site only. Page views are sent by the app (lib/analytics.js).
+if (location.hostname === 'beyondexpeditions.in') {
+  var ga = document.createElement('script');
+  ga.async = true;
+  ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-52R5MKQDDF';
+  document.head.appendChild(ga);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { dataLayer.push(arguments); };
+  gtag('js', new Date());
+  gtag('config', 'G-52R5MKQDDF', { send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false });
+}
+</script>
+  <script type="module" crossorigin src="/static/app/assets/index-BDkseeg-.js"></script>
   <link rel="modulepreload" crossorigin href="/static/app/assets/usePage-Txrr2OE0.js">
 </head>
 <body>
