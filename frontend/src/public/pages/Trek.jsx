@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Icon from '../../components/Icon.jsx';
 import { PageState, Reviews } from '../../components/common.jsx';
 import PhotoGrid from '../../components/PhotoGrid.jsx';
+import { track } from '../../lib/analytics.js';
 import { usePage, useTitle } from '../../lib/usePage.js';
 import { useSubmit } from '../../lib/useSubmit.js';
 import { blocks, carryGroups, fmtDate, inr, lines, mentions, paras, parsePickups, photoURL, rating, whatsappTo } from '../../lib/util.js';
@@ -143,6 +144,11 @@ export default function Trek() {
   const d = page.data;
   useTitle(d && (d.Teaser ? "Revealing soon" : `${d.Trek.Name} Trek`));
   useWhatsAppMessage(d && d.Trek ? `Hi! I'm interested in the ${d.Trek.Name} trek.` : '');
+  // Which treks get looked at: one view_item per trek page opened (never for a secret trek).
+  const viewed = d && !d.Teaser && d.Trek ? d.Trek.Slug : '';
+  useEffect(() => {
+    if (viewed) track('view_item', { item_id: viewed, item_name: d.Trek.Name });
+  }, [viewed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (page.notFound) return <NotFound />;
   if (!d) return <PageShell><PageState page={page} /></PageShell>;

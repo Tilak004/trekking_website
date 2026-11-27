@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import { trackPageView } from '../lib/analytics.js';
+import { trackLinkClicks, trackPageView } from '../lib/analytics.js';
 import Layout from './Layout.jsx';
 import Home from './pages/Home.jsx';
 import Trek from './pages/Trek.jsx';
@@ -17,6 +17,7 @@ import NotFound from './pages/NotFound.jsx';
 // the page title is the new page's.
 function PageViews() {
   const { pathname } = useLocation();
+  useEffect(trackLinkClicks, []);
   useEffect(() => {
     const t = setTimeout(() => trackPageView(pathname), 400);
     return () => clearTimeout(t);

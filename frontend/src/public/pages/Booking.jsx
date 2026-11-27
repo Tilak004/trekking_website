@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { track } from '../../lib/analytics.js';
 import { useSubmit } from '../../lib/useSubmit.js';
 import { digitsOnly, inr } from '../../lib/util.js';
 
@@ -44,8 +45,11 @@ export default function Booking({ d }) {
     if (problems[0]) return;
     setTouched(false);
     setStep(1);
+    track('begin_checkout', { item_id: d.slug }); // picked a date and carried on: started booking
   };
-  const send = submit(`/treks/${d.slug}/book`);
+  const send = submit(`/treks/${d.slug}/book`, {
+    onDone: (res) => res && res.redirect && track('booking_requested', { item_id: d.slug, people: f.people }),
+  });
 
   return (
     <form className="bk" onSubmit={(e) => {

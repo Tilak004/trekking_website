@@ -4,6 +4,7 @@ import Icon from '../../components/Icon.jsx';
 import { PageState } from '../../components/common.jsx';
 import { useSession } from '../../lib/session.jsx';
 import { usePage, useTitle } from '../../lib/usePage.js';
+import { once, track } from '../../lib/analytics.js';
 import { useSubmit } from '../../lib/useSubmit.js';
 import { firstWord, fmtDate, inr, stars, whatsappTo } from '../../lib/util.js';
 import PageShell from '../PageShell.jsx';
@@ -160,7 +161,7 @@ export function HoldTimer({ seconds }) {
 function UtrForm({ k }) {
   const { submit, busy, error } = useSubmit();
   return (
-    <form onSubmit={submit(`${k.PayPath}/utr`)} className="utr-form">
+    <form onSubmit={submit(`${k.PayPath}/utr`, { onDone: (res) => res && res.redirect && track('payment_claimed', { item_id: k.TrekSlug }) })} className="utr-form">
       <strong>Paid? Send us the UPI reference</strong>
       <p className="small muted">In your UPI app, open the payment and copy the 12-digit <b>UTR / UPI reference number</b>.</p>
       {error && <div className="flash err">{error}</div>}
@@ -177,6 +178,11 @@ export function Pay() {
   const { Site } = useSession();
   useTitle('Pay for your trek');
   const [copied, setCopied] = useState('');
+  // The trekker opened a booking we've marked paid: counted once per booking in this browser.
+  const paid = page.data && page.data.Booking && page.data.Booking.PaidAt ? page.data.Booking : null;
+  useEffect(() => {
+    if (paid) once(`ga-confirmed-${paid.ID}`, () => track('booking_confirmed', { item_id: paid.TrekSlug, value: paid.PaidAmount || paid.Amount, currency: 'INR' }));
+  }, [paid && paid.ID]); // eslint-disable-line react-hooks/exhaustive-deps
   if (page.notFound) return <NotFound />;
   const d = page.data;
   if (!d) return <PageShell><PageState page={page} /></PageShell>;
